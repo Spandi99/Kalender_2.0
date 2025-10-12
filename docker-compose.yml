@@ -19,6 +19,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://calendar:calendar@db:5432/calendar
       PYTHONPATH: /app
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080,http://192.168.1.132:8080
     depends_on:
       - db
     ports:

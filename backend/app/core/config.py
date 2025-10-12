@@ -1,5 +1,8 @@
 from functools import lru_cache
-from pydantic import BaseSettings, Field
+import json
+from typing import Any, Optional
+
+from pydantic import BaseSettings, Field, validator
 
 
 class Settings(BaseSettings):
@@ -9,7 +12,30 @@ class Settings(BaseSettings):
         default="sqlite:///./calendar.db",
         env="DATABASE_URL",
     )
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://192.168.1.132:8080",
+        ],
+        env="CORS_ORIGINS",
+    )
+
+    @validator("cors_origins", pre=True)
+    def parse_cors_origins(cls, value: Any) -> Optional[list[str]]:
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+            if value.startswith("["):
+                origins = json.loads(value)
+                if not isinstance(origins, list):
+                    raise ValueError("CORS_ORIGINS must be a list of origins")
+                return [str(origin).strip() for origin in origins if str(origin).strip()]
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        if isinstance(value, list):
+            return value
+        return value
 
     class Config:
         env_file = ".env"
