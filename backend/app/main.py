@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
-from .core.database import Base, engine
+from .core.migrations import run_migrations
 from .modules.calendar import router as calendar_router
 from .modules.feedback import router as feedback_router
 from .modules.xp import router as xp_router
@@ -32,7 +32,7 @@ app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
 
 
 def _create_database_schema() -> None:
-    Base.metadata.create_all(bind=engine)
+    run_migrations()
 
 
 def _ensure_database_schema_eagerly() -> None:
@@ -66,7 +66,7 @@ async def initialize_database() -> None:
 
     for attempt in range(1, max_attempts + 1):
         try:
-            Base.metadata.create_all(bind=engine)
+            run_migrations()
         except OperationalError as exc:  # pragma: no cover - depends on DB availability
             if attempt == max_attempts:
                 logger.exception("Database initialization failed after %s attempts", attempt)

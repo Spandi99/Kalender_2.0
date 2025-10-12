@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ..core.database import Base, get_db
+from ..core.migrations import seed_default_categories
 from ..main import app
 from .test_calendar import TestingSessionLocal, engine, override_get_db
 
@@ -13,6 +14,9 @@ client = TestClient(app)
 def reset_database() -> None:
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+    with TestingSessionLocal() as session:
+        seed_default_categories(session)
+        session.commit()
 
 
 def test_xp_totals_endpoint():

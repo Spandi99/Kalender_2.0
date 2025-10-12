@@ -1,16 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import type { FeedbackSummary } from "../../api/client";
+import type { EventCategory, FeedbackSummary } from "../../api/client";
 
 interface StatsDashboardProps {
   xpTotals: { total: number; by_category: Record<string, number> } | undefined;
   feedbackSummary: FeedbackSummary | undefined;
+  categories?: EventCategory[];
 }
 
-export function StatsDashboard({ xpTotals, feedbackSummary }: StatsDashboardProps) {
+export function StatsDashboard({ xpTotals, feedbackSummary, categories }: StatsDashboardProps) {
+  const categoryNameMap = new Map((categories ?? []).map((category) => [category.slug, category.name]));
   const chartData = Object.entries(xpTotals?.by_category ?? {}).map(([category, value]) => ({
-    category,
+    category: categoryNameMap.get(category) ?? category,
     xp: value
   }));
 

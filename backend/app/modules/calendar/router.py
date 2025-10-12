@@ -2,8 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from ...core.database import get_db
-from .schemas import EventCompleteResponse, EventCreate, EventRead, EventUpdate
-from .service import complete_event, create_event, delete_event, list_events, update_event
+from .schemas import (
+    EventCategoryRead,
+    EventCompleteResponse,
+    EventCreate,
+    EventRead,
+    EventUpdate,
+)
+from .service import (
+    complete_event,
+    create_event,
+    delete_event,
+    list_categories,
+    list_events,
+    update_event,
+)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -16,8 +29,17 @@ def read_events(db: Session = Depends(get_db)) -> list[EventRead]:
 
 @router.post("/", response_model=EventRead, status_code=status.HTTP_201_CREATED)
 def create_event_route(payload: EventCreate, db: Session = Depends(get_db)) -> EventRead:
-    event = create_event(db, payload)
+    try:
+        event = create_event(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return EventRead.from_orm(event)
+
+
+@router.get("/categories", response_model=list[EventCategoryRead])
+def read_categories(db: Session = Depends(get_db)) -> list[EventCategoryRead]:
+    categories = list_categories(db)
+    return [EventCategoryRead.from_orm(category) for category in categories]
 
 
 @router.put("/{event_id}", response_model=EventRead)

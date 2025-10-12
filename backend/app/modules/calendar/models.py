@@ -1,9 +1,20 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
+
+
+class EventCategory(Base):
+    __tablename__ = "event_categories"
+
+    slug = Column(String(100), primary_key=True)
+    name = Column(String(255), nullable=False)
+    xp_value = Column(Integer, nullable=False, default=20)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    events = relationship("Event", back_populates="category_ref")
 
 
 class Event(Base):
@@ -13,10 +24,11 @@ class Event(Base):
     title = Column(String(255), nullable=False)
     start = Column(DateTime, nullable=False)
     end = Column(DateTime, nullable=False)
-    category = Column(String(100), nullable=False, default="General")
+    category = Column(String(100), ForeignKey("event_categories.slug"), nullable=False, default="general")
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    category_ref = relationship("EventCategory", back_populates="events")
     xp_entry = relationship("XPEntry", back_populates="event", uselist=False)
     feedbacks = relationship("Feedback", back_populates="event")

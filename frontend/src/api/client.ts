@@ -30,6 +30,12 @@ export interface UpdateEventPayload extends Partial<CreateEventPayload> {
   completed?: boolean;
 }
 
+export interface EventCategory {
+  slug: string;
+  name: string;
+  xp_value: number;
+}
+
 export interface FeedbackPayload {
   event_id: number;
   rating: number;
@@ -53,6 +59,15 @@ export const createEvent = async (payload: CreateEventPayload): Promise<Calendar
   return data;
 };
 
+export const updateEvent = async (eventId: number, payload: UpdateEventPayload): Promise<CalendarEvent> => {
+  const { data } = await api.put<CalendarEvent>(`/events/${eventId}`, payload);
+  return data;
+};
+
+export const deleteEvent = async (eventId: number): Promise<void> => {
+  await api.delete(`/events/${eventId}`);
+};
+
 export const completeEvent = async (eventId: number) => {
   const { data } = await api.post<{ event: CalendarEvent; xp_awarded: number }>(
     `/events/${eventId}/complete`
@@ -72,6 +87,11 @@ export const submitFeedback = async (payload: FeedbackPayload) => {
 
 export const fetchFeedbackSummary = async (): Promise<FeedbackSummary> => {
   const { data } = await api.get<FeedbackSummary>("/feedback/summary");
+  return data;
+};
+
+export const fetchEventCategories = async (): Promise<EventCategory[]> => {
+  const { data } = await api.get<EventCategory[]>("/events/categories");
   return data;
 };
 

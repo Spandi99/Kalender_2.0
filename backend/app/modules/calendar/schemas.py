@@ -36,3 +36,12 @@ class EventRead(EventBase):
 class EventCompleteResponse(BaseModel):
     event: EventRead
     xp_awarded: int
+
+
+class EventCategoryRead(BaseModel):
+    slug: str
+    name: str
+    xp_value: int
+
+    class Config:
+        orm_mode = True
