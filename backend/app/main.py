@@ -1,5 +1,9 @@
+import asyncio
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
 from .core.database import Base, engine
@@ -8,8 +12,7 @@ from .modules.feedback import router as feedback_router
 from .modules.xp import router as xp_router
 
 settings = get_settings()
-
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title=settings.app_name)
 
@@ -24,6 +27,33 @@ app.add_middleware(
 app.include_router(calendar_router.router, prefix=settings.api_v1_prefix)
 app.include_router(xp_router.router, prefix=settings.api_v1_prefix)
 app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
+
+
+@app.on_event("startup")
+async def initialize_database() -> None:
+    backoff_seconds = 1.0
+    max_attempts = 5
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            Base.metadata.create_all(bind=engine)
+        except OperationalError as exc:  # pragma: no cover - depends on DB availability
+            if attempt == max_attempts:
+                logger.exception("Database initialization failed after %s attempts", attempt)
+                raise
+
+            logger.warning(
+                "Database initialization failed (attempt %s/%s). Retrying in %.1f seconds... (%s)",
+                attempt,
+                max_attempts,
+                backoff_seconds,
+                exc,
+            )
+            await asyncio.sleep(backoff_seconds)
+            backoff_seconds *= 2
+        else:
+            logger.info("Database initialization completed successfully.")
+            break
 
 
 @app.get("/health")
