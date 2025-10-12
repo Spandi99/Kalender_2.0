@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from ..feedback.models import Feedback
+from ..xp.models import XPEntry
 from ..xp.service import award_xp_for_event
 from .models import Event
 from .schemas import EventCreate, EventUpdate
@@ -35,6 +37,9 @@ def delete_event(db: Session, event_id: int) -> None:
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise ValueError("Event not found")
+
+    db.query(XPEntry).filter(XPEntry.event_id == event.id).delete(synchronize_session=False)
+    db.query(Feedback).filter(Feedback.event_id == event.id).delete(synchronize_session=False)
 
     db.delete(event)
     db.commit()
