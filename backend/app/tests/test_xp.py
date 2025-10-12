@@ -1,14 +1,18 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from ..core.database import Base, get_db
 from ..main import app
 from .test_calendar import TestingSessionLocal, engine, override_get_db
 
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
-
 app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def reset_database() -> None:
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
 
 def test_xp_totals_endpoint():
