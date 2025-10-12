@@ -37,16 +37,16 @@ client = TestClient(app)
 def test_create_and_complete_event():
     payload = {
         "title": "Test Event",
-        "start_time": datetime.utcnow().isoformat(),
-        "end_time": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+        "start": datetime.utcnow().isoformat(),
+        "end": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
         "category": "work",
     }
-    response = client.post("/api/v1/calendar/", json=payload)
+    response = client.post("/api/events/", json=payload)
     assert response.status_code == 201
     event = response.json()
     assert event["title"] == "Test Event"
 
-    complete = client.post(f"/api/v1/calendar/{event['id']}/complete")
+    complete = client.post(f"/api/events/{event['id']}/complete")
     assert complete.status_code == 200
     data = complete.json()
     assert data["xp_awarded"] == 50

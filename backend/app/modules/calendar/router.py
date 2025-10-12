@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from ...core.database import get_db
 from .schemas import EventCompleteResponse, EventCreate, EventRead, EventUpdate
-from .service import complete_event, create_event, list_events, update_event
+from .service import complete_event, create_event, delete_event, list_events, update_event
 
-router = APIRouter(prefix="/calendar", tags=["calendar"])
+router = APIRouter(prefix="/events", tags=["events"])
 
 
 @router.get("/", response_model=list[EventRead])
@@ -27,6 +27,15 @@ def update_event_route(event_id: int, payload: EventUpdate, db: Session = Depend
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     return EventRead.from_orm(event)
+
+
+@router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_event_route(event_id: int, db: Session = Depends(get_db)) -> Response:
+    try:
+        delete_event(db, event_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{event_id}/complete", response_model=EventCompleteResponse)

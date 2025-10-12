@@ -3,15 +3,13 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from .models import EventCategory
-
 
 class EventBase(BaseModel):
     title: str
+    start: datetime
+    end: datetime
+    category: str = "General"
     description: Optional[str] = None
-    start_time: datetime
-    end_time: datetime
-    category: EventCategory = EventCategory.OTHER
 
 
 class EventCreate(EventBase):
@@ -20,10 +18,10 @@ class EventCreate(EventBase):
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+    category: Optional[str] = None
     description: Optional[str] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    category: Optional[EventCategory] = None
     completed: Optional[bool] = None
 
 

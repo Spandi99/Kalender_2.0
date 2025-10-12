@@ -35,8 +35,8 @@ const defaultFormState = {
   title: "",
   description: "",
   category: "work",
-  start_time: "",
-  end_time: ""
+  start: "",
+  end: ""
 };
 
 function formatDateInput(date: Date | null) {
@@ -68,8 +68,8 @@ export default function App() {
     if (selectedRange) {
       setFormState((prev) => ({
         ...prev,
-        start_time: formatDateInput(selectedRange.start),
-        end_time: formatDateInput(selectedRange.end)
+        start: formatDateInput(selectedRange.start),
+        end: formatDateInput(selectedRange.end)
       }));
     }
   }, [selectedRange]);
@@ -113,14 +113,14 @@ export default function App() {
       title: "",
       description: "",
       category: "work",
-      start_time: formatDateInput(now),
-      end_time: formatDateInput(new Date(now.getTime() + 60 * 60 * 1000))
+      start: formatDateInput(now),
+      end: formatDateInput(new Date(now.getTime() + 60 * 60 * 1000))
     });
     setEventDialogOpen(true);
   };
 
   const handleSubmitEvent = () => {
-    if (!formState.title || !formState.start_time || !formState.end_time) {
+    if (!formState.title || !formState.start || !formState.end) {
       return;
     }
 
@@ -128,8 +128,8 @@ export default function App() {
       title: formState.title,
       description: formState.description,
       category: formState.category,
-      start_time: new Date(formState.start_time).toISOString(),
-      end_time: new Date(formState.end_time).toISOString()
+      start: new Date(formState.start).toISOString(),
+      end: new Date(formState.end).toISOString()
     });
   };
 
@@ -191,8 +191,8 @@ export default function App() {
                 <Input
                   id="event-start"
                   type="datetime-local"
-                  value={formState.start_time}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, start_time: event.target.value }))}
+                  value={formState.start}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, start: event.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -200,8 +200,8 @@ export default function App() {
                 <Input
                   id="event-end"
                   type="datetime-local"
-                  value={formState.end_time}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, end_time: event.target.value }))}
+                  value={formState.end}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, end: event.target.value }))}
                 />
               </div>
             </div>

@@ -25,8 +25,8 @@ export function CalendarView({ events, onSelectRange, onEventClick }: CalendarVi
       events.map((event) => ({
         id: String(event.id),
         title: event.title,
-        start: event.start_time,
-        end: event.end_time,
+        start: event.start,
+        end: event.end,
         classNames: event.completed ? ["opacity-60"] : [],
         backgroundColor: event.completed ? "#22c55e" : undefined
       })),

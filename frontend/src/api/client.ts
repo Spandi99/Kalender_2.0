@@ -1,15 +1,15 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1"
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"
 });
 
 export interface CalendarEvent {
   id: number;
   title: string;
   description?: string | null;
-  start_time: string;
-  end_time: string;
+  start: string;
+  end: string;
   category: string;
   completed: boolean;
 }
@@ -17,9 +17,13 @@ export interface CalendarEvent {
 export interface CreateEventPayload {
   title: string;
   description?: string;
-  start_time: string;
-  end_time: string;
+  start: string;
+  end: string;
   category: string;
+}
+
+export interface UpdateEventPayload extends Partial<CreateEventPayload> {
+  completed?: boolean;
 }
 
 export interface FeedbackPayload {
@@ -36,18 +40,18 @@ export interface FeedbackSummary {
 }
 
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
-  const { data } = await api.get<CalendarEvent[]>("/calendar/");
+  const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
 };
 
 export const createEvent = async (payload: CreateEventPayload): Promise<CalendarEvent> => {
-  const { data } = await api.post<CalendarEvent>("/calendar/", payload);
+  const { data } = await api.post<CalendarEvent>("/events/", payload);
   return data;
 };
 
 export const completeEvent = async (eventId: number) => {
   const { data } = await api.post<{ event: CalendarEvent; xp_awarded: number }>(
-    `/calendar/${eventId}/complete`
+    `/events/${eventId}/complete`
   );
   return data;
 };

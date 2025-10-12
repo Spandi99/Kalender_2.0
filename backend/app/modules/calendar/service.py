@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy.orm import Session
 
 from ..xp.service import award_xp_for_event
@@ -8,7 +6,7 @@ from .schemas import EventCreate, EventUpdate
 
 
 def list_events(db: Session) -> list[Event]:
-    return db.query(Event).order_by(Event.start_time).all()
+    return db.query(Event).order_by(Event.start).all()
 
 
 def create_event(db: Session, payload: EventCreate) -> Event:
@@ -31,6 +29,15 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
     db.commit()
     db.refresh(event)
     return event
+
+
+def delete_event(db: Session, event_id: int) -> None:
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise ValueError("Event not found")
+
+    db.delete(event)
+    db.commit()
 
 
 def complete_event(db: Session, event_id: int) -> tuple[Event, int]:

@@ -4,7 +4,7 @@ from pydantic import BaseSettings, Field
 
 class Settings(BaseSettings):
     app_name: str = "AI Calendar XP Backend"
-    api_v1_prefix: str = "/api/v1"
+    api_v1_prefix: str = "/api"
     database_url: str = Field(
         default="sqlite:///./calendar.db",
         env="DATABASE_URL",
