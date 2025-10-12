@@ -41,7 +41,7 @@ const CalendarView = () => {
       // Optimistic update until backend supports persistence.
       setEvents((prev) =>
         prev.map((item) =>
-          item.id === event.id
+          String(item.id) === String(event.id)
             ? {
                 ...item,
                 start: event.start?.toISOString(),
