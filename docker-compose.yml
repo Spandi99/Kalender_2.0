@@ -1,39 +1,41 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
-    restart: unless-stopped
+    container_name: kalender-db
     environment:
-      POSTGRES_USER: calendar
-      POSTGRES_PASSWORD: calendar
-      POSTGRES_DB: calendar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calendar_xp
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build:
       context: ./backend
-    environment:
-      DATABASE_URL: postgresql+psycopg2://calendar:calendar@db:5432/calendar
-      PYTHONPATH: /app
-      CORS_ORIGINS: http://localhost:5173,http://localhost:8080,http://192.168.1.132:8080
+    container_name: kalender-backend
     depends_on:
       - db
+    environment:
+      POSTGRES_SERVER: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calendar_xp
+      BACKEND_CORS_ORIGINS: '["http://localhost:8080", "http://192.168.1.132:8080"]'
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
 
   frontend:
     build:
       context: ./frontend
-    environment:
-      VITE_API_URL: http://backend:8000/api
+    container_name: kalender-frontend
     depends_on:
       - backend
     ports:
       - "8080:80"
 
 volumes:
-  db_data:
+  postgres_data:
