@@ -14,6 +14,8 @@ from .modules.xp import router as xp_router
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
+_database_schema_initialized = False
+
 app = FastAPI(title=settings.app_name)
 
 app.add_middleware(
@@ -29,8 +31,36 @@ app.include_router(xp_router.router, prefix=settings.api_v1_prefix)
 app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
 
 
+def _create_database_schema() -> None:
+    Base.metadata.create_all(bind=engine)
+
+
+def _ensure_database_schema_eagerly() -> None:
+    global _database_schema_initialized
+
+    if _database_schema_initialized:
+        return
+
+    try:
+        _create_database_schema()
+    except OperationalError as exc:  # pragma: no cover - depends on DB availability
+        logger.warning("Eager database initialization failed: %s", exc)
+    else:
+        _database_schema_initialized = True
+        logger.info("Database schema initialized eagerly.")
+
+
+_ensure_database_schema_eagerly()
+
+
 @app.on_event("startup")
 async def initialize_database() -> None:
+    global _database_schema_initialized
+
+    if _database_schema_initialized:
+        logger.debug("Database schema already initialized; skipping startup initialization.")
+        return
+
     backoff_seconds = 1.0
     max_attempts = 5
 
@@ -52,6 +82,7 @@ async def initialize_database() -> None:
             await asyncio.sleep(backoff_seconds)
             backoff_seconds *= 2
         else:
+            _database_schema_initialized = True
             logger.info("Database initialization completed successfully.")
             break
 
