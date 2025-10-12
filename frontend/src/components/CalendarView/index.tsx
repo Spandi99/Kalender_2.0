@@ -5,10 +5,11 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 
-import "@fullcalendar/core/index.css";
-import "@fullcalendar/daygrid/index.css";
-import "@fullcalendar/timegrid/index.css";
-import "@fullcalendar/list/index.css";
+// --- FullCalendar Styles (safe import for Docker/Vite) ---
+import '@fullcalendar/daygrid/main.css'
+import '@fullcalendar/timegrid/main.css'
+import '@fullcalendar/list/main.css'
+// ----------------------------------------------------------
 
 import type { CalendarEvent } from "../../api/client";
 
