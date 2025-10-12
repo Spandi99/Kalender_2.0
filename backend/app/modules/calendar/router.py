@@ -1,0 +1,38 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from ...core.database import get_db
+from .schemas import EventCompleteResponse, EventCreate, EventRead, EventUpdate
+from .service import complete_event, create_event, list_events, update_event
+
+router = APIRouter(prefix="/calendar", tags=["calendar"])
+
+
+@router.get("/", response_model=list[EventRead])
+def read_events(db: Session = Depends(get_db)) -> list[EventRead]:
+    events = list_events(db)
+    return [EventRead.from_orm(event) for event in events]
+
+
+@router.post("/", response_model=EventRead, status_code=status.HTTP_201_CREATED)
+def create_event_route(payload: EventCreate, db: Session = Depends(get_db)) -> EventRead:
+    event = create_event(db, payload)
+    return EventRead.from_orm(event)
+
+
+@router.put("/{event_id}", response_model=EventRead)
+def update_event_route(event_id: int, payload: EventUpdate, db: Session = Depends(get_db)) -> EventRead:
+    try:
+        event = update_event(db, event_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return EventRead.from_orm(event)
+
+
+@router.post("/{event_id}/complete", response_model=EventCompleteResponse)
+def complete_event_route(event_id: int, db: Session = Depends(get_db)) -> EventCompleteResponse:
+    try:
+        event, xp_awarded = complete_event(db, event_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return EventCompleteResponse(event=EventRead.from_orm(event), xp_awarded=xp_awarded)

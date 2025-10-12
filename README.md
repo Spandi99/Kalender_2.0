@@ -1,67 +1,87 @@
-# AI Calendar XP v0.1.0
+# AI Calendar XP
 
-AI Calendar XP is a modular, gamified, AI-assisted calendar system designed to run locally on a Raspberry Pi 5 using Docker Compose. This repository provides the production-ready bootstrap for both backend and frontend services, complete with CI and container orchestration.
+A minimal, container-friendly calendar and XP tracking application optimized for Raspberry Pi 5 (16 GB RAM). The project ships with a FastAPI backend, a Vite + React frontend using ShadCN UI primitives, Docker Compose orchestration, and GitHub Actions CI.
 
-## Project Layout
+## Features
+- 📅 **Calendar management** with FullCalendar (month & week views)
+- ⭐ **XP tracking** with automatic rewards per event category and Recharts visualization
+- 💬 **Feedback collection** dialog with mood tracking and difficulty ratings
+- 🧱 **Two-panel layout** (calendar + analytics) using ShadCN-inspired components
+- 🧪 **Automated tests** (`pytest` for backend, `vitest` for frontend)
+- 🐳 **Docker Compose** stack for PostgreSQL, backend, and frontend services
 
+## Project Structure
 ```
 calendar-xp-ai/
-├── backend/            # FastAPI + SQLAlchemy backend
-├── frontend/           # Vite + React + Tailwind frontend
-├── docker-compose.yml  # Multi-service orchestration (backend, frontend, PostgreSQL)
-└── .github/workflows   # Continuous integration pipelines
+├── backend/
+│   ├── app/
+│   │   ├── core/
+│   │   ├── modules/{calendar,xp,feedback}/
+│   │   └── tests/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   └── api/
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+├── .github/workflows/test.yml
+└── README.md
 ```
 
+## Prerequisites
+- Docker & Docker Compose
+- Node.js 20+ (for local frontend development)
+- Python 3.11+ (for local backend development)
+
+## Local Development
 ### Backend
-- FastAPI application with modular routers (`calendar`, `xp`, `feedback`, `ai`).
-- Async PostgreSQL integration via SQLAlchemy + asyncpg.
-- Pytest smoke tests ensure API startup and health endpoint correctness.
-- Dockerfile targets Python 3.11 slim images with ARM64-friendly packages.
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
 ### Frontend
-- React 18 + Vite + TypeScript PWA scaffold.
-- Tailwind CSS with ShadCN-inspired UI primitives and Radix UI dialogs.
-- FullCalendar integration for scheduling, Recharts for analytics, Axios API client.
-- Jest + Testing Library smoke test for the main dashboard render.
-- Dockerfile builds static assets and serves them through nginx.
-- PWA icons are intentionally omitted so that only text-based assets are tracked; place your PNG icons under
-  `frontend/web/public/icons/` before building for distribution.
-
-### DevOps
-- `docker-compose.yml` spins up PostgreSQL, backend, and frontend services with the correct environment variables.
-- GitHub Actions workflow runs backend pytest suite, frontend Jest suite, and builds Docker images on every push/PR.
-
-## Getting Started
-
-### Local Development
-1. **Backend**
-   ```bash
-   cd calendar-xp-ai/backend
-   python -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload
-   ```
-
-2. **Frontend**
-   ```bash
-   cd calendar-xp-ai/frontend/web
-   npm install
-   npm run dev
-   ```
-
-### Docker Compose
 ```bash
-cd calendar-xp-ai
-docker-compose up --build
+cd frontend
+npm install
+npm run dev -- --host
 ```
-This starts PostgreSQL on port `5432`, the FastAPI backend on `8000`, and the nginx-served frontend on `3000`.
+Set the Vite environment variable `VITE_API_URL` to point to the backend API (defaults to `http://localhost:8000/api/v1`).
 
-### Running Tests
-- Backend: `pytest` from `calendar-xp-ai/backend`
-- Frontend: `npm test -- --runInBand` from `calendar-xp-ai/frontend/web`
+## Docker Compose
+```bash
+docker compose up --build
+```
+Services:
+- `frontend` → http://localhost:5173
+- `backend` → http://localhost:8000
+- `db` → PostgreSQL on port 5432 (user/password: `calendar`)
 
-## Versioning
-Project versioning follows semantic versioning. This bootstrap release is tagged as **v0.1.0**.
+## Testing
+```bash
+# Backend
+cd backend
+pytest
 
-## License
-This project is provided as-is for internal development of AI Calendar XP.
+# Frontend
+cd frontend
+npm test -- --run
+```
+
+## Continuous Integration
+GitHub Actions workflow (`.github/workflows/test.yml`) installs dependencies and runs unit tests for both the backend and frontend on every push and pull request.
+
+## Environment Variables
+| Service   | Variable        | Default Value                                     |
+|-----------|-----------------|---------------------------------------------------|
+| Backend   | `DATABASE_URL`  | `sqlite:///./calendar.db` (local) / Postgres in CI |
+| Frontend  | `VITE_API_URL`  | `http://localhost:8000/api/v1`                     |
+
+## Raspberry Pi Notes
+- Docker images are based on `python:3.11-slim` and `node:20-slim`, both supporting ARM64.
+- Postgres uses the `postgres:16-alpine` image, compatible with Raspberry Pi 5.
