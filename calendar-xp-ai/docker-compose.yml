@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: calendarxp
+      POSTGRES_PASSWORD: calendarxp
+      POSTGRES_DB: calendarxp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: calendarxp
+      POSTGRES_PASSWORD: calendarxp
+      POSTGRES_DB: calendarxp
+      POSTGRES_PORT: 5432
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://backend:8000/api/v1
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
