@@ -36,17 +36,27 @@ export interface EventCategory {
   xp_value: number;
 }
 
+export type FeedbackReason = "too_tired" | "no_time" | "forgot" | "low_motivation" | "other";
+export type FeedbackPunctuality = "on_time" | "late" | "early";
+
 export interface FeedbackPayload {
   event_id: number;
-  rating: number;
-  mood: string;
-  notes?: string;
+  completed: boolean;
+  rating: number | null;
+  mood: string | null;
+  reason?: FeedbackReason | null;
+  punctuality?: FeedbackPunctuality | null;
+  arrival_delay_minutes?: number | null;
+  duration_variance_minutes?: number | null;
+  notes?: string | null;
 }
 
 export interface FeedbackSummary {
   average_rating: number;
   mood_counts: Record<string, number>;
   total_feedback: number;
+  completion_rate: number;
+  punctuality_distribution: Record<string, number>;
 }
 
 export interface XpSummary {

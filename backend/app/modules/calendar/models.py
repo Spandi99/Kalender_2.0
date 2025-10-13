@@ -27,6 +27,8 @@ class Event(Base):
     category = Column(String(100), ForeignKey("event_categories.slug"), nullable=False, default="work")
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False, nullable=False)
+    actual_start = Column(DateTime, nullable=True)
+    actual_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     category_ref = relationship("EventCategory", back_populates="events")
