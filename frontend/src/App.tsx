@@ -14,12 +14,14 @@ import {
   fetchEvents,
   fetchFeedbackSummary,
   fetchXpSummary,
+  fetchAiInsights,
   submitFeedback,
   updateEvent
 } from "./api/client";
 import { CalendarView } from "./components/CalendarView";
 import { FeedbackModal } from "./components/Feedback/FeedbackModal";
 import { FeedbackSummaryCard } from "./components/Feedback/FeedbackSummaryCard";
+import { AiAssistPanel } from "./components/AiAssistPanel";
 import { TopBar } from "./components/TopBar";
 import { XpDashboard } from "./components/XP/XpDashboard";
 import { AVATAR_QUERY_KEY, useAvatar } from "./lib/useAvatar";
@@ -95,6 +97,7 @@ export default function App() {
   const xpQuery = useQuery({ queryKey: ["xp-summary"], queryFn: fetchXpSummary });
   const avatarQuery = useAvatar();
   const feedbackSummaryQuery = useQuery({ queryKey: ["feedback-summary"], queryFn: fetchFeedbackSummary });
+  const aiInsightsQuery = useQuery({ queryKey: ["ai-insights"], queryFn: fetchAiInsights });
 
   const apiCategories = categoriesQuery.data ?? null;
   const categories = apiCategories && apiCategories.length > 0 ? apiCategories : FALLBACK_CATEGORIES;
@@ -102,6 +105,7 @@ export default function App() {
   const xpSummary = xpQuery.data;
   const levelStatus = avatarQuery.data;
   const feedbackSummary = feedbackSummaryQuery.data;
+  const aiInsights = aiInsightsQuery.data;
 
   const fallbackCategory = useMemo(() => {
     const preferredOrder = ["work", "study", "exercise", "other"];
@@ -203,6 +207,7 @@ export default function App() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights"] });
       queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       setFeedbackEvent(data.event);
       setXpAwarded(data.xp_awarded);
@@ -217,6 +222,7 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ["feedback-summary"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights"] });
       queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       setFeedbackDialogOpen(false);
     }
@@ -325,6 +331,13 @@ export default function App() {
           />
           <div className="space-y-6">
             <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} levelInfo={levelStatus} />
+            <AiAssistPanel
+              insights={aiInsights}
+              isLoading={aiInsightsQuery.isLoading}
+              isError={aiInsightsQuery.isError}
+              isRefetching={aiInsightsQuery.isRefetching}
+              onRetry={() => aiInsightsQuery.refetch()}
+            />
             <FeedbackSummaryCard summary={feedbackSummary} />
           </div>
         </div>

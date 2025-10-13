@@ -7,6 +7,7 @@ from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
 from .core.migrations import run_migrations
+from .modules.ai_assist import router as ai_router
 from .modules.calendar import router as calendar_router
 from .modules.feedback import router as feedback_router
 from .modules.xp import router as xp_router
@@ -29,6 +30,7 @@ app.add_middleware(
 app.include_router(calendar_router.router, prefix=settings.api_v1_prefix)
 app.include_router(xp_router.router, prefix=settings.api_v1_prefix)
 app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
+app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
 
 
 def _create_database_schema() -> None:

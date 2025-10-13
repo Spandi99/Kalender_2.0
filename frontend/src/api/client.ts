@@ -74,6 +74,23 @@ export interface LevelStatus {
   expression: string;
 }
 
+export interface AIRecommendation {
+  title: string;
+  description: string;
+  category?: string | null;
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface AIInsightsResponse {
+  total_events: number;
+  completed_events: number;
+  completion_rate: number;
+  punctuality_stats: Record<string, number>;
+  frequent_reasons: Record<string, number>;
+  average_rating: number | null;
+  recommendations: AIRecommendation[];
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -122,6 +139,11 @@ export const fetchFeedbackSummary = async (): Promise<FeedbackSummary> => {
 
 export const fetchEventCategories = async (): Promise<EventCategory[]> => {
   const { data } = await api.get<EventCategory[]>("/events/categories");
+  return data;
+};
+
+export const fetchAiInsights = async (): Promise<AIInsightsResponse> => {
+  const { data } = await api.get<AIInsightsResponse>("/ai/insights");
   return data;
 };
 
