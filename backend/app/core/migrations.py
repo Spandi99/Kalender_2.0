@@ -4,6 +4,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterable
 
+from sqlalchemy import MetaData, inspect, select
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
 from ..modules.calendar.models import EventCategory
@@ -45,7 +47,52 @@ def seed_default_categories(db: Session) -> None:
         db.flush()
 
 
+def _migrate_legacy_xp_entries(connection: Connection) -> None:
+    inspector = inspect(connection)
+    tables = set(inspector.get_table_names())
+    if "xp_entries" not in tables or "xp_log" not in tables:
+        return
+
+    metadata = MetaData()
+    metadata.reflect(bind=connection, only=("xp_entries", "xp_log"))
+    xp_entries = metadata.tables["xp_entries"]
+    xp_log = metadata.tables["xp_log"]
+
+    existing_event_ids = {
+        row[0] for row in connection.execute(select(xp_log.c.event_id))
+    }
+
+    legacy_rows = connection.execute(
+        select(
+            xp_entries.c.event_id,
+            xp_entries.c.category,
+            xp_entries.c.xp_value,
+            xp_entries.c.created_at,
+        )
+    ).mappings()
+
+    to_insert: list[dict[str, object]] = []
+    for row in legacy_rows:
+        event_id = row["event_id"]
+        if event_id in existing_event_ids:
+            continue
+        to_insert.append(
+            {
+                "event_id": event_id,
+                "category": row["category"],
+                "xp_awarded": row["xp_value"],
+                "created_at": row["created_at"],
+            }
+        )
+        existing_event_ids.add(event_id)
+
+    if to_insert:
+        connection.execute(xp_log.insert(), to_insert)
+
+
 def run_migrations() -> None:
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as connection:
+        _migrate_legacy_xp_entries(connection)
     with _session_scope() as session:
         seed_default_categories(session)
