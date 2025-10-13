@@ -137,6 +137,14 @@ und soll sowohl über Desktop (Browser/PC) als auch iPhone erreichbar sein.
 * Mobile-friendly PWA für iPhone-Sync
 
 ---
+## 🎮 Avatar & Level Progression (Planned)
+
+Once the XP and feedback systems are stable and integrated:
+- Introduce a personal avatar representing user progress.
+- Avatar changes visually based on XP level thresholds (e.g., novice → skilled → expert).
+- Different themes or items unlocked at milestones.
+- Animated reactions (e.g., happy on XP gain, tired when many tasks left).
+- Integration with XP Dashboard for seamless visual feedback.
 
 ## 💡 Guideline for Codex Requests
 
@@ -161,6 +169,4 @@ Damit hat Codex bei jedem Request:
 * und unseren Entwicklungsworkflow.
 
 ---
-
-Willst du, dass ich dir gleich eine **leicht angepasste Version** des ersten Codex-Prompts (Event-Persistenz) so formuliere, dass er direkt auf diesen Plan referenziert und du ihn copy-paste nutzen kannst?
 
