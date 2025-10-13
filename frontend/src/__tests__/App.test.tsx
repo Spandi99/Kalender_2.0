@@ -18,7 +18,15 @@ vi.mock("../api/client", () => ({
     avatar_state: "beginner",
     expression: "neutral",
   }),
-  fetchFeedbackSummary: vi.fn().mockResolvedValue({ average_rating: 0, mood_counts: {}, total_feedback: 0 }),
+  fetchFeedbackSummary: vi
+    .fn()
+    .mockResolvedValue({
+      average_rating: 0,
+      mood_counts: {},
+      total_feedback: 0,
+      completion_rate: 0,
+      punctuality_distribution: {},
+    }),
   createEvent: vi.fn(),
   updateEvent: vi.fn(),
   deleteEvent: vi.fn(),

@@ -282,7 +282,7 @@ export default function App() {
     deleteEventMutation.mutate(activeEventId);
   };
 
-  const handleFeedbackSubmit = async (payload: { rating: number; mood: string; notes?: string }) => {
+  const handleFeedbackSubmit = async (payload: Omit<FeedbackPayload, "event_id">) => {
     if (!feedbackEvent) return;
     await feedbackMutation.mutateAsync({ ...payload, event_id: feedbackEvent.id });
   };
