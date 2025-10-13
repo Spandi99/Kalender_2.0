@@ -215,6 +215,9 @@ export default function App() {
     mutationFn: (payload: FeedbackPayload) => submitFeedback(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feedback-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       setFeedbackDialogOpen(false);
     }
   });
