@@ -59,8 +59,18 @@ const FALLBACK_CATEGORIES: EventCategory[] = [
 
 function formatDateInput(date: Date | null) {
   if (!date) return "";
-  const iso = date.toISOString();
-  return iso.slice(0, 16);
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  const localISO = new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  return localISO;
+}
+
+function normalizePayloadDate(value: string) {
+  if (!value) {
+    return value;
+  }
+  const date = new Date(value);
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offsetMs).toISOString().replace(/\.\d{3}Z$/, "");
 }
 
 export default function App() {
@@ -224,8 +234,8 @@ export default function App() {
       title: formState.title,
       description: formState.description,
       category: formState.category,
-      start: new Date(formState.start).toISOString(),
-      end: new Date(formState.end).toISOString()
+      start: normalizePayloadDate(formState.start),
+      end: normalizePayloadDate(formState.end)
     };
 
     if (activeEventId) {
