@@ -66,7 +66,7 @@ def test_create_and_complete_event():
     complete = client.post(f"/api/events/{event['id']}/complete")
     assert complete.status_code == 200
     data = complete.json()
-    assert data["xp_awarded"] == 50
+    assert data["xp_awarded"] == 20
 
 
 def test_update_event_details():
@@ -74,7 +74,7 @@ def test_update_event_details():
         "title": "Morning Run",
         "start": "2024-01-01T07:00:00",
         "end": "2024-01-01T08:00:00",
-        "category": "health",
+        "category": "exercise",
     }
     created = client.post("/api/events/", json=create_payload).json()
 
@@ -82,13 +82,13 @@ def test_update_event_details():
         "title": "Evening Run",
         "start": "2024-01-01T18:00:00",
         "end": "2024-01-01T19:00:00",
-        "category": "personal",
+        "category": "study",
     }
     response = client.put(f"/api/events/{created['id']}", json=update_payload)
     assert response.status_code == 200
     updated = response.json()
     assert updated["title"] == "Evening Run"
-    assert updated["category"] == "personal"
+    assert updated["category"] == "study"
     assert updated["start"].startswith("2024-01-01T18:00:00")
 
 
@@ -102,13 +102,13 @@ def test_delete_event_removes_event_and_xp():
     event = client.post("/api/events/", json=payload).json()
 
     client.post(f"/api/events/{event['id']}/complete")
-    totals_before = client.get("/api/xp/").json()
-    assert totals_before["total"] == 50
+    totals_before = client.get("/api/xp/summary").json()
+    assert totals_before["total"] == 20
 
     delete_response = client.delete(f"/api/events/{event['id']}")
     assert delete_response.status_code == 204
 
-    totals_after = client.get("/api/xp/").json()
+    totals_after = client.get("/api/xp/summary").json()
     assert totals_after["total"] == 0
     events = client.get("/api/events/").json()
     assert all(item["id"] != event["id"] for item in events)
@@ -132,4 +132,4 @@ def test_list_categories_returns_seeded_categories():
     assert response.status_code == 200
     categories = response.json()
     slugs = {category["slug"] for category in categories}
-    assert {"work", "personal", "health", "other", "general"}.issubset(slugs)
+    assert {"work", "exercise", "study", "other"}.issubset(slugs)

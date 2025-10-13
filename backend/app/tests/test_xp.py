@@ -20,7 +20,7 @@ def reset_database() -> None:
 
 
 def test_xp_totals_endpoint():
-    response = client.get("/api/xp/")
+    response = client.get("/api/xp/summary")
     assert response.status_code == 200
     initial_totals = response.json()
 
@@ -28,14 +28,14 @@ def test_xp_totals_endpoint():
         "title": "XP Event",
         "start": "2024-01-01T00:00:00",
         "end": "2024-01-01T01:00:00",
-        "category": "personal",
+        "category": "study",
     }
     create_response = client.post("/api/events/", json=payload)
     event_id = create_response.json()["id"]
     client.post(f"/api/events/{event_id}/complete")
 
-    totals_after = client.get("/api/xp/")
+    totals_after = client.get("/api/xp/summary")
     data = totals_after.json()
-    assert data["total"] == initial_totals["total"] + 30
-    previous_personal = initial_totals["by_category"].get("personal", 0)
-    assert data["by_category"].get("personal", 0) == previous_personal + 30
+    assert data["total"] == initial_totals["total"] + 25
+    previous_study = initial_totals["by_category"].get("Study", 0)
+    assert data["by_category"].get("Study", 0) == previous_study + 25

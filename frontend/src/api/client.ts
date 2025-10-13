@@ -49,6 +49,11 @@ export interface FeedbackSummary {
   total_feedback: number;
 }
 
+export interface XpSummary {
+  total: number;
+  by_category: Record<string, number>;
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -75,8 +80,8 @@ export const completeEvent = async (eventId: number) => {
   return data;
 };
 
-export const fetchXpTotals = async (): Promise<{ total: number; by_category: Record<string, number> }> => {
-  const { data } = await api.get("/xp/");
+export const fetchXpSummary = async (): Promise<XpSummary> => {
+  const { data } = await api.get<XpSummary>("/xp/summary");
   return data;
 };
 

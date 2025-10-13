@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from ..feedback.models import Feedback
-from ..xp.models import XPEntry
-from ..xp.service import award_xp_for_event, get_xp_value_for_category
+from ..xp.models import XPLog
+from ..xp.service import award_xp_for_event
 from .models import Event, EventCategory
 from .schemas import EventCreate, EventUpdate
 
@@ -43,11 +43,6 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
     for field, value in update_values.items():
         setattr(event, field, value)
 
-    if event.xp_entry and "category" in update_values:
-        event.xp_entry.category = event.category
-        event.xp_entry.xp_value = get_xp_value_for_category(db, event.category)
-        db.add(event.xp_entry)
-
     db.add(event)
     db.commit()
     db.refresh(event)
@@ -59,7 +54,7 @@ def delete_event(db: Session, event_id: int) -> None:
     if not event:
         raise ValueError("Event not found")
 
-    db.query(XPEntry).filter(XPEntry.event_id == event.id).delete(synchronize_session=False)
+    db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
     db.query(Feedback).filter(Feedback.event_id == event.id).delete(synchronize_session=False)
 
     db.delete(event)

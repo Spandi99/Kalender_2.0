@@ -10,11 +10,10 @@ from ..modules.calendar.models import EventCategory
 from .database import Base, SessionLocal, engine
 
 DEFAULT_CATEGORIES: Iterable[dict[str, object]] = (
-    {"slug": "work", "name": "Work", "xp_value": 50},
-    {"slug": "personal", "name": "Personal", "xp_value": 30},
-    {"slug": "health", "name": "Health", "xp_value": 40},
-    {"slug": "other", "name": "Other", "xp_value": 20},
-    {"slug": "general", "name": "General", "xp_value": 20},
+    {"slug": "work", "name": "Work", "xp_value": 20},
+    {"slug": "exercise", "name": "Exercise", "xp_value": 30},
+    {"slug": "study", "name": "Study", "xp_value": 25},
+    {"slug": "other", "name": "Other", "xp_value": 10},
 )
 
 

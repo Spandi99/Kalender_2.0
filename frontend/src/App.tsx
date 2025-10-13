@@ -13,14 +13,15 @@ import {
   fetchEventCategories,
   fetchEvents,
   fetchFeedbackSummary,
-  fetchXpTotals,
+  fetchXpSummary,
   submitFeedback,
   updateEvent
 } from "./api/client";
 import { CalendarView } from "./components/CalendarView";
-import { StatsDashboard } from "./components/StatsDashboard";
-import { FeedbackDialog } from "./components/FeedbackDialog";
+import { FeedbackModal } from "./components/Feedback/FeedbackModal";
+import { FeedbackSummaryCard } from "./components/Feedback/FeedbackSummaryCard";
 import { TopBar } from "./components/TopBar";
+import { XpDashboard } from "./components/XP/XpDashboard";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -50,11 +51,10 @@ function createDefaultFormState(category: string): EventFormState {
 }
 
 const FALLBACK_CATEGORIES: EventCategory[] = [
-  { slug: "work", name: "Work", xp_value: 50 },
-  { slug: "personal", name: "Personal", xp_value: 30 },
-  { slug: "health", name: "Health", xp_value: 40 },
-  { slug: "other", name: "Other", xp_value: 20 },
-  { slug: "general", name: "General", xp_value: 20 },
+  { slug: "work", name: "Work", xp_value: 20 },
+  { slug: "exercise", name: "Exercise", xp_value: 30 },
+  { slug: "study", name: "Study", xp_value: 25 },
+  { slug: "other", name: "Other", xp_value: 10 },
 ];
 
 function formatDateInput(date: Date | null) {
@@ -91,21 +91,21 @@ export default function App() {
 
   const categoriesQuery = useQuery({ queryKey: ["event-categories"], queryFn: fetchEventCategories });
   const eventsQuery = useQuery({ queryKey: ["events"], queryFn: fetchEvents });
-  const xpQuery = useQuery({ queryKey: ["xp"], queryFn: fetchXpTotals });
+  const xpQuery = useQuery({ queryKey: ["xp-summary"], queryFn: fetchXpSummary });
   const feedbackSummaryQuery = useQuery({ queryKey: ["feedback-summary"], queryFn: fetchFeedbackSummary });
 
   const apiCategories = categoriesQuery.data ?? null;
   const categories = apiCategories && apiCategories.length > 0 ? apiCategories : FALLBACK_CATEGORIES;
   const events = eventsQuery.data ?? [];
-  const xpTotals = xpQuery.data;
+  const xpSummary = xpQuery.data;
   const feedbackSummary = feedbackSummaryQuery.data;
 
   const fallbackCategory = useMemo(() => {
-    if (categories.some((category) => category.slug === "work")) {
-      return "work";
-    }
-    if (categories.some((category) => category.slug === "personal")) {
-      return "personal";
+    const preferredOrder = ["work", "study", "exercise", "other"];
+    for (const slug of preferredOrder) {
+      if (categories.some((category) => category.slug === slug)) {
+        return slug;
+      }
     }
     return categories[0]?.slug ?? "work";
   }, [categories]);
@@ -179,7 +179,7 @@ export default function App() {
       updateEvent(eventId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["xp"] });
+      queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
       closeEventDialog();
     }
   });
@@ -188,7 +188,7 @@ export default function App() {
     mutationFn: (eventId: number) => deleteEvent(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["xp"] });
+      queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
       closeEventDialog();
     }
   });
@@ -197,7 +197,7 @@ export default function App() {
     mutationFn: (eventId: number) => completeEvent(eventId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["xp"] });
+      queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
       setFeedbackEvent(data.event);
       setXpAwarded(data.xp_awarded);
       setFeedbackDialogOpen(true);
@@ -293,12 +293,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <TopBar totalXp={xpTotals?.total ?? 0} onAddEvent={handleAddEvent} />
-        {xpAwarded ? (
-          <div className="rounded-md bg-white p-3 text-sm text-emerald-600 shadow-sm">
-            +{xpAwarded} XP awarded!
-          </div>
-        ) : null}
+        <TopBar totalXp={xpSummary?.total ?? 0} onAddEvent={handleAddEvent} />
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <CalendarView
             events={events}
@@ -314,11 +309,10 @@ export default function App() {
             }}
             onEventClick={handleEventClick}
           />
-          <StatsDashboard
-            xpTotals={xpTotals}
-            feedbackSummary={feedbackSummary}
-            categories={categories}
-          />
+          <div className="space-y-6">
+            <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} />
+            <FeedbackSummaryCard summary={feedbackSummary} />
+          </div>
         </div>
       </div>
 
@@ -421,7 +415,7 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
-      <FeedbackDialog
+      <FeedbackModal
         open={feedbackDialogOpen}
         onOpenChange={setFeedbackDialogOpen}
         onSubmit={handleFeedbackSubmit}

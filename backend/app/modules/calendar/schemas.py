@@ -8,7 +8,7 @@ class EventBase(BaseModel):
     title: str
     start: datetime
     end: datetime
-    category: str = "General"
+    category: str = "work"
     description: Optional[str] = None
 
 

@@ -24,11 +24,11 @@ class Event(Base):
     title = Column(String(255), nullable=False)
     start = Column(DateTime, nullable=False)
     end = Column(DateTime, nullable=False)
-    category = Column(String(100), ForeignKey("event_categories.slug"), nullable=False, default="general")
+    category = Column(String(100), ForeignKey("event_categories.slug"), nullable=False, default="work")
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     category_ref = relationship("EventCategory", back_populates="events")
-    xp_entry = relationship("XPEntry", back_populates="event", uselist=False)
+    xp_log_entry = relationship("XPLog", back_populates="event", uselist=False)
     feedbacks = relationship("Feedback", back_populates="event")
