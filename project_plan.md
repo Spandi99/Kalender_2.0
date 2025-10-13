@@ -76,6 +76,33 @@ und soll sowohl über Desktop (Browser/PC) als auch iPhone erreichbar sein.
 
   * Erkennt freie Zeiten und schlägt Aufgabenplatzierung vor.
   * Anpassung basierend auf Standard-Tag-Entwürfen (Templates).
+🧩 3.1 Enhanced Feedback & Behavior Data Capture
+
+Erweiterung der Feedback-Erhebung zur besseren Trainingsgrundlage für KI-Modelle.
+
+Neue Datenpunkte:
+
+Task-Completion-Status (✅ / ❌)
+
+Reason für Nicht-Abschluss
+
+Pünktlichkeits-Daten (on time / late / early, Delay-Minuten)
+
+Dauer-Abweichung (actual vs planned)
+
+Ziele:
+
+Verbesserung der Vorhersagegenauigkeit für Motivation und Zeitplanung
+
+Grundlage für zukünftige „Smart Rescheduling“- und „AI Coach“-Funktionen
+
+Umsetzung:
+
+Backend-Erweiterung Feedback-Modell
+
+Frontend-UI im Feedback-Modal mit neuen Eingaben
+
+XP-Berechnung = 0, wenn completed == false
 
 ### 🧩 **4. Day Template System**
 
