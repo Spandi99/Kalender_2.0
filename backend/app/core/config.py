@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         default_factory=lambda: [
             "http://localhost:5173",
             "http://localhost:8080",
-            "http://192.168.1.132:8080",
+            "http://192.168.1.136:8080",
         ],
         env="CORS_ORIGINS",
     )

@@ -22,7 +22,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: calendar_xp
-      BACKEND_CORS_ORIGINS: '["http://localhost:8080", "http://192.168.1.132:8080"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:8080", "http://192.168.1.136:8080"]'
     ports:
       - "8000:8000"
     volumes:

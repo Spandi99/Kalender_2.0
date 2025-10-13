@@ -49,7 +49,7 @@ AI Calendar XP is a personal productivity and gamified calendar assistant that:
 ✅ Tasks:
 - [ ] Fix backend entrypoint (FastAPI loads correctly)
 - [ ] Ensure `/health` endpoint returns `{ "status": "ok" }`
-- [ ] CORS headers work for frontend at `http://192.168.1.132:8080`
+- [ ] CORS headers work for frontend at `http://192.168.1.136:8080`
 - [ ] Database accessible via SQLAlchemy
 - [ ] Docker Compose starts all services without error
 
@@ -59,7 +59,7 @@ AI Calendar XP is a personal productivity and gamified calendar assistant that:
 # Fix FastAPI Backend (Raspberry Pi / Docker Compose Environment)
 
 Ensure FastAPI backend runs on port 8000 and responds correctly to frontend requests.
-Enable CORS for origins [http://localhost:8080](http://localhost:8080) and [http://192.168.1.132:8080](http://192.168.1.132:8080).
+Enable CORS for origins [http://localhost:8080](http://localhost:8080) and [http://192.168.1.136:8080](http://192.168.1.132:8080).
 Add /health and /api/events endpoints that connect to PostgreSQL.
 Verify startup inside Docker Compose (Raspberry Pi ARM64).
 
