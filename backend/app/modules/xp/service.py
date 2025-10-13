@@ -180,7 +180,11 @@ def get_level_status(db: Session, *, user_id: Optional[int] = 1) -> dict[str, ob
         db.refresh(state)
 
     if xp_next:
-        progress = total_xp / xp_next
+        level_range = xp_next - previous_threshold
+        if level_range > 0:
+            progress = (total_xp - previous_threshold) / level_range
+        else:
+            progress = 1.0
     else:
         progress = 1.0
     progress = max(0.0, min(progress, 1.0))
