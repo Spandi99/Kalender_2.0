@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="level2Gradient" cx="45%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#eef2ff" />
+      <stop offset="100%" stop-color="#a5b4fc" />
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="url(#level2Gradient)" stroke="#4338ca" stroke-width="6" />
+  <text x="60" y="70" font-size="44" text-anchor="middle" fill="#3730a3" font-family="'Inter', 'Segoe UI', sans-serif">2</text>
+</svg>

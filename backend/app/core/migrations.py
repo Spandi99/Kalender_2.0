@@ -5,8 +5,8 @@ from contextlib import contextmanager
 from typing import Iterable
 
 from sqlalchemy import MetaData, inspect, select
-from sqlalchemy.engine import Connection
-from sqlalchemy.orm import Session
+from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from ..modules.calendar.models import EventCategory
 from .database import Base, SessionLocal, engine
@@ -20,8 +20,12 @@ DEFAULT_CATEGORIES: Iterable[dict[str, object]] = (
 
 
 @contextmanager
-def _session_scope() -> Iterable[Session]:
-    session = SessionLocal()
+def _session_scope(bind: Engine | None = None) -> Iterable[Session]:
+    if bind is None:
+        session = SessionLocal()
+    else:
+        CustomSession = sessionmaker(bind=bind, autocommit=False, autoflush=False)
+        session = CustomSession()
     try:
         yield session
         session.commit()
@@ -90,9 +94,11 @@ def _migrate_legacy_xp_entries(connection: Connection) -> None:
         connection.execute(xp_log.insert(), to_insert)
 
 
-def run_migrations() -> None:
-    Base.metadata.create_all(bind=engine)
-    with engine.begin() as connection:
+def run_migrations(bind: Engine | None = None) -> None:
+    active_engine = bind or engine
+
+    Base.metadata.create_all(bind=active_engine)
+    with active_engine.begin() as connection:
         _migrate_legacy_xp_entries(connection)
-    with _session_scope() as session:
+    with _session_scope(bind=active_engine) as session:
         seed_default_categories(session)

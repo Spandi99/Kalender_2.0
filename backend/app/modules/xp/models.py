@@ -16,3 +16,13 @@ class XPLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     event = relationship("Event", back_populates="xp_log_entry")
+
+
+class AvatarState(Base):
+    __tablename__ = "avatar_state"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True, default=1)
+    level = Column(Integer, nullable=False, default=1)
+    mood = Column(String(32), nullable=False, default="neutral")
+    last_update = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 
+import { AvatarDisplay } from "../Avatar/AvatarDisplay";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
+import { AvatarStatus } from "../../lib/useAvatar";
 
 const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   Work: { icon: "💼", label: "Work" },
@@ -18,9 +20,10 @@ export interface XpSummaryPayload {
 interface XpDashboardProps {
   summary?: XpSummaryPayload;
   lastAwarded?: number | null;
+  levelInfo?: AvatarStatus;
 }
 
-export function XpDashboard({ summary, lastAwarded }: XpDashboardProps) {
+export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProps) {
   const categories = useMemo(() => {
     const entries = Object.entries(summary?.by_category ?? {});
     if (!entries.length) {
@@ -44,6 +47,10 @@ export function XpDashboard({ summary, lastAwarded }: XpDashboardProps) {
     return categories.reduce((max, category) => Math.max(max, category.value), 0);
   }, [categories]);
 
+  const xpLabel = levelInfo?.xp_next
+    ? `${levelInfo.xp_current} / ${levelInfo.xp_next} XP`
+    : `${levelInfo?.xp_current ?? 0} XP`;
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="space-y-1 border-b bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent">
@@ -58,9 +65,26 @@ export function XpDashboard({ summary, lastAwarded }: XpDashboardProps) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4 p-6">
-        <div>
-          <div className="text-4xl font-bold text-indigo-600">{summary?.total ?? 0}</div>
-          <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Total XP</div>
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-4xl font-bold text-indigo-600">{summary?.total ?? 0}</div>
+              <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Total XP</div>
+              <div className="text-sm text-muted-foreground">{xpLabel}</div>
+            </div>
+          </div>
+          {levelInfo ? (
+            <AvatarDisplay
+              level={levelInfo.current_level}
+              avatarState={levelInfo.avatar_state}
+              expression={levelInfo.expression}
+              xpCurrent={levelInfo.xp_current}
+              xpNext={levelInfo.xp_next ?? undefined}
+              xpPrevious={levelInfo.xp_previous}
+              levelProgress={levelInfo.level_progress}
+              xpToNext={levelInfo.xp_to_next}
+            />
+          ) : null}
         </div>
         {lastAwarded ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm">

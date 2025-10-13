@@ -54,6 +54,16 @@ export interface XpSummary {
   by_category: Record<string, number>;
 }
 
+export interface LevelStatus {
+  current_level: number;
+  xp_current: number;
+  xp_previous: number;
+  xp_next: number | null;
+  progress: number;
+  avatar_state: string;
+  expression: string;
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -82,6 +92,11 @@ export const completeEvent = async (eventId: number) => {
 
 export const fetchXpSummary = async (): Promise<XpSummary> => {
   const { data } = await api.get<XpSummary>("/xp/summary");
+  return data;
+};
+
+export const fetchLevelStatus = async (): Promise<LevelStatus> => {
+  const { data } = await api.get<LevelStatus>("/xp/level");
   return data;
 };
 

@@ -22,6 +22,7 @@ import { FeedbackModal } from "./components/Feedback/FeedbackModal";
 import { FeedbackSummaryCard } from "./components/Feedback/FeedbackSummaryCard";
 import { TopBar } from "./components/TopBar";
 import { XpDashboard } from "./components/XP/XpDashboard";
+import { AVATAR_QUERY_KEY, useAvatar } from "./lib/useAvatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -92,12 +93,14 @@ export default function App() {
   const categoriesQuery = useQuery({ queryKey: ["event-categories"], queryFn: fetchEventCategories });
   const eventsQuery = useQuery({ queryKey: ["events"], queryFn: fetchEvents });
   const xpQuery = useQuery({ queryKey: ["xp-summary"], queryFn: fetchXpSummary });
+  const avatarQuery = useAvatar();
   const feedbackSummaryQuery = useQuery({ queryKey: ["feedback-summary"], queryFn: fetchFeedbackSummary });
 
   const apiCategories = categoriesQuery.data ?? null;
   const categories = apiCategories && apiCategories.length > 0 ? apiCategories : FALLBACK_CATEGORIES;
   const events = eventsQuery.data ?? [];
   const xpSummary = xpQuery.data;
+  const levelStatus = avatarQuery.data;
   const feedbackSummary = feedbackSummaryQuery.data;
 
   const fallbackCategory = useMemo(() => {
@@ -180,6 +183,7 @@ export default function App() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       closeEventDialog();
     }
   });
@@ -189,6 +193,7 @@ export default function App() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       closeEventDialog();
     }
   });
@@ -198,6 +203,7 @@ export default function App() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["xp-summary"] });
+      queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
       setFeedbackEvent(data.event);
       setXpAwarded(data.xp_awarded);
       setFeedbackDialogOpen(true);
@@ -293,7 +299,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <TopBar totalXp={xpSummary?.total ?? 0} onAddEvent={handleAddEvent} />
+        <TopBar
+          totalXp={xpSummary?.total ?? 0}
+          onAddEvent={handleAddEvent}
+          levelInfo={levelStatus}
+          isLevelLoading={avatarQuery.isLoading || avatarQuery.isRefetching}
+        />
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <CalendarView
             events={events}
@@ -310,7 +321,7 @@ export default function App() {
             onEventClick={handleEventClick}
           />
           <div className="space-y-6">
-            <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} />
+            <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} levelInfo={levelStatus} />
             <FeedbackSummaryCard summary={feedbackSummary} />
           </div>
         </div>
