@@ -104,18 +104,89 @@ Frontend-UI im Feedback-Modal mit neuen Eingaben
 
 XP-Berechnung = 0, wenn completed == false
 
-### 🧩 **4. Day Template System**
+Phase 4: Day Template System
 
-* User kann mehrere „Standard-Tage“ definieren (z. B. „Weekday“, „Weekend“).
-* System plant automatisch Blöcke (z. B. Lernen 08–12 Uhr),
-  passt aber automatisch an bestehende Termine an:
+Benutzer können mehrere Tagesvorlagen („Weekday“, „Weekend“, „Focus Day“ usw.) definieren.
+Das System generiert automatisch Zeitblöcke (z. B. „Lernen 08:00–12:00“) und passt diese an bestehende Termine an.
+Blöcke, die durch Termine unterbrochen werden, werden dynamisch verkürzt oder aufgeteilt.
 
-  * Falls Termin um 09:00 Uhr → Lernblock von 08:00–09:00 Uhr und 11:00–12:00 Uhr.
-  * Blöcke kürzer als 1 h werden nicht erstellt.
+Ziele:
 
----
+Wiederverwendbare Tagesstrukturen (Templates) erstellen und speichern.
 
+Automatische Block-Generierung auf Basis der aktiven Vorlage.
+
+Automatische Anpassung an vorhandene Kalender-Events (keine Überschneidungen).
+
+Blöcke < 1 h werden ignoriert oder zusammengefasst.
+
+Deliverables:
+
+Neues Modul day_templates im Backend.
+
+API:
+
+GET /api/templates/ – Liste der Vorlagen
+
+POST /api/templates/ – Neue Vorlage speichern
+
+POST /api/templates/apply – Template auf Tag anwenden → generiert Event-Blöcke
+
+Frontend-UI: Template-Editor + Button „Apply Template to Day“.
+
+Intelligente Block-Anpassung (z. B. wenn Termin 09:00 → Lernblock 08–09 & 11–12).
+
+Phase 5: AI Assist Core (Behavior Analysis & Recommendations)
+
+Aufbau des intelligenten Analysemoduls, das aus Feedback-, Event- und XP-Daten automatisch Muster erkennt und Empfehlungen erstellt.
+Ziel ist es, Benutzerverhalten zu verstehen (Pünktlichkeit, Abschlussquote, Energiezyklen) und konstruktive Vorschläge zur Verbesserung zu liefern.
+
+Ziele:
+
+Analyse von Pünktlichkeit, Completion Rate, Stimmung und Feedback-Gründen.
+
+Generierung einfacher Handlungsempfehlungen.
+
+Vorbereitung auf Machine-Learning-Modelle (später in Phase 6).
+
+Deliverables:
+
+Neues Modul ai_assist im Backend.
+
+Endpoint /api/ai/insights.
+
+Frontend-Komponente AI Insights Panel mit Handlungsempfehlungen.
+
+Erweiterung der Feedback-Zusammenfassung um heuristische Analyse.
+
+Phase 6: Adaptive Scheduling System
+
+Aufbau eines Systems, das automatisch Zeitblöcke anpasst, priorisiert oder Vorschläge zur Tagesplanung macht — basierend auf der Analyse des AI-Assist-Cores.
+
+Ziele:
+
+Dynamische Anpassung von Tagesvorlagen und Terminen.
+
+Erkennung ineffizienter oder zu dichter Zeitpläne.
+
+Vorschläge für alternative Blöcke („verschiebe dein Lernfenster um 30 Minuten“).
+
+Deliverables:
+
+Erweiterung des Backends mit adaptiven Scheduling-Logiken.
+
+Integration mit bestehenden calendar- und feedback-Modulen.
+
+Frontend-Vorschlagsmodul mit Vorschau & „Apply Changes“-Button.
+
+Berücksichtigung der definierten Tages-Templates.
 ## 🧭 Development Workflow
+
+
+🔮 Phase 7 (Future Work): Learning & Optimization
+
+Implementierung echter KI-Modelle (lokal oder API-basiert), die auf Basis der Nutzerdaten Vorhersagen treffen und personalisierte Zeitoptimierung bieten.
+
 
 1. **Branches**
 
