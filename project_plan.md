@@ -152,7 +152,7 @@ Optional: periodische Synchronisation (z. B. 1× täglich)
 
 Deduplizierung anhand UID aus der iCal-Datei
 
-Events aus externen Kalendern sollen readonly markiert sein
+
 
 📂 Deliverables
 
@@ -170,7 +170,7 @@ POST /api/ical/import → Einmaliger Import aus URL oder Upload
 
 POST /api/ical/sync → Manuelles Sync-Triggern
 
-Neue DB-Tabelle external_calendars (Quelle + URL + letzter Sync)
+Integration in bestehende DB-Tabelle für Events
 
 Frontend:
 
