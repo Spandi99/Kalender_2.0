@@ -232,13 +232,14 @@ Integration mit bestehenden calendar- und feedback-Modulen.
 Frontend-Vorschlagsmodul mit Vorschau & „Apply Changes“-Button.
 
 Berücksichtigung der definierten Tages-Templates.
-## 🧭 Development Workflow
+
 
 
 🔮 Phase 8 (Future Work): Learning & Optimization
 
 Implementierung echter KI-Modelle (lokal oder API-basiert), die auf Basis der Nutzerdaten Vorhersagen treffen und personalisierte Zeitoptimierung bieten.
 
+Development Workflow:
 
 1. **Branches**
 
