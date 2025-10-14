@@ -27,58 +27,58 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 @router.get("/", response_model=list[EventOut])
 def read_events(db: Session = Depends(get_db)) -> list[EventOut]:
-    imported_events = (
-        db.query(ImportedEvent)
-        .order_by(ImportedEvent.start)
-        .all()
-    )
     local_events = db.query(Event).order_by(Event.start).all()
+    imported_events = db.query(ImportedEvent).order_by(ImportedEvent.start).all()
 
-    combined: list[EventOut] = []
+    combined: list[dict[str, object]] = []
 
     for imported in imported_events:
+        description = getattr(imported, "description", None)
+        if not description and imported.source_calendar_id is not None:
+            description = f"Imported from iCal source #{imported.source_calendar_id}"
+
         combined.append(
-            EventOut(
-                id=f"ext-{imported.id}",
-                title=imported.title or "(Kein Titel)",
-                start=imported.start,
-                end=imported.end,
-                category="External",
-                completed=False,
-                description=(
-                    f"Imported from iCal source #{imported.source_calendar_id}"
-                    if imported.source_calendar_id
-                    else None
-                ),
-                readonly=True,
-            )
+            {
+                "id": f"ext-{imported.id}",
+                "title": imported.title or "(Kein Titel)",
+                "start": imported.start.isoformat() if imported.start else None,
+                "end": imported.end.isoformat() if imported.end else None,
+                "category": "General",
+                "completed": False,
+                "description": description,
+            }
         )
 
     for event in local_events:
         combined.append(
-            EventOut(
-                id=str(event.id),
-                title=event.title,
-                start=event.start,
-                end=event.end,
-                category=event.category,
-                completed=event.completed,
-                description=event.description,
-                readonly=False,
-            )
+            {
+                "id": str(event.id),
+                "title": event.title,
+                "start": event.start.isoformat(),
+                "end": event.end.isoformat() if event.end else None,
+                "category": event.category,
+                "completed": event.completed,
+                "description": event.description,
+            }
         )
 
-    def event_start_sort_key(entry: EventOut) -> datetime:
-        start = entry.start
-        if start is None:
+    def sort_key(event: dict[str, object]) -> datetime:
+        raw_start = event.get("start")
+        if raw_start is None:
             return datetime.max.replace(tzinfo=timezone.utc)
-        if start.tzinfo is None:
-            return start.replace(tzinfo=timezone.utc)
-        return start.astimezone(timezone.utc)
 
-    combined.sort(key=event_start_sort_key)
+        if isinstance(raw_start, datetime):
+            start_dt = raw_start
+        else:
+            start_dt = datetime.fromisoformat(str(raw_start))
 
-    return combined
+        if start_dt.tzinfo is None:
+            return start_dt.replace(tzinfo=timezone.utc)
+        return start_dt.astimezone(timezone.utc)
+
+    combined.sort(key=sort_key)
+
+    return [EventOut(**event) for event in combined]
 
 
 @router.post("/", response_model=EventRead, status_code=status.HTTP_201_CREATED)

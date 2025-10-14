@@ -24,14 +24,14 @@ def import_calendar(db: Session, name: str, url: str) -> ExternalCalendar:
 
 
 def _upsert_imported_event(db: Session, calendar: ExternalCalendar, event_data: Dict[str, object]) -> None:
-    existing = db.query(ImportedEvent).filter(ImportedEvent.uid == event_data["uid"]).one_or_none()
+    existing = db.query(ImportedEvent).filter_by(uid=str(event_data["uid"])).first()
 
     if existing:
         existing.title = event_data.get("title")
         existing.start = event_data.get("start")
         existing.end = event_data.get("end")
         existing.source_calendar_id = calendar.id
-        existing.readonly = True
+        existing.readonly = False
         return
 
     imported_event = ImportedEvent(
@@ -40,7 +40,7 @@ def _upsert_imported_event(db: Session, calendar: ExternalCalendar, event_data: 
         start=event_data.get("start"),
         end=event_data.get("end"),
         source_calendar_id=calendar.id,
-        readonly=True,
+        readonly=False,
     )
     db.add(imported_event)
 

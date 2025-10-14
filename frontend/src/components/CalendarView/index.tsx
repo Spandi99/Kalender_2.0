@@ -31,28 +31,14 @@ const toLocalCalendarDate = (value: string | null | undefined) => {
 export function CalendarView({ events, onSelectRange, onEventClick }: CalendarViewProps) {
   const calendarEvents = useMemo(
     () =>
-      events.map((event) => {
-        const isExternal = event.readonly || event.category === "External";
-        const isCompleted = Boolean(event.completed);
-
-        return {
-          id: String(event.id),
-          title: event.title,
-          start: toLocalCalendarDate(event.start) ?? undefined,
-          end: toLocalCalendarDate(event.end) ?? undefined,
-          classNames: isExternal
-            ? ["bg-gray-300", "opacity-70"]
-            : isCompleted
-              ? ["opacity-60"]
-              : [],
-          backgroundColor: isExternal
-            ? "#d1d5db"
-            : isCompleted
-              ? "#22c55e"
-              : undefined,
-          editable: !isExternal,
-        };
-      }),
+      events.map((event) => ({
+        id: String(event.id),
+        title: event.title,
+        start: toLocalCalendarDate(event.start) ?? undefined,
+        end: toLocalCalendarDate(event.end) ?? undefined,
+        classNames: event.completed ? ["opacity-60"] : [],
+        backgroundColor: event.completed ? "#22c55e" : undefined,
+      })),
     [events]
   );
 

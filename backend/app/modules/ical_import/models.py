@@ -32,6 +32,6 @@ class ImportedEvent(Base):
     start = Column(DateTime, nullable=True)
     end = Column(DateTime, nullable=True)
     source_calendar_id = Column(Integer, ForeignKey("external_calendars.id"), index=True, nullable=False)
-    readonly = Column(Boolean, default=True, nullable=False)
+    readonly = Column(Boolean, default=False, nullable=False)
 
     source_calendar = relationship("ExternalCalendar", back_populates="events")
