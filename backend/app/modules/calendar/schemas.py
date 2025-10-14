@@ -41,7 +41,6 @@ class EventOut(BaseModel):
     category: Optional[str] = None
     completed: bool
     description: Optional[str] = None
-    readonly: bool = False
 
     class Config:
         orm_mode = True

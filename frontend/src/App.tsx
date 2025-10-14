@@ -267,7 +267,7 @@ export default function App() {
   };
 
   const handleEventClick = (eventId: string) => {
-    if (!eventId || eventId.startsWith("ext-")) {
+    if (!eventId) {
       return;
     }
     const event = events.find((item) => String(item.id) === eventId);

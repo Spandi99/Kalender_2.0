@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session
 
 from ..feedback.models import Feedback
@@ -5,6 +7,13 @@ from ..xp.models import XPLog
 from ..xp.service import award_xp_for_event
 from .models import Event, EventCategory
 from .schemas import EventCreate, EventUpdate
+
+
+def _normalise_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value
+
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def list_events(db: Session) -> list[Event]:
@@ -24,7 +33,10 @@ def _ensure_category_exists(db: Session, category_slug: str) -> EventCategory:
 
 def create_event(db: Session, payload: EventCreate) -> Event:
     _ensure_category_exists(db, payload.category)
-    event = Event(**payload.dict())
+    data = payload.dict()
+    data["start"] = _normalise_datetime(data["start"])
+    data["end"] = _normalise_datetime(data["end"])
+    event = Event(**data)
     db.add(event)
     db.commit()
     db.refresh(event)
@@ -41,6 +53,8 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
         _ensure_category_exists(db, update_values["category"])
 
     for field, value in update_values.items():
+        if field in {"start", "end"} and value is not None:
+            value = _normalise_datetime(value)
         setattr(event, field, value)
 
     db.add(event)

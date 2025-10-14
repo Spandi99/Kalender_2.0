@@ -1,12 +1,13 @@
 """Service layer for importing and syncing external calendars."""
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Dict, List
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from .models import ExternalCalendar, ImportedEvent
+from ..calendar.models import Event
+from .models import ExternalCalendar
 from .parser import fetch_and_parse_ical
 
 
@@ -23,26 +24,45 @@ def import_calendar(db: Session, name: str, url: str) -> ExternalCalendar:
     return calendar
 
 
-def _upsert_imported_event(db: Session, calendar: ExternalCalendar, event_data: Dict[str, object]) -> None:
-    existing = db.query(ImportedEvent).filter(ImportedEvent.uid == event_data["uid"]).one_or_none()
+def _normalise_datetime(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
 
-    if existing:
-        existing.title = event_data.get("title")
-        existing.start = event_data.get("start")
-        existing.end = event_data.get("end")
-        existing.source_calendar_id = calendar.id
-        existing.readonly = True
+    if value.tzinfo is None:
+        return value
+
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def _upsert_imported_event(db: Session, calendar: ExternalCalendar, event_data: Dict[str, object]) -> None:
+    uid = str(event_data["uid"])
+    start = _normalise_datetime(event_data.get("start"))
+    if start is None:
         return
 
-    imported_event = ImportedEvent(
-        uid=str(event_data["uid"]),
-        title=event_data.get("title"),
-        start=event_data.get("start"),
-        end=event_data.get("end"),
-        source_calendar_id=calendar.id,
-        readonly=True,
+    end = _normalise_datetime(event_data.get("end")) or start
+    title = (event_data.get("title") or "").strip() or "(Kein Titel)"
+
+    existing = db.query(Event).filter_by(external_uid=uid).first()
+
+    if existing:
+        existing.title = title
+        existing.start = start
+        existing.end = end
+        existing.external_calendar_id = calendar.id
+        return
+
+    event = Event(
+        title=title,
+        start=start,
+        end=end,
+        category="work",
+        description=None,
+        completed=False,
+        external_uid=uid,
+        external_calendar_id=calendar.id,
     )
-    db.add(imported_event)
+    db.add(event)
 
 
 def sync_calendar(db: Session, calendar_id: int) -> Dict[str, int]:

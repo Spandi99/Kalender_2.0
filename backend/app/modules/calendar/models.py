@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -30,7 +29,10 @@ class Event(Base):
     actual_start = Column(DateTime, nullable=True)
     actual_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    external_uid = Column(String(255), unique=True, index=True, nullable=True)
+    external_calendar_id = Column(Integer, ForeignKey("external_calendars.id"), nullable=True)
 
     category_ref = relationship("EventCategory", back_populates="events")
     xp_log_entry = relationship("XPLog", back_populates="event", uselist=False)
     feedbacks = relationship("Feedback", back_populates="event")
+    external_calendar = relationship("ExternalCalendar", back_populates="events")

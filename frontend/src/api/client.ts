@@ -16,7 +16,6 @@ export interface CalendarEvent {
   end: string | null;
   category: string | null;
   completed: boolean;
-  readonly?: boolean;
 }
 
 export interface TemplateBlockInput {
