@@ -25,6 +25,7 @@ import { AiAssistPanel } from "./components/AiAssistPanel";
 import { TopBar } from "./components/TopBar";
 import { XpDashboard } from "./components/XP/XpDashboard";
 import { TemplateManager } from "./components/TemplateManager";
+import { CalendarIntegration } from "./components/CalendarIntegration";
 import { AVATAR_QUERY_KEY, useAvatar } from "./lib/useAvatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
@@ -340,6 +341,7 @@ export default function App() {
               onRetry={() => aiInsightsQuery.refetch()}
             />
             <TemplateManager categories={categories} />
+            <CalendarIntegration />
             <FeedbackSummaryCard summary={feedbackSummary} />
           </div>
         </div>

@@ -115,6 +115,13 @@ export interface AIInsightsResponse {
   recommendations: AIRecommendation[];
 }
 
+export interface ExternalCalendar {
+  id: number;
+  name: string;
+  url: string;
+  last_synced: string | null;
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -196,6 +203,21 @@ export const applyTemplate = async (
     null,
     { params: { date } }
   );
+  return data;
+};
+
+export const importIcal = async (name: string, url: string): Promise<ExternalCalendar> => {
+  const { data } = await api.post<ExternalCalendar>("/ical/import", { name, url });
+  return data;
+};
+
+export const fetchExternalCalendars = async (): Promise<ExternalCalendar[]> => {
+  const { data } = await api.get<ExternalCalendar[]>("/ical/");
+  return data;
+};
+
+export const syncCalendar = async (id: number): Promise<{ imported: number }> => {
+  const { data } = await api.post<{ imported: number }>(`/ical/sync/${id}`);
   return data;
 };
 
