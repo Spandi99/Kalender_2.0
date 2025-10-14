@@ -13,6 +13,12 @@ from .schemas import AIInsightsResponse, Recommendation
 
 RECENT_DAYS_WINDOW = 30
 
+MOOD_EMOJI_ALIASES: dict[str, str] = {
+    "😊": "happy",
+    "😐": "neutral",
+    "😞": "sad",
+}
+
 
 def _enum_to_value(value: Optional[object]) -> Optional[str]:
     """Convert enum instances to their primitive representation."""
@@ -148,7 +154,11 @@ def analyze_user_behavior(db: Session) -> AIInsightsResponse:
         )
 
     negative_moods = {"tired", "stressed", "overwhelmed", "sad"}
-    negative_mood_hits = sum(count for mood, count in mood_counter.items() if mood in negative_moods)
+    negative_mood_hits = sum(
+        count
+        for mood, count in mood_counter.items()
+        if _normalize_mood(mood) in negative_moods
+    )
     if negative_mood_hits >= 3:
         recommendations.append(
             Recommendation(
@@ -181,3 +191,9 @@ def analyze_user_behavior(db: Session) -> AIInsightsResponse:
         average_rating=average_rating,
         recommendations=recommendations,
     )
+
+
+def _normalize_mood(mood: str) -> str:
+    """Return a case-folded mood value while mapping known emoji choices."""
+
+    return MOOD_EMOJI_ALIASES.get(mood, mood).lower()
