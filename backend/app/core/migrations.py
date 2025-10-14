@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterable
 
-from sqlalchemy import MetaData, inspect, select
+from sqlalchemy import MetaData, inspect, select, text
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -94,11 +94,43 @@ def _migrate_legacy_xp_entries(connection: Connection) -> None:
         connection.execute(xp_log.insert(), to_insert)
 
 
+def _ensure_external_event_columns(connection: Connection) -> None:
+    inspector = inspect(connection)
+    tables = set(inspector.get_table_names())
+    if "events" not in tables:
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("events")}
+
+    if "external_uid" not in existing_columns:
+        connection.execute(
+            text("ALTER TABLE events ADD COLUMN external_uid VARCHAR(255)")
+        )
+        connection.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_events_external_uid"
+                " ON events (external_uid)"
+            )
+        )
+
+    if "external_calendar_id" not in existing_columns:
+        connection.execute(
+            text("ALTER TABLE events ADD COLUMN external_calendar_id INTEGER")
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_events_external_calendar_id"
+                " ON events (external_calendar_id)"
+            )
+        )
+
+
 def run_migrations(bind: Engine | None = None) -> None:
     active_engine = bind or engine
 
     Base.metadata.create_all(bind=active_engine)
     with active_engine.begin() as connection:
+        _ensure_external_event_columns(connection)
         _migrate_legacy_xp_entries(connection)
     with _session_scope(bind=active_engine) as session:
         seed_default_categories(session)

@@ -31,7 +31,7 @@ def _normalise_datetime(value: Optional[datetime]) -> Optional[datetime]:
     if value.tzinfo is None:
         return value
 
-    return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value.astimezone(timezone.utc)
 
 
 def _upsert_imported_event(db: Session, calendar: ExternalCalendar, event_data: Dict[str, object]) -> None:
