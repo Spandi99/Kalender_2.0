@@ -136,7 +136,59 @@ Frontend-UI: Template-Editor + Button „Apply Template to Day“.
 
 Intelligente Block-Anpassung (z. B. wenn Termin 09:00 → Lernblock 08–09 & 11–12).
 
-Phase 5: AI Assist Core (Behavior Analysis & Recommendations)
+📅 Phase 5: iCal Import & Synchronisation
+
+Benutzer sollen Kalender aus externen Quellen (z. B. Google Calendar, Outlook, Apple Calendar)
+über iCal-Links importieren können. Diese Events werden in der internen Datenbank gespiegelt,
+damit der AI Assist und das Adaptive Scheduling auf vollständige Daten zugreifen können.
+
+🎯 Ziele
+
+Unterstützung für .ics / iCal URLs (z. B. https://calendar.google.com/calendar/ical/.../basic.ics)
+
+Automatischer Import aller zukünftigen Events
+
+Optional: periodische Synchronisation (z. B. 1× täglich)
+
+Deduplizierung anhand UID aus der iCal-Datei
+
+Events aus externen Kalendern sollen readonly markiert sein
+
+📂 Deliverables
+
+Backend:
+
+Neues Modul app/modules/ical_import/
+
+parser.py: Parsen von .ics-Dateien mit icalendar
+
+service.py: Import-Logik + Duplikat-Erkennung
+
+router.py: Endpoints
+
+POST /api/ical/import → Einmaliger Import aus URL oder Upload
+
+POST /api/ical/sync → Manuelles Sync-Triggern
+
+Neue DB-Tabelle external_calendars (Quelle + URL + letzter Sync)
+
+Frontend:
+
+Neues UI-Panel „External Calendars“ im Einstellungsbereich:
+
+Feld für iCal-Link
+
+Button „Import Now“
+
+Liste importierter Kalender + letzter Sync
+
+Sonstiges:
+
+Logging der Importaktivität
+
+Fehlerbehandlung für ungültige oder private Links
+
+Phase 6: AI Assist Core (Behavior Analysis & Recommendations)
 
 Aufbau des intelligenten Analysemoduls, das aus Feedback-, Event- und XP-Daten automatisch Muster erkennt und Empfehlungen erstellt.
 Ziel ist es, Benutzerverhalten zu verstehen (Pünktlichkeit, Abschlussquote, Energiezyklen) und konstruktive Vorschläge zur Verbesserung zu liefern.
@@ -159,7 +211,7 @@ Frontend-Komponente AI Insights Panel mit Handlungsempfehlungen.
 
 Erweiterung der Feedback-Zusammenfassung um heuristische Analyse.
 
-Phase 6: Adaptive Scheduling System
+Phase 7: Adaptive Scheduling System
 
 Aufbau eines Systems, das automatisch Zeitblöcke anpasst, priorisiert oder Vorschläge zur Tagesplanung macht — basierend auf der Analyse des AI-Assist-Cores.
 
@@ -183,7 +235,7 @@ Berücksichtigung der definierten Tages-Templates.
 ## 🧭 Development Workflow
 
 
-🔮 Phase 7 (Future Work): Learning & Optimization
+🔮 Phase 8 (Future Work): Learning & Optimization
 
 Implementierung echter KI-Modelle (lokal oder API-basiert), die auf Basis der Nutzerdaten Vorhersagen treffen und personalisierte Zeitoptimierung bieten.
 
