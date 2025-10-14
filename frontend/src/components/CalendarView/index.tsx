@@ -16,12 +16,12 @@ import type { CalendarEvent } from "../../api/client";
 export interface CalendarViewProps {
   events: CalendarEvent[];
   onSelectRange: (range: { start: Date; end: Date }) => void;
-  onEventClick: (eventId: number) => void;
+  onEventClick: (eventId: string) => void;
 }
 
-const toLocalCalendarDate = (value: string) => {
+const toLocalCalendarDate = (value: string | null | undefined) => {
   if (!value) {
-    return value;
+    return undefined;
   }
   const date = new Date(value);
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -31,14 +31,28 @@ const toLocalCalendarDate = (value: string) => {
 export function CalendarView({ events, onSelectRange, onEventClick }: CalendarViewProps) {
   const calendarEvents = useMemo(
     () =>
-      events.map((event) => ({
-        id: String(event.id),
-        title: event.title,
-        start: toLocalCalendarDate(event.start),
-        end: toLocalCalendarDate(event.end),
-        classNames: event.completed ? ["opacity-60"] : [],
-        backgroundColor: event.completed ? "#22c55e" : undefined
-      })),
+      events.map((event) => {
+        const isExternal = event.readonly || event.category === "External";
+        const isCompleted = Boolean(event.completed);
+
+        return {
+          id: String(event.id),
+          title: event.title,
+          start: toLocalCalendarDate(event.start) ?? undefined,
+          end: toLocalCalendarDate(event.end) ?? undefined,
+          classNames: isExternal
+            ? ["bg-gray-300", "opacity-70"]
+            : isCompleted
+              ? ["opacity-60"]
+              : [],
+          backgroundColor: isExternal
+            ? "#d1d5db"
+            : isCompleted
+              ? "#22c55e"
+              : undefined,
+          editable: !isExternal,
+        };
+      }),
     [events]
   );
 
@@ -50,7 +64,7 @@ export function CalendarView({ events, onSelectRange, onEventClick }: CalendarVi
   };
 
   const handleEventClick = (info: EventClickArg) => {
-    onEventClick(Number(info.event.id));
+    onEventClick(String(info.event.id));
   };
 
   return (

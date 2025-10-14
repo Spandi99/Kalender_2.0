@@ -33,6 +33,20 @@ class EventRead(EventBase):
         orm_mode = True
 
 
+class EventOut(BaseModel):
+    id: str
+    title: str
+    start: datetime
+    end: Optional[datetime] = None
+    category: Optional[str] = None
+    completed: bool
+    description: Optional[str] = None
+    readonly: bool = False
+
+    class Config:
+        orm_mode = True
+
+
 class EventCompleteResponse(BaseModel):
     event: EventRead
     xp_awarded: int

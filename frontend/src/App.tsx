@@ -83,7 +83,7 @@ export default function App() {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [formState, setFormState] = useState<EventFormState>(() => createDefaultFormState("work"));
   const [selectedRange, setSelectedRange] = useState<{ start: Date; end: Date } | null>(null);
-  const [activeEventId, setActiveEventId] = useState<number | null>(null);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [feedbackEvent, setFeedbackEvent] = useState<CalendarEvent | null>(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [xpAwarded, setXpAwarded] = useState<number | null>(null);
@@ -123,7 +123,7 @@ export default function App() {
     if (!activeEventId) {
       return null;
     }
-    return events.find((event) => event.id === activeEventId) ?? null;
+    return events.find((event) => String(event.id) === activeEventId) ?? null;
   }, [activeEventId, events]);
 
   useEffect(() => {
@@ -153,11 +153,11 @@ export default function App() {
     setFormState({
       title: activeEvent.title,
       description: activeEvent.description ?? "",
-      category: activeEvent.category,
+      category: activeEvent.category ?? fallbackCategory,
       start: formatDateInput(new Date(activeEvent.start)),
-      end: formatDateInput(new Date(activeEvent.end))
+      end: activeEvent.end ? formatDateInput(new Date(activeEvent.end)) : ""
     });
-  }, [activeEvent]);
+  }, [activeEvent, fallbackCategory]);
 
   const closeEventDialog = () => {
     setEventDialogOpen(false);
@@ -256,14 +256,21 @@ export default function App() {
     };
 
     if (activeEventId) {
-      updateEventMutation.mutate({ eventId: activeEventId, payload: payload as UpdateEventPayload });
+      const numericId = Number(activeEventId);
+      if (Number.isNaN(numericId)) {
+        return;
+      }
+      updateEventMutation.mutate({ eventId: numericId, payload: payload as UpdateEventPayload });
     } else {
       createEventMutation.mutate(payload);
     }
   };
 
-  const handleEventClick = (eventId: number) => {
-    const event = events.find((item) => item.id === eventId);
+  const handleEventClick = (eventId: string) => {
+    if (!eventId || eventId.startsWith("ext-")) {
+      return;
+    }
+    const event = events.find((item) => String(item.id) === eventId);
     if (!event) {
       return;
     }
@@ -272,9 +279,9 @@ export default function App() {
     setFormState({
       title: event.title,
       description: event.description ?? "",
-      category: event.category,
+      category: event.category ?? fallbackCategory,
       start: formatDateInput(new Date(event.start)),
-      end: formatDateInput(new Date(event.end))
+      end: event.end ? formatDateInput(new Date(event.end)) : ""
     });
     setEventDialogOpen(true);
   };
@@ -283,19 +290,27 @@ export default function App() {
     if (!activeEventId) {
       return;
     }
-    completeEventMutation.mutate(activeEventId);
+    const numericId = Number(activeEventId);
+    if (Number.isNaN(numericId)) {
+      return;
+    }
+    completeEventMutation.mutate(numericId);
   };
 
   const handleDeleteEvent = () => {
     if (!activeEventId) {
       return;
     }
-    deleteEventMutation.mutate(activeEventId);
+    const numericId = Number(activeEventId);
+    if (Number.isNaN(numericId)) {
+      return;
+    }
+    deleteEventMutation.mutate(numericId);
   };
 
   const handleFeedbackSubmit = async (payload: Omit<FeedbackPayload, "event_id">) => {
     if (!feedbackEvent) return;
-    await feedbackMutation.mutateAsync({ ...payload, event_id: feedbackEvent.id });
+    await feedbackMutation.mutateAsync({ ...payload, event_id: Number(feedbackEvent.id) });
   };
 
   useEffect(() => {

@@ -9,13 +9,14 @@ const api = axios.create({
 });
 
 export interface CalendarEvent {
-  id: number;
+  id: number | string;
   title: string;
   description?: string | null;
   start: string;
-  end: string;
-  category: string;
+  end: string | null;
+  category: string | null;
   completed: boolean;
+  readonly?: boolean;
 }
 
 export interface TemplateBlockInput {
