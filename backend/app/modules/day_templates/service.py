@@ -11,9 +11,6 @@ from ..calendar.service import create_event
 from .models import DayTemplate, TemplateBlock
 from .schemas import DayTemplateCreate
 
-MIN_SLOT_SECONDS = 60 * 60
-
-
 class TemplateNotFoundError(ValueError):
     """Raised when a requested day template cannot be found."""
 
@@ -140,9 +137,6 @@ def apply_template_to_day(db: Session, template_id: int, target_date: date) -> L
         free_slots = _subtract_conflicts((block_start, block_end), conflicts)
 
         for slot_start, slot_end in free_slots:
-            if (slot_end - slot_start).total_seconds() < MIN_SLOT_SECONDS:
-                continue
-
             payload = EventCreate(
                 title=block.label,
                 description=None,
