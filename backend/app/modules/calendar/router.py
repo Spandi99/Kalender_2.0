@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -68,7 +68,15 @@ def read_events(db: Session = Depends(get_db)) -> list[EventOut]:
             )
         )
 
-    combined.sort(key=lambda entry: entry.start or datetime.max)
+    def event_start_sort_key(entry: EventOut) -> datetime:
+        start = entry.start
+        if start is None:
+            return datetime.max.replace(tzinfo=timezone.utc)
+        if start.tzinfo is None:
+            return start.replace(tzinfo=timezone.utc)
+        return start.astimezone(timezone.utc)
+
+    combined.sort(key=event_start_sort_key)
 
     return combined
 
