@@ -18,6 +18,30 @@ export interface CalendarEvent {
   completed: boolean;
 }
 
+export interface TemplateBlockInput {
+  label: string;
+  start_time: string;
+  end_time: string;
+  category?: string;
+}
+
+export interface TemplateBlock extends TemplateBlockInput {
+  id: number;
+}
+
+export interface DayTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  blocks: TemplateBlock[];
+}
+
+export interface CreateDayTemplatePayload {
+  name: string;
+  description?: string;
+  blocks: TemplateBlockInput[];
+}
+
 export interface CreateEventPayload {
   title: string;
   description?: string;
@@ -144,6 +168,34 @@ export const fetchEventCategories = async (): Promise<EventCategory[]> => {
 
 export const fetchAiInsights = async (): Promise<AIInsightsResponse> => {
   const { data } = await api.get<AIInsightsResponse>("/ai/insights");
+  return data;
+};
+
+export const fetchTemplates = async (): Promise<DayTemplate[]> => {
+  const { data } = await api.get<DayTemplate[]>("/templates/");
+  return data;
+};
+
+export const createTemplate = async (
+  payload: CreateDayTemplatePayload
+): Promise<DayTemplate> => {
+  const { data } = await api.post<DayTemplate>("/templates/", payload);
+  return data;
+};
+
+export const deleteTemplate = async (templateId: number): Promise<void> => {
+  await api.delete(`/templates/${templateId}`);
+};
+
+export const applyTemplate = async (
+  templateId: number,
+  date: string
+): Promise<CalendarEvent[]> => {
+  const { data } = await api.post<CalendarEvent[]>(
+    `/templates/${templateId}/apply`,
+    null,
+    { params: { date } }
+  );
   return data;
 };
 
