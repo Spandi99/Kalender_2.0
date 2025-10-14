@@ -152,7 +152,7 @@ Optional: periodische Synchronisation (z. B. 1× täglich)
 
 Deduplizierung anhand UID aus der iCal-Datei
 
-Events aus externen Kalendern sollen readonly markiert sein
+
 
 📂 Deliverables
 
