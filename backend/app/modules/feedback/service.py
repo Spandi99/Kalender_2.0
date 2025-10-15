@@ -15,18 +15,18 @@ def create_feedback(db: Session, payload: FeedbackCreate) -> Feedback:
         raise ValueError("Event not found")
 
     payload_data = payload.dict()
-
-    if payload.completed:
-        event.completed = True
-        award_xp_for_event(db, event)
-    else:
-        event.completed = False
-        db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
-
     feedback = Feedback(**payload_data)
+
+    event.completed = payload.completed
     db.add(event)
     db.add(feedback)
-    db.commit()
+
+    if payload.completed:
+        award_xp_for_event(db, event, feedback_override=feedback)
+    else:
+        db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
+        db.commit()
+
     db.refresh(feedback)
     return feedback
 

@@ -173,8 +173,10 @@ def calculate_xp_award(event: Event) -> int:
     return xp_awarded
 
 
-def award_xp_for_event(db: Session, event: Event) -> int:
-    feedback = _fetch_latest_feedback(db, event.id)
+def award_xp_for_event(
+    db: Session, event: Event, feedback_override: Feedback | None = None
+) -> int:
+    feedback = feedback_override or _fetch_latest_feedback(db, event.id)
 
     if not event.completed or (feedback and not feedback.completed):
         xp_awarded = 0
