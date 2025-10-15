@@ -105,6 +105,18 @@ export interface LevelStatus {
   expression: string;
 }
 
+export interface AdaptiveAnalysis {
+  avg_completion_rate: number;
+  avg_mood: number;
+  productive_hours: number[];
+  discipline_streaks: Record<string, number>;
+}
+
+export interface AdaptiveResponse {
+  status: string;
+  analysis: AdaptiveAnalysis;
+}
+
 export interface AIRecommendation {
   title: string;
   description: string;
@@ -175,6 +187,11 @@ export const fetchEventCategories = async (): Promise<EventCategory[]> => {
 
 export const fetchAiInsights = async (): Promise<AIInsightsResponse> => {
   const { data } = await api.get<AIInsightsResponse>("/ai/insights");
+  return data;
+};
+
+export const runAdaptiveAnalysis = async (): Promise<AdaptiveResponse> => {
+  const { data } = await api.post<AdaptiveResponse>("/adaptive/analyze");
   return data;
 };
 

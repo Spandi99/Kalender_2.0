@@ -8,6 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..calendar.models import Event
+from ..feedback.models import Feedback, Punctuality
 from .models import AvatarState, XPLog
 
 XP_RATE_PER_HOUR: dict[str, int] = {
@@ -107,6 +108,58 @@ def _calculate_duration_hours(event: Event) -> float:
     return max(delta.total_seconds() / 3600, 0.0)
 
 
+def _fetch_latest_feedback(db: Session, event_id: int) -> Feedback | None:
+    return (
+        db.query(Feedback)
+        .filter(Feedback.event_id == event_id)
+        .order_by(Feedback.created_at.desc())
+        .first()
+    )
+
+
+def _calculate_feedback_modifier(feedback: Feedback | None) -> float:
+    if not feedback:
+        return 0.0
+
+    modifier = 0.0
+    if feedback.rating is not None:
+        if feedback.rating >= 4:
+            modifier += 0.2
+        elif feedback.rating <= 2:
+            modifier -= 0.2
+
+    if feedback.punctuality == Punctuality.ON_TIME:
+        modifier += 0.1
+    elif feedback.punctuality == Punctuality.LATE:
+        modifier -= 0.1
+
+    return modifier
+
+
+def _calculate_streak_bonus(db: Session, event: Event) -> float:
+    category = _resolve_category(event.category)
+    recent_entries = (
+        db.query(XPLog)
+        .filter(XPLog.category == category)
+        .order_by(XPLog.created_at.desc())
+        .limit(3)
+        .all()
+    )
+
+    streak = 0
+    for entry in recent_entries:
+        if entry.xp_awarded > 0:
+            streak += 1
+        else:
+            break
+
+    if streak >= 3:
+        return 0.15
+    if streak >= 2:
+        return 0.05
+    return 0.0
+
+
 def calculate_xp_award(event: Event) -> int:
     rate = _determine_rate(event.category)
     hours = _calculate_duration_hours(event)
@@ -121,17 +174,32 @@ def calculate_xp_award(event: Event) -> int:
 
 
 def award_xp_for_event(db: Session, event: Event) -> int:
-    existing = db.query(XPLog).filter(XPLog.event_id == event.id).first()
-    if existing:
-        return existing.xp_awarded
+    feedback = _fetch_latest_feedback(db, event.id)
 
-    xp_awarded = calculate_xp_award(event)
-    entry = XPLog(
-        event_id=event.id,
-        category=_resolve_category(event.category),
-        xp_awarded=xp_awarded,
-    )
-    db.add(entry)
+    if not event.completed or (feedback and not feedback.completed):
+        xp_awarded = 0
+    else:
+        base_xp = calculate_xp_award(event)
+        modifier = _calculate_feedback_modifier(feedback)
+        modifier += _calculate_streak_bonus(db, event)
+        xp_awarded = max(0, int(round(base_xp * (1 + modifier))))
+
+    existing = db.query(XPLog).filter(XPLog.event_id == event.id).first()
+    category = _resolve_category(event.category)
+
+    if existing:
+        existing.category = category
+        existing.xp_awarded = xp_awarded
+        existing.created_at = datetime.utcnow()
+        entry = existing
+    else:
+        entry = XPLog(
+            event_id=event.id,
+            category=category,
+            xp_awarded=xp_awarded,
+        )
+        db.add(entry)
+
     db.commit()
     db.refresh(entry)
     return entry.xp_awarded

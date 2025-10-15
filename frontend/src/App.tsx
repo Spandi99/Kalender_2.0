@@ -22,6 +22,7 @@ import { CalendarView } from "./components/CalendarView";
 import { FeedbackModal } from "./components/Feedback/FeedbackModal";
 import { FeedbackSummaryCard } from "./components/Feedback/FeedbackSummaryCard";
 import { AiAssistPanel } from "./components/AiAssistPanel";
+import { AdaptiveInsightsCard } from "./components/AdaptiveInsightsCard";
 import { TopBar } from "./components/TopBar";
 import { XpDashboard } from "./components/XP/XpDashboard";
 import { TemplateManager } from "./components/TemplateManager";
@@ -333,6 +334,7 @@ export default function App() {
           />
           <div className="space-y-6">
             <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} levelInfo={levelStatus} />
+            <AdaptiveInsightsCard />
             <AiAssistPanel
               insights={aiInsights}
               isLoading={aiInsightsQuery.isLoading}
