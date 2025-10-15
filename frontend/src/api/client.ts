@@ -18,6 +18,13 @@ export interface CalendarEvent {
   completed: boolean;
 }
 
+export interface ImportedCalendar {
+  id: number;
+  name: string;
+  url: string;
+  last_synced: string | null;
+}
+
 export interface TemplateBlockInput {
   label: string;
   start_time: string;
@@ -168,6 +175,23 @@ export const fetchEventCategories = async (): Promise<EventCategory[]> => {
 
 export const fetchAiInsights = async (): Promise<AIInsightsResponse> => {
   const { data } = await api.get<AIInsightsResponse>("/ai/insights");
+  return data;
+};
+
+export const fetchImportedCalendars = async (): Promise<ImportedCalendar[]> => {
+  const { data } = await api.get<ImportedCalendar[]>("/ical/");
+  return data;
+};
+
+export const addICalCalendar = async (name: string, url: string): Promise<ImportedCalendar> => {
+  const { data } = await api.post<ImportedCalendar>("/ical/add", { name, url });
+  return data;
+};
+
+export const syncICalCalendar = async (
+  id: number,
+): Promise<{ status: string; last_synced: string | null }> => {
+  const { data } = await api.post<{ status: string; last_synced: string | null }>(`/ical/${id}/sync`);
   return data;
 };
 

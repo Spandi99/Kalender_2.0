@@ -108,6 +108,9 @@ def _subtract_conflicts(slot: TimeSlot, conflicts: Iterable[Event]) -> List[Time
     return remaining
 
 
+MIN_SLOT_DURATION = timedelta(minutes=60)
+
+
 def apply_template_to_day(db: Session, template_id: int, target_date: date) -> List[Event]:
     template = _load_template(db, template_id)
 
@@ -137,6 +140,8 @@ def apply_template_to_day(db: Session, template_id: int, target_date: date) -> L
         free_slots = _subtract_conflicts((block_start, block_end), conflicts)
 
         for slot_start, slot_end in free_slots:
+            if slot_end - slot_start < MIN_SLOT_DURATION:
+                continue
             payload = EventCreate(
                 title=block.label,
                 description=None,

@@ -6,11 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
+from .core.database import SessionLocal
 from .core.migrations import run_migrations
 from .modules.ai_assist import router as ai_router
 from .modules.calendar import router as calendar_router
 from .modules.day_templates import router as templates_router
 from .modules.feedback import router as feedback_router
+from .modules.ical_import import router as ical_router
+from .modules.ical_import.service import (
+    list_calendars as list_imported_calendars,
+    sync_calendar as sync_imported_calendar,
+)
 from .modules.xp import router as xp_router
 
 settings = get_settings()
@@ -33,6 +39,7 @@ app.include_router(templates_router.router, prefix="/api/templates", tags=["Day 
 app.include_router(xp_router.router, prefix=settings.api_v1_prefix)
 app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
 app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
+app.include_router(ical_router.router, prefix=settings.api_v1_prefix)
 
 
 def _create_database_schema() -> None:
@@ -55,6 +62,20 @@ def _ensure_database_schema_eagerly() -> None:
 
 
 _ensure_database_schema_eagerly()
+
+
+def _sync_imported_calendars_on_startup() -> None:
+    with SessionLocal() as session:
+        calendars = list_imported_calendars(session)
+        for calendar in calendars:
+            try:
+                sync_imported_calendar(session, calendar.id)
+            except Exception as exc:  # pragma: no cover - depends on remote availability
+                logger.warning(
+                    "Failed to sync imported calendar '%s' during startup: %s",
+                    calendar.name,
+                    exc,
+                )
 
 
 @app.on_event("startup")
@@ -88,6 +109,7 @@ async def initialize_database() -> None:
         else:
             _database_schema_initialized = True
             logger.info("Database initialization completed successfully.")
+            _sync_imported_calendars_on_startup()
             break
 
 

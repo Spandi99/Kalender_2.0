@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from ..feedback.models import Feedback
@@ -43,6 +45,14 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
     for field, value in update_values.items():
         setattr(event, field, value)
 
+    imported_event = getattr(event, "imported_source", None)
+    if imported_event is not None:
+        imported_event.title = event.title
+        imported_event.start = event.start
+        imported_event.end = event.end
+        imported_event.description = event.description
+        imported_event.last_updated = datetime.utcnow()
+
     db.add(event)
     db.commit()
     db.refresh(event)
@@ -56,6 +66,10 @@ def delete_event(db: Session, event_id: int) -> None:
 
     db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
     db.query(Feedback).filter(Feedback.event_id == event.id).delete(synchronize_session=False)
+
+    imported_event = getattr(event, "imported_source", None)
+    if imported_event is not None:
+        db.delete(imported_event)
 
     db.delete(event)
     db.commit()
