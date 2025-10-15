@@ -51,7 +51,10 @@ def _normalize_datetime(value) -> datetime:
         raise ValueError("Unsupported datetime type")
 
     if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        local_tz = datetime.now().astimezone().tzinfo
+        if local_tz is not None:
+            dt = dt.astimezone(local_tz)
+        dt = dt.replace(tzinfo=None)
 
     return dt
 
