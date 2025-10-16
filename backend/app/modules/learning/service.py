@@ -142,8 +142,8 @@ def suggest_template_updates(db: Session) -> LearningSuggestionsResult:
             continue
 
         current_hour = _time_to_hour(block.start_time)
-        target_hour = min(stats.clusters, key=lambda value: abs(value - current_hour))
-        delta_hours = target_hour - current_hour
+        target_hour = min(stats.clusters, key=lambda value: _hour_distance(value, current_hour))
+        delta_hours = _hour_delta(current_hour, target_hour)
 
         # Require at least a one-hour difference to avoid noisy adjustments.
         if abs(delta_hours) < 1.0:
@@ -287,6 +287,18 @@ def _snapshot_matches(snapshot: LearningSnapshot, stats: LearningStatsData) -> b
 
 def _time_to_hour(value: time) -> float:
     return value.hour + value.minute / 60.0 + value.second / 3600.0
+
+
+def _hour_distance(a: float, b: float) -> float:
+    diff = abs(a - b) % 24.0
+    return min(diff, 24.0 - diff)
+
+
+def _hour_delta(current: float, target: float) -> float:
+    diff = (target - current) % 24.0
+    if diff > 12.0:
+        diff -= 24.0
+    return diff
 
 
 def _shift_time(value: time, delta_hours: float) -> time:
