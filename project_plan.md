@@ -235,9 +235,65 @@ Berücksichtigung der definierten Tages-Templates.
 
 
 
-🔮 Phase 8 (Future Work): Learning & Optimization
+🔮 Phase 8 : Learning & Optimization (AI Self-Tuning System)
 
-Implementierung echter KI-Modelle (lokal oder API-basiert), die auf Basis der Nutzerdaten Vorhersagen treffen und personalisierte Zeitoptimierung bieten.
+Ziel:
+Das System soll auf Basis historischer Daten (Events, Feedback, XP, Tagesmuster) selbstständig lernen,
+welche Tagesstrukturen, Zeitfenster und Aktivitätsblöcke für den Nutzer optimal sind.
+Statt nur reaktiv Templates zu verschieben (wie in Phase 6),
+entwickelt es nun eigene Vorschläge und passt Templates iterativ an.
+
+Kernziele:
+
+Lernmodell (AI Core):
+
+Analysiert langfristige Trends (über Tage/Wochen).
+
+Ermittelt Produktivitätsfenster, wiederkehrende Muster und Abweichungen.
+
+Bewertet die Wirksamkeit von Templates (z. B. wie oft geplante Blöcke tatsächlich erfüllt werden).
+
+Passt Templates automatisch an und dokumentiert Änderungen (Audit).
+
+Optimierung:
+
+Schlägt Änderungen proaktiv vor („Möchtest du deinen Lernblock von 08:00 auf 09:00 verschieben?“).
+
+Erkennt inaktive Zeiten (Blöcke oft übersprungen) und entfernt oder ersetzt sie.
+
+Nutzt Feedback (mood, completion rate) und XP-Verlauf, um Wochenroutinen zu verbessern.
+
+Machine-Learning-Komponente:
+
+Kein externer API-Aufruf (läuft lokal).
+
+Verwendet einfache Regressions- oder Clustering-Ansätze (z. B. K-Means auf produktiven Stunden).
+
+Speicherung des Modells in der DB (z. B. JSON-Struktur mit learned preferences).
+
+Transparente Benutzerkontrolle:
+
+Der Nutzer sieht Vorschläge (nicht automatische Änderungen ohne Zustimmung).
+
+Kann Änderungen annehmen, ablehnen oder temporär pausieren.
+
+Änderungen und Lernverlauf werden im „AI-Assist Dashboard“ angezeigt.
+
+Integration:
+
+Nahtlos eingebunden in bestehende Adaptive Scheduling Logik.
+
+Nutzt XP-/Feedback-Daten, Day Templates, Calendar Events (lokal & iCal).
+
+Keine Blöcke unter 60 Minuten, volle Kompatibilität mit vorhandenen Mechanismen.
+
+Beispiel:
+
+Der Nutzer hat in den letzten 3 Wochen Lernblöcke um 08:00 Uhr nur zu 30 % abgeschlossen,
+aber ab 09:00 Uhr zu 90 %.
+
+→ Das System schlägt automatisch vor, den „Morning Study“-Block um +1 h zu verschieben
+und die XP-Verteilung leicht anzupassen (mehr Fokus-XP für spätere Stunden)..
 
 Development Workflow:
 
