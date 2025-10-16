@@ -18,6 +18,7 @@ from .modules.ical_import.service import (
     list_calendars as list_imported_calendars,
     sync_calendar as sync_imported_calendar,
 )
+from .modules.learning import router as learning_router
 from .modules.xp import router as xp_router
 
 settings = get_settings()
@@ -42,6 +43,7 @@ app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
 app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
 app.include_router(ical_router.router, prefix=settings.api_v1_prefix)
 app.include_router(adaptive_router.router, prefix=settings.api_v1_prefix)
+app.include_router(learning_router.router, prefix=settings.api_v1_prefix)
 
 
 def _create_database_schema() -> None:

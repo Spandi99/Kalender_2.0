@@ -117,6 +117,56 @@ export interface AdaptiveResponse {
   analysis: AdaptiveAnalysis;
 }
 
+export interface LearningStats {
+  clusters: number[];
+  average_mood: number | null;
+  average_xp: number | null;
+  total_events: number;
+  feedback_samples: number;
+  xp_samples: number;
+  snapshot_id: number | null;
+  snapshot_created_at: string | null;
+}
+
+export interface LearningSuggestion {
+  block_id: number;
+  template_id: number;
+  block_label: string;
+  current_start: string;
+  current_end: string;
+  suggested_start: string;
+  suggested_end: string;
+  delta_minutes: number;
+  reason: string;
+}
+
+export interface LearningSuggestionsResponse {
+  stats: LearningStats | null;
+  suggestions: LearningSuggestion[];
+}
+
+export interface ApplyLearningSuggestionsPayload {
+  block_ids: number[];
+}
+
+export interface AppliedLearningSuggestion {
+  block_id: number;
+  template_id: number;
+  block_label: string;
+  previous_start: string;
+  previous_end: string;
+  new_start: string;
+  new_end: string;
+  delta_minutes: number;
+  reason: string;
+}
+
+export interface ApplyLearningSuggestionsResponse {
+  applied: number;
+  updated_blocks: AppliedLearningSuggestion[];
+  stats: LearningStats | null;
+}
+
 export interface AIRecommendation {
   title: string;
   description: string;
@@ -237,6 +287,18 @@ export const applyTemplate = async (
     null,
     { params: { date } }
   );
+  return data;
+};
+
+export const fetchLearningSuggestions = async (): Promise<LearningSuggestionsResponse> => {
+  const { data } = await api.get<LearningSuggestionsResponse>("/learning/suggestions");
+  return data;
+};
+
+export const applyLearningSuggestions = async (
+  payload: ApplyLearningSuggestionsPayload
+): Promise<ApplyLearningSuggestionsResponse> => {
+  const { data } = await api.post<ApplyLearningSuggestionsResponse>("/learning/apply", payload);
   return data;
 };
 

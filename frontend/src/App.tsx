@@ -27,6 +27,7 @@ import { TopBar } from "./components/TopBar";
 import { XpDashboard } from "./components/XP/XpDashboard";
 import { TemplateManager } from "./components/TemplateManager";
 import { ExternalCalendars } from "./components/ExternalCalendars";
+import { LearningSuggestionsCard } from "./components/LearningSuggestionsCard";
 import { AVATAR_QUERY_KEY, useAvatar } from "./lib/useAvatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
@@ -335,6 +336,7 @@ export default function App() {
           <div className="space-y-6">
             <XpDashboard summary={xpSummary} lastAwarded={xpAwarded} levelInfo={levelStatus} />
             <AdaptiveInsightsCard />
+            <LearningSuggestionsCard />
             <AiAssistPanel
               insights={aiInsights}
               isLoading={aiInsightsQuery.isLoading}
