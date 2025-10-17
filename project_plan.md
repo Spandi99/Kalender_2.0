@@ -644,9 +644,51 @@ frontend/src/components/dashboard/
 - Nach erfolgreicher Integration dieses Dashboards:  
 **Phase 12 – Adaptive UX & User Gamification**  
 → Fokus auf Personalisierung, Avatare & animierte XP-Levelaufstiege
-```
 
 
+## 🧠 Phase 12 – Adaptive UX & Personalized Avatar Gamification
+
+### 🎯 Ziel
+In dieser Phase wird das Nutzererlebnis (UX) mit einem **personalisierten Videospiel-Avatar** erweitert.  
+Der Avatar repräsentiert den Benutzer visuell und reagiert dynamisch auf Fortschritt, Stimmung und Erfolge.  
+Ziel ist, die App motivierender und immersiver zu gestalten, damit sie sich eher wie ein persönlicher Begleiter anfühlt als wie ein Kalender.
+
+Der Avatar soll den realen Benutzer stilisiert widerspiegeln – sportlich, etwa 1,78 m groß, mit braunen Locken und grünen Augen –  
+und dabei in einem klaren, modernen Illustrationsstil gehalten sein.
+
+---
+
+### 🧱 Kernfunktionen
+
+1. **Personalisierter Avatar**
+   - Darstellung als stilisierte Spielfigur (SVG / Lottie-Animation).
+   - Anpassungen nach:
+     - **XP-Level** → Avatar bekommt neue Kleidung / Accessoires.
+     - **Stimmung** → Gesichtsausdruck, Körperhaltung, Lichtstimmung ändern sich.
+     - **Erfolge** → kurze Animationen oder Symbol-Overlays (z. B. Pokal, Medaille).
+
+2. **XP-Level-Animationen**
+   - Glüh- und Puls-Effekte bei Level-Up.
+   - Konfetti-/Licht-Animationen.
+   - Sanfter Übergang der Levelzahl + Soundeffekt (optional).
+
+3. **Adaptive Dashboard-Visuals**
+   - Dashboard-Hintergrund und Farben ändern sich je nach Avatar-Stimmung.
+   - Tagesfortschritt („Du hast 87 % deines Plans geschafft!“).
+   - Tooltip-Hinweise von der KI („Toller Fokus heute!“).
+
+4. **Motivations- und Zielsystem**
+   - Wöchentliche Missionsziele („5 Aufgaben abschließen“, „3 Tage konsekutiv im Flow“).
+   - Kleine Belohnungen / Badges / Licht-Effekte im Avatar-Bereich.
+   - Anzeige persönlicher Meilensteine.
+
+---
+
+### ⚙️ Technische Anforderungen
+
+#### Frontend
+- **Frameworks:** React, TailwindCSS, Framer Motion, Lottie React  
+- **Verzeichnisstruktur:**
 
 
 Development Workflow:
