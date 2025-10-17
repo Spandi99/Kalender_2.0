@@ -50,10 +50,17 @@ app.add_middleware(AutoFixMiddleware)
 if settings.debug_mode:
     app.add_middleware(RequestResponseLoggerMiddleware)
 
+default_cors_origins = {"https://orgalifer.ch", "http://orgalifer.ch"}
+configured_origins = set(settings.cors_origins or []) | default_cors_origins
+
+allow_credentials = True
+if "*" in configured_origins:
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=sorted(configured_origins),
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
