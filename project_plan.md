@@ -686,6 +686,19 @@ Health-Check & Monitoring für Verbindungs- und Portstatus
 Alle vorherigen Änderungen wo CloudDownload genutzt wurde durch DownloadCloud ersetzen => Neuer Name.
 
 
+
+Patch 11e — Connectivity & Routing Hotfix
+
+Dieser Patch:
+
+repariert Nginx-Proxy und Routing,
+
+behebt die 403/500/502/404-Fehler,
+
+stellt wieder sauberen Zugriff auf /dashboard, /api/events, /api/ical, /health usw. her,
+
+sorgt für Mobilzugriff via Cloudflare-Tunnel und IPv6-Fallback.
+
 ## 🧠 Phase 12 – Adaptive UX & Personalized Avatar Gamification
 
 ### 🎯 Ziel
