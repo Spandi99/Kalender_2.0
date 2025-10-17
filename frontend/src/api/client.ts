@@ -184,6 +184,28 @@ export interface AIInsightsResponse {
   recommendations: AIRecommendation[];
 }
 
+export interface SystemHealthStatus {
+  status: string;
+  database_connected: boolean;
+  auto_recovery_enabled: boolean;
+  last_recovery_run: string | null;
+  self_healing_active: boolean;
+  last_recovery_action: string | null;
+  last_recovery_timestamp?: string | null;
+  system_log_entries: number;
+  error?: string;
+}
+
+export interface SystemLogEntry {
+  id: number;
+  timestamp: string;
+  component: string | null;
+  severity: string | null;
+  message: string | null;
+  action_taken: string | null;
+  resolved: boolean;
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -299,6 +321,16 @@ export const applyLearningSuggestions = async (
   payload: ApplyLearningSuggestionsPayload
 ): Promise<ApplyLearningSuggestionsResponse> => {
   const { data } = await api.post<ApplyLearningSuggestionsResponse>("/learning/apply", payload);
+  return data;
+};
+
+export const fetchSystemHealth = async (): Promise<SystemHealthStatus> => {
+  const { data } = await api.get<SystemHealthStatus>("/health/extended");
+  return data;
+};
+
+export const fetchSystemLogs = async (): Promise<SystemLogEntry[]> => {
+  const { data } = await api.get<SystemLogEntry[]>("/system/logs");
   return data;
 };
 

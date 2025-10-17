@@ -154,29 +154,35 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
-if settings.debug_mode:
+@app.get("/health/extended")
+@app.get(f"{settings.api_v1_prefix}/health/extended", tags=["System Health"])
+def extended_health(request: Request) -> dict[str, object]:
+    """Provide diagnostics and self-healing status for dashboards."""
 
-    @app.get("/health/extended")
-    def extended_health(request: Request) -> dict[str, object]:
-        client_host = request.client.host if request.client else "unknown"
-        logger.debug("Received extended health check from %s", client_host)
-        result: dict[str, object] = {
-            "status": "ok",
-            "database_connected": False,
-            "auto_recovery_enabled": AUTO_RECOVERY_ENABLED,
-            "last_recovery_run": None,
-        }
-        try:
-            with SessionLocal() as db:
-                db.execute(text("SELECT 1"))
-                result["database_connected"] = True
-                result["tables"] = list(Base.metadata.tables.keys())
-                result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
-                last_run = get_last_recovery_run()
-                if last_run is not None:
-                    result["last_recovery_run"] = last_run.isoformat()
-                result.update(get_self_healing_status())
-        except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
-            result["status"] = "error"
-            result["error"] = str(exc)
-        return result
+    client_host = request.client.host if request.client else "unknown"
+    logger.debug("Received extended health check from %s", client_host)
+
+    result: dict[str, object] = {
+        "status": "ok",
+        "database_connected": False,
+        "auto_recovery_enabled": AUTO_RECOVERY_ENABLED,
+        "last_recovery_run": None,
+    }
+
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+            result["database_connected"] = True
+            result["tables"] = list(Base.metadata.tables.keys())
+            result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
+
+            last_run = get_last_recovery_run()
+            if last_run is not None:
+                result["last_recovery_run"] = last_run.isoformat()
+
+            result.update(get_self_healing_status())
+    except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
+        result["status"] = "error"
+        result["error"] = str(exc)
+
+    return result

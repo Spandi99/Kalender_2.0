@@ -17,6 +17,8 @@ export interface CalendarViewProps {
   events: CalendarEvent[];
   onSelectRange: (range: { start: Date; end: Date }) => void;
   onEventClick: (eventId: number) => void;
+  timeZone?: string;
+  locale?: string;
 }
 
 const toLocalCalendarDate = (value: string) => {
@@ -28,7 +30,7 @@ const toLocalCalendarDate = (value: string) => {
   return new Date(date.getTime() - offsetMs).toISOString().replace(/\.\d{3}Z$/, "");
 };
 
-export function CalendarView({ events, onSelectRange, onEventClick }: CalendarViewProps) {
+export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
   const calendarEvents = useMemo(
     () =>
       events.map((event) => ({
@@ -58,7 +60,8 @@ export function CalendarView({ events, onSelectRange, onEventClick }: CalendarVi
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
-        timeZone="local"
+        timeZone={timeZone}
+        locale={locale}
         headerToolbar={{
           left: "prev,next today",
           center: "title",
