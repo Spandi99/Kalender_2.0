@@ -644,9 +644,84 @@ frontend/src/components/dashboard/
 - Nach erfolgreicher Integration dieses Dashboards:  
 **Phase 12 – Adaptive UX & User Gamification**  
 → Fokus auf Personalisierung, Avatare & animierte XP-Levelaufstiege
-```
 
+## 🧭 Phase 11b – Dashboard UX Refinement & Integrated Navigation
 
+### 🎯 Ziel
+Nach Abschluss von Phase 11 ("Self-Healing Visualization & Unified Dashboard") sind die Funktionen technisch vorhanden,  
+aber UI und Navigation wirken noch uneinheitlich:  
+- Der Kalender und Teile des Textes sind grau oder schlecht lesbar.  
+- Einige UI-Elemente (z. B. Buttons) verlinken einfach auf alte Einzelseiten,  
+  statt im neuen Dashboard-Kontext zu bleiben.  
+
+Ziel von Phase 11b ist daher ein **visuelles & strukturelles Feintuning**:
+Ein klar integriertes, interaktives Dashboard mit konsistenter Sidebar-Navigation,  
+modernen Farben und flüssigen Wechseln zwischen Bereichen (XP, AI, Templates, Kalender, Feedback usw.).
+
+---
+
+### 🧱 Kernpunkte
+
+1. **Farbanpassung & Lesbarkeit**
+   - Entferne graue Typografie.
+   - Nutze Tailwind-Design-Tokens (`text-gray-900` für Haupttext, `text-gray-700` für Sekundärtext).
+   - Kalender-Events und UI-Elemente in kontrastreichen Farben (hell/dunkel kompatibel).
+
+2. **Sidebar-Navigation**
+   - Permanente Sidebar auf Desktop, Collapsible Drawer auf Mobile.
+   - Navigation ohne Seiten-Reload:
+     - `/dashboard` (Übersicht)
+     - `/dashboard/calendar`
+     - `/dashboard/xp`
+     - `/dashboard/ai`
+     - `/dashboard/templates`
+     - `/dashboard/feedback`
+   - Aktiver Tab visuell hervorgehoben (z. B. blaues Accent-Highlight).
+
+3. **Integrierte Dashboard-Komponenten**
+   - Alle bisherigen Funktionen aus der alten UI (Events, Templates, Feedback, AI Insights)  
+     werden als **Subviews im Dashboard** gerendert, **nicht** mehr über externe Links.
+   - Kalender-Ansicht integriert direkt in die Dashboard-Page.
+   - Self-Healing/Health-Status weiterhin sichtbar (oben rechts oder in separater Card).
+
+4. **Komponentenhierarchie**
+frontend/src/components/dashboard/
+├── Dashboard.tsx
+├── Sidebar.tsx
+├── TopBar.tsx
+├── CalendarView.tsx
+├── XPView.tsx
+├── AIView.tsx
+├── FeedbackView.tsx
+└── TemplatesView.tsx
+
+markdown
+Code kopieren
+
+5. **Navigationstechnik**
+- React Router DOM mit `<Routes>` und `<Outlet>` im Dashboard-Container.
+- Sidebar nutzt `<NavLink>` → aktiver State farblich hervorgehoben.
+- Kein Seiten-Neuladen; alle Views laden dynamisch via Client-Side-Routing.
+
+6. **UI-Verfeinerung**
+- Shadcn/UI + Tailwind für einheitliche Button-, Card- und Sidebar-Stile.  
+- Framer Motion für Sidebar-Einblendung & View-Transitions.  
+- Mobile Responsive Design sicherstellen.
+
+---
+
+### ✅ Erfolgskriterien
+
+- Kalender und Texte sind klar lesbar, keine graue Schrift.  
+- Navigation erfolgt rein über Sidebar innerhalb des Dashboards.  
+- Keine toten oder externen Links zur alten UI.  
+- UX ist flüssig, modern, visuell konsistent.  
+- Dashboard ist vollständig der zentrale Einstiegspunkt.
+
+---
+
+### 🔮 Nächste Schritte
+Nach dieser Phase kann **Phase 12 – Adaptive UX & Personalized Avatar** sauber darauf aufbauen
 
 
 Development Workflow:
