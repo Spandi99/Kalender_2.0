@@ -646,93 +646,49 @@ frontend/src/components/dashboard/
 → Fokus auf Personalisierung, Avatare & animierte XP-Levelaufstiege
 
 
-## 🧠 Phase 12 – Adaptive UX & User Gamification
+## 🧠 Phase 12 – Adaptive UX & Personalized Avatar Gamification
 
 ### 🎯 Ziel
-Diese Phase konzentriert sich auf die Verbesserung der Benutzererfahrung (UX) durch **Gamification**, **Personalisierung**  
-und **dynamische visuelle Rückmeldungen**. Der Kalender soll nicht nur funktional, sondern auch motivierend und interaktiv wirken.
+In dieser Phase wird das Nutzererlebnis (UX) mit einem **personalisierten Videospiel-Avatar** erweitert.  
+Der Avatar repräsentiert den Benutzer visuell und reagiert dynamisch auf Fortschritt, Stimmung und Erfolge.  
+Ziel ist, die App motivierender und immersiver zu gestalten, damit sie sich eher wie ein persönlicher Begleiter anfühlt als wie ein Kalender.
 
-XP-Level, Avatare, Stimmung, Tagesleistung und Fortschritt werden visuell dargestellt und dynamisch an die Nutzeraktivität angepasst.  
-Dadurch entsteht ein immersives, belohnendes Erlebnis ähnlich wie bei Spielen oder Fitness-Trackern.
+Der Avatar soll den realen Benutzer stilisiert widerspiegeln – sportlich, etwa 1,78 m groß, mit braunen Locken und grünen Augen –  
+und dabei in einem klaren, modernen Illustrationsstil gehalten sein.
 
 ---
 
 ### 🧱 Kernfunktionen
 
-1. **Avatar-System**
-   - Jeder Benutzer hat einen **animierten Avatar**, der seinen Fortschritt und Zustand repräsentiert.
-   - Der Avatar verändert sich visuell basierend auf:
-     - XP-Level (Level-Ups)
-     - Stimmung (aus Feedbackdaten)
-     - Erreichten Meilensteinen (z. B. 7 erfolgreiche Tage in Folge)
-   - Avatare können als SVG oder Lottie-Animationen dargestellt werden.
+1. **Personalisierter Avatar**
+   - Darstellung als stilisierte Spielfigur (SVG / Lottie-Animation).
+   - Anpassungen nach:
+     - **XP-Level** → Avatar bekommt neue Kleidung / Accessoires.
+     - **Stimmung** → Gesichtsausdruck, Körperhaltung, Lichtstimmung ändern sich.
+     - **Erfolge** → kurze Animationen oder Symbol-Overlays (z. B. Pokal, Medaille).
 
 2. **XP-Level-Animationen**
-   - Sanfte Übergänge bei Levelaufstieg (z. B. Glühen, Pulsieren, Farbwechsel).
-   - Fortschrittsring füllt sich dynamisch.
-   - Soundeffekte optional (z. B. XP gained „ding“).
+   - Glüh- und Puls-Effekte bei Level-Up.
+   - Konfetti-/Licht-Animationen.
+   - Sanfter Übergang der Levelzahl + Soundeffekt (optional).
 
 3. **Adaptive Dashboard-Visuals**
-   - UI-Theme reagiert auf Stimmung (z. B. gedämpfte Farben bei schlechter Stimmung, hell bei motivierter Phase).
-   - Personalisierte Tagesübersicht („Dein Tag heute: 84 % abgeschlossen!“).
-   - Tooltip mit motivierenden Hinweisen oder AI-Tipps.
+   - Dashboard-Hintergrund und Farben ändern sich je nach Avatar-Stimmung.
+   - Tagesfortschritt („Du hast 87 % deines Plans geschafft!“).
+   - Tooltip-Hinweise von der KI („Toller Fokus heute!“).
 
-4. **Motivationssystem**
-   - Wöchentliche Ziele („Schließe 5 Aufgaben ab“, „Bleib 3 Tage im Flow“).
-   - Kleine Belohnungsmechanismen (z. B. visuelle „Badges“ im Avatar-Bereich).
+4. **Motivations- und Zielsystem**
+   - Wöchentliche Missionsziele („5 Aufgaben abschließen“, „3 Tage konsekutiv im Flow“).
+   - Kleine Belohnungen / Badges / Licht-Effekte im Avatar-Bereich.
+   - Anzeige persönlicher Meilensteine.
 
 ---
 
 ### ⚙️ Technische Anforderungen
 
-#### **Frontend**
-- **Frameworks:** React, TailwindCSS, Framer Motion, Lottie React
+#### Frontend
+- **Frameworks:** React, TailwindCSS, Framer Motion, Lottie React  
 - **Verzeichnisstruktur:**
-frontend/src/components/gamification/
-├── Avatar.tsx
-├── LevelUpAnimation.tsx
-├── MoodIndicator.tsx
-├── WeeklyGoalCard.tsx
-└── index.ts
-
-yaml
-Code kopieren
-- Integration in Dashboard (`Dashboard.tsx`) als zusätzliche rechte Seitenleiste oder Pop-over.
-
-#### **Backend**
-- Erweiterung des XP-Systems:
-- Tabelle `avatar_state` enthält:
-  - `user_id`
-  - `level`
-  - `mood`
-  - `last_update`
-- Endpoints:
-  - `GET /api/avatar/state`
-  - `POST /api/avatar/update`
-- Stimmung und Motivation werden aus Feedbackdaten (`/api/feedback/summary`) abgeleitet.
-
----
-
-### 🧩 Interaktionslogik
-
-| Ereignis | Avatar-Reaktion | XP-Reaktion |
-|-----------|------------------|--------------|
-| Event abgeschlossen | Levelbar blinkt kurz | XP + Animation |
-| Negatives Feedback | Avatar zeigt müde / neutral | Keine XP |
-| Level-Up | Avatar leuchtet auf, Soundeffekt | Fortschrittsring reset |
-| Ziel erreicht | Badge erscheint über Avatar | Kurze Konfetti-Animation |
-
----
-
-### ✅ Erfolgskriterien
-
-- Dashboard zeigt Avatar mit dynamischem Level & Stimmung
-- XP-Level steigen optisch und technisch synchron
-- Animationen flüssig (FPS > 55 auf Midrange-Geräten)
-- Feedbackdaten beeinflussen Avatar-Stimmung korrekt
-- Motivationselemente (Badges, Ziele) funktionieren & werden gespeichert
-
----
 
 
 Development Workflow:
