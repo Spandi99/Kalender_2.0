@@ -46,9 +46,16 @@ app.add_middleware(AutoFixMiddleware)
 if settings.debug_mode:
     app.add_middleware(RequestResponseLoggerMiddleware)
 
+origins = settings.cors_origins or [
+    "https://orgalifer.ch",
+    "http://orgalifer.ch",
+    "http://localhost:8080",
+    "http://192.168.1.136:8080",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins or ["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -166,7 +173,7 @@ async def health_extended() -> dict[str, object]:
     return {
         "status": "ok",
         "database": settings.database_url,
-        "cors": settings.cors_origins,
+        "cors": origins,
         "uptime": "active",
     }
 
@@ -183,6 +190,6 @@ async def network_status() -> dict[str, object]:
     return {
         "backend": "ok",
         "database": db_status,
-        "cors_origins": settings.cors_origins,
+        "cors_origins": origins,
         "api_prefixes": ["/api/events", "/api/xp", "/api/templates"],
     }
