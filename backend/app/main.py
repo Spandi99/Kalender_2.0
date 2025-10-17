@@ -30,6 +30,11 @@ from .modules.ical_import.service import (
     sync_calendar as sync_imported_calendar,
 )
 from .modules.learning import router as learning_router
+from .modules.self_healing.monitor import (
+    get_self_healing_status,
+    start_self_healing_monitor,
+)
+from .modules.self_healing.router import router as system_router
 from .modules.xp import router as xp_router
 
 settings = get_settings()
@@ -60,6 +65,7 @@ app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
 app.include_router(ical_router.router, prefix=settings.api_v1_prefix)
 app.include_router(adaptive_router.router, prefix=settings.api_v1_prefix)
 app.include_router(learning_router.router, prefix=settings.api_v1_prefix)
+app.include_router(system_router, prefix="", tags=["System Health"])
 
 
 def _create_database_schema() -> None:
@@ -139,6 +145,7 @@ async def initialize_database() -> None:
             _log_event_count()
             logger.info("Database initialization completed successfully.")
             _sync_imported_calendars_on_startup()
+            start_self_healing_monitor()
             break
 
 
@@ -168,6 +175,7 @@ if settings.debug_mode:
                 last_run = get_last_recovery_run()
                 if last_run is not None:
                     result["last_recovery_run"] = last_run.isoformat()
+                result.update(get_self_healing_status())
         except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
             result["status"] = "error"
             result["error"] = str(exc)
