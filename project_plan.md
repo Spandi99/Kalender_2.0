@@ -664,6 +664,28 @@ Das System soll über IPv4 und IPv6, mobil und Desktop vollständig erreichbar s
 → Fokus auf Personalisierung, Avatare & animierte XP-Levelaufstiege
 
 
+Phase 11d – Connectivity & Routing Fix (Mobile + Public Access Stabilization)
+
+Ziel:
+Sicherstellen, dass die Anwendung auf allen Geräten (Desktop, Mobile, IPv4, IPv6) über
+https://orgalifer.ch erreichbar ist.
+Beseitigung aller 404-Fehler, CORS-Probleme und Routing-Inkompatibilitäten.
+
+Kernpunkte:
+
+Korrektes Nginx-Routing (Reverse Proxy + SPA Fallback)
+
+IPv4/IPv6-Hybrid-Support via Cloudflare Tunnel
+
+Automatische CORS-Erkennung im Backend
+
+Einheitliche API-BaseURL im Frontend
+
+Health-Check & Monitoring für Verbindungs- und Portstatus
+
+Alle vorherigen Änderungen wo CloudDownload genutzt wurde durch DownloadCloud ersetzen => Neuer Name.
+
+
 ## 🧠 Phase 12 – Adaptive UX & Personalized Avatar Gamification
 
 ### 🎯 Ziel
