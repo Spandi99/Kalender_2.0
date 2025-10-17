@@ -86,7 +86,7 @@ const fromDateTimeLocalValue = (value: string) => {
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return new Date(date.getTime() + date.getTimezoneOffset() * 60_000);
+  return date;
 };
 
 export default function CalendarView() {
