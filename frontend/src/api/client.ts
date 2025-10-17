@@ -12,9 +12,9 @@ const resolveBaseUrl = () => {
     return "http://localhost:8000/api";
   }
 
-  const origin = window.location.origin.replace(/\/$/, "");
-  if (origin.includes("orgalifer.ch")) {
-    return `${origin}/api`;
+  const hostname = window.location.hostname;
+  if (hostname.includes("orgalifer.ch")) {
+    return "/api";
   }
 
   return "http://localhost:8000/api";

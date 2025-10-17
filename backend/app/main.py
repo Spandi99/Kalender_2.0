@@ -50,17 +50,10 @@ app.add_middleware(AutoFixMiddleware)
 if settings.debug_mode:
     app.add_middleware(RequestResponseLoggerMiddleware)
 
-default_cors_origins = {"https://orgalifer.ch", "http://orgalifer.ch"}
-configured_origins = set(settings.cors_origins or []) | default_cors_origins
-
-allow_credentials = True
-if "*" in configured_origins:
-    allow_credentials = False
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=sorted(configured_origins),
-    allow_credentials=allow_credentials,
+    allow_origins=["*", "https://orgalifer.ch", "http://orgalifer.ch"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -77,12 +70,12 @@ def _is_service_reachable(host: str, port: int) -> bool:
 def _log_unreachable(component: str) -> None:
     logger.error("Subsystem check failed: %s", component)
 
-app.include_router(calendar_router.router, prefix=settings.api_v1_prefix)
+app.include_router(calendar_router.router, prefix="/api/events", tags=["Events"])
+app.include_router(ical_router.router, prefix="/api/ical", tags=["iCal"])
+app.include_router(feedback_router.router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(xp_router.router, prefix="/api/xp", tags=["XP"])
 app.include_router(templates_router.router, prefix="/api/templates", tags=["Day Templates"])
-app.include_router(xp_router.router, prefix=settings.api_v1_prefix)
-app.include_router(feedback_router.router, prefix=settings.api_v1_prefix)
 app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
-app.include_router(ical_router.router, prefix=settings.api_v1_prefix)
 app.include_router(adaptive_router.router, prefix=settings.api_v1_prefix)
 app.include_router(learning_router.router, prefix=settings.api_v1_prefix)
 app.include_router(system_router, prefix="", tags=["System Health"])
@@ -172,6 +165,11 @@ async def initialize_database() -> None:
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/health/nginx")
+def nginx_status() -> dict[str, str]:
+    return {"status": "ok", "via": "nginx"}
 
 
 @app.get("/health/network")

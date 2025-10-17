@@ -9,7 +9,7 @@ from . import schemas
 from .models import ImportedCalendar
 from .service import create_calendar, list_calendars, sync_calendar
 
-router = APIRouter(prefix="/ical", tags=["iCal Import"])
+router = APIRouter(tags=["iCal"])
 
 
 @router.get("/", response_model=list[schemas.ImportedCalendarOut])
