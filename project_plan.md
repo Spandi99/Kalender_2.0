@@ -554,6 +554,97 @@ System lernt, welche Maßnahmen am effektivsten sind
 Ziel: < 5 Sekunden Recovery bei bekannten Problemen
 
 
+Perfekt 👌 — hier ist der passende **Markdown-Abschnitt**, den du direkt in deine `project_plan.md` einfügen kannst.
+Er folgt exakt dem Stil eurer bisherigen Phasen und ist konsistent mit dem Codex-Prompt oben.
+
+---
+
+
+## 🧩 Phase 11 – Self-Healing Visualization & Unified Dashboard
+
+### 🎯 Ziel
+Nach der erfolgreichen Implementierung des Self-Healing-Systems (Phase 10) wird in dieser Phase ein visuelles Dashboard entwickelt,  
+das Systemzustand, KI-Aktivitäten, XP-Fortschritt und Kalenderfunktionen in einer einheitlichen Benutzeroberfläche zusammenführt.
+
+Das Ziel ist, alle relevanten Informationen — technische wie persönliche — auf einen Blick zugänglich zu machen und  
+eine klare, moderne, interaktive Übersicht zu schaffen.
+
+---
+
+### 🧱 Kernfunktionen
+
+1. **Zentrales Dashboard-Layout**
+   - Kalender-Ansicht (FullCalendar)
+   - XP-Level & Fortschrittsanzeige
+   - AI Insights & Lernempfehlungen
+   - System-Health-Status & Self-Healing-Aktivität
+
+2. **Systemstatus-Visualisierung**
+   - Backend liefert Daten aus `/health/extended` und `/api/system/logs`
+   - Farbcode:
+     - 🟢 *Stable* – System läuft fehlerfrei
+     - 🟠 *Recovering* – Self-Healing aktiv
+     - 🔴 *Error* – Fehlerzustand erkannt
+   - Anzeige letzter Self-Healing-Aktion & Loganzahl
+
+3. **Interaktive Karten (Cards)**
+   - **XPCard:** Aktueller XP-Level + Fortschrittsring  
+   - **AIInsightsCard:** Aktuelle Empfehlungen der KI  
+   - **HealthCard:** Zustand & Logs aus Self-Healing-System  
+   - **CalendarSection:** Anzeige von Events, Templates & iCal-Daten  
+
+4. **Echtzeit-Updates**
+   - Automatisches Polling (alle 60 Sekunden)
+   - Live-Statusänderungen werden visuell reflektiert
+
+5. **Design & User Experience**
+   - Frameworks: TailwindCSS, Shadcn/UI, Framer Motion  
+   - Einheitlicher moderner Look mit hell/dunkel Modus  
+   - Sanfte Animationen, modulare Kartenstruktur  
+   - Responsive (Mobile / Desktop)
+
+---
+
+### ⚙️ Technische Anforderungen
+
+- **Frontend:** React + Vite  
+- **Backend:** FastAPI + PostgreSQL  
+- **APIs:**
+  - `/api/xp/summary` → XP & Fortschritt  
+  - `/api/ai/insights` → KI-Empfehlungen  
+  - `/health/extended` → Systemzustand  
+  - `/api/system/logs` → Letzte 20 Logeinträge  
+
+- **Dateistruktur (Frontend):**
+```
+
+frontend/src/components/dashboard/
+├── Dashboard.tsx
+├── XPCard.tsx
+├── HealthCard.tsx
+├── AIInsightsCard.tsx
+└── CalendarSection.tsx
+
+```
+
+---
+
+### ✅ Erfolgskriterien
+
+- Dashboard bündelt alle wichtigen Ansichten auf einer Seite (`/dashboard`)
+- Systemstatus, XP, AI-Insights & Kalender live synchronisiert
+- Optisch kohärente UI mit moderner Typografie & Icons
+- Vollständig kompatibel mit Backend-Self-Healing-Mechanismen
+- Grundlage für **Phase 12 (Adaptive UX & Gamification)** geschaffen
+
+---
+
+### 🔮 Nächste Schritte
+
+- Nach erfolgreicher Integration dieses Dashboards:  
+**Phase 12 – Adaptive UX & User Gamification**  
+→ Fokus auf Personalisierung, Avatare & animierte XP-Levelaufstiege
+```
 
 
 
