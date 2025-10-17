@@ -638,47 +638,24 @@ frontend/src/components/dashboard/
 - Grundlage für **Phase 12 (Adaptive UX & Gamification)** geschaffen
 
 ---
-Phase 11c – Deployment & UI Fixes
+## 🧱 **Eintrag für `project_plan.md`**
 
-Ziel: Stabilisierung der produktiven Umgebung nach Domain-Integration.
-Behebung von UI- und Netzwerkproblemen, um volle Funktionalität auf Desktop & Mobilgeräten sicherzustellen.
+> *(ergänze ihn oder aktualisiere, falls schon vorhanden)*
 
-Tasks:
+### **Phase 11c – Deployment & UI Stabilization**
 
- IPv4-Fallback aktivieren:
+**Ziel:**
+Beheben der UI- und Netzwerkfehler nach der Integration der Domain `orgalifer.ch`.
+Das System soll über IPv4 und IPv6, mobil und Desktop vollständig erreichbar sein.
 
-Nginx Reverse Proxy hinzufügen, der sowohl IPv4 als auch IPv6 akzeptiert.
+**Hauptpunkte:**
 
-Frontend (Port 80) und Backend (Port 443) werden über denselben Proxy weitergeleitet.
-
-Automatische Weiterleitung von HTTP → HTTPS.
-
- Fix: Event-Erstellung im Unified Dashboard
-
-Sicherstellen, dass der „+ Event“-Button die richtige API POST /api/events/ aufruft.
-
-Validierung (title, start, end) im Frontend reaktivieren.
-
-Fehlermeldungen im Frontend abfangen und lesbar anzeigen.
-
- Fix: iCal-Import sichtbar & interaktiv
-
-Menüpunkt „Kalender-Import“ in der Sidebar wieder aktivieren.
-
-iCal-Liste (GET /api/ical/) korrekt abrufen und anzeigen.
-
-„+ Import“-Dialog korrigieren.
-
- UI-Kosmetik & Accessibility
-
-Grau-schwarzer Text des Kalenders auf klare Farben (weiß auf dunklem Hintergrund) anpassen.
-
-Event-Beschriftungen besser lesbar auf mobilen Displays.
-
- Testing & Healthcheck-Erweiterung
-
-/health/extended liefert auch CORS- und Frontend-Status.
-
+* Hybrid-Deployment mit Nginx Reverse Proxy (IPv4 + IPv6 + CORS)
+* Fix Event-Erstellung im Unified Dashboard
+* Fix iCal-Import und Sidebar-Navigation
+* UI Farbanpassung + mobile Optimierung
+* Erweiterter Healthcheck / Logging
+* Tests auf Port- und Verbindungsfehlern (ERR_CONNECTION_REFUSED, CORS, API-Timeouts)
 Überwachung von ical-sync & event-save in Log.
 ### 🔮 Nächste Schritte
 
