@@ -3,7 +3,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, text
+from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
@@ -53,16 +53,7 @@ def _create_database_schema() -> None:
     logger.info("✅ Schema migration complete.")
 
 
-def _has_existing_tables() -> bool:
-    inspector = inspect(engine)
-    tables = inspector.get_table_names()
-    return bool(tables)
-
-
 def _initialize_database_schema() -> None:
-    if _has_existing_tables():
-        logger.info("🗄️ Existing schema detected – skipping migration.")
-        return
     _create_database_schema()
 
 

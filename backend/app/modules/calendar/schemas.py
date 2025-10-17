@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, validator
+from pydantic.datetime_parse import parse_datetime
 
 
 class EventBase(BaseModel):
@@ -15,8 +16,9 @@ class EventBase(BaseModel):
     def normalize_datetime(cls, value: datetime | str) -> datetime:
         if isinstance(value, str):
             try:
-                return datetime.fromisoformat(value.replace(" ", "T"))
-            except Exception as exc:  # pragma: no cover - delegated to validation
+                normalized_value = value.replace(" ", "T")
+                return parse_datetime(normalized_value)
+            except (TypeError, ValueError) as exc:  # pragma: no cover - delegated to validation
                 raise ValueError(f"Invalid datetime format: {value}") from exc
         return value
 
