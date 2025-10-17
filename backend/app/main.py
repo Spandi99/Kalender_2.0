@@ -169,15 +169,22 @@ def health_check() -> dict[str, str]:
 
 @app.get("/health/network")
 def health_network() -> dict[str, object]:
+    services = {
+        "frontend": ("frontend", 80),
+        "backend": ("backend", 8000),
+        "db": ("db", 5432),
+    }
+
+    reachability = {
+        name: _is_service_reachable(host, port)
+        for name, (host, port) in services.items()
+    }
+
+    status = "ok" if all(reachability.values()) else "degraded"
+
     return {
-        "frontend_port": 80,
-        "backend_port": 8000,
-        "db_port": 5432,
-        "reachable": {
-            "frontend": socket.getfqdn("frontend"),
-            "backend": socket.getfqdn("backend"),
-            "db": socket.getfqdn("db"),
-        },
+        "status": status,
+        **reachability,
     }
 
 
@@ -207,7 +214,6 @@ def extended_health(request: Request) -> dict[str, object]:
         "http://localhost",
         "http://orgalifer.ch",
         "https://orgalifer.ch",
-        "http://192.168.1.136:8080",
     }
     configured_origins = set(settings.cors_origins or [])
     if expected_origins.issubset(configured_origins):

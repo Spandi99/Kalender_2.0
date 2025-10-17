@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: kalender-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -13,14 +12,10 @@ services:
       - kalnet
 
   backend:
-    build:
-      context: ./backend
-    container_name: kalender-backend
-    depends_on:
-      - db
+    build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp
-      BACKEND_CORS_ORIGINS: '["http://localhost", "http://orgalifer.ch", "https://orgalifer.ch", "http://192.168.1.136:8080"]'
+      BACKEND_CORS_ORIGINS: '["http://orgalifer.ch", "https://orgalifer.ch", "http://localhost"]'
       TZ: Europe/Zurich
     expose:
       - "8000"
@@ -28,11 +23,7 @@ services:
       - kalnet
 
   frontend:
-    build:
-      context: ./frontend
-    container_name: kalender-frontend
-    depends_on:
-      - backend
+    build: ./frontend
     expose:
       - "80"
     networks:
@@ -40,14 +31,14 @@ services:
 
   nginx:
     image: nginx:latest
-    container_name: kalender-nginx
-    depends_on:
-      - frontend
-      - backend
     ports:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend
+      - backend
     networks:
       - kalnet
 
