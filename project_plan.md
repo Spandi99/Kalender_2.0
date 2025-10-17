@@ -188,6 +188,30 @@ Logging der Importaktivität
 
 Fehlerbehandlung für ungültige oder private Links
 
+🧩 Phase 5b: Persistent Data Layer Stabilization
+
+Ziel:
+Sicherstellung der dauerhaften Datenspeicherung über Container-Lebenszyklen hinweg.
+
+Beschreibung:
+Diese Phase stellt die Persistenz und Zuverlässigkeit der Datenbank sicher, sodass alle Benutzerdaten (Events, XP-Logs, Feedback, Templates, iCal-Imports usw.) auch nach Systemneustarts oder docker compose down erhalten bleiben.
+
+Anforderungen:
+
+Vollständiger Wechsel auf PostgreSQL.
+
+Migrationen beim Startup automatisch, aber nur wenn nötig.
+
+Events dauerhaft gespeichert und nach Neustart abrufbar.
+
+Kompatible Zeitzonen und Datumsformate (ISO-8601).
+
+Integration eines Diagnose- und Testskripts für Verbindungsprüfung.
+
+Ergebnis:
+Ein stabiler, persistenter Datenspeicher als Grundlage für zukünftige Module
+(z. B. Day Templates, AI-Learning und Adaptive Scheduling).
+
 Phase 6: AI Assist Core (Behavior Analysis & Recommendations)
 
 Aufbau des intelligenten Analysemoduls, das aus Feedback-, Event- und XP-Daten automatisch Muster erkennt und Empfehlungen erstellt.
