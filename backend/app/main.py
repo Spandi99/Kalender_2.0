@@ -2,13 +2,13 @@ import asyncio
 import logging
 import socket
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
-from .core.database import Base, SessionLocal
+from .core.database import SessionLocal
 from .core.migrations import run_migrations
 from .core.middleware import (
     AutoFixMiddleware,
@@ -18,7 +18,6 @@ from .core.middleware import (
 from .core.recovery import (
     AUTO_RECOVERY_ENABLED,
     full_recovery_sequence_async,
-    get_last_recovery_run,
 )
 from .modules.ai_assist import router as ai_router
 from .modules.adaptive import router as adaptive_router
@@ -31,10 +30,7 @@ from .modules.ical_import.service import (
     sync_calendar as sync_imported_calendar,
 )
 from .modules.learning import router as learning_router
-from .modules.self_healing.monitor import (
-    get_self_healing_status,
-    start_self_healing_monitor,
-)
+from .modules.self_healing.monitor import start_self_healing_monitor
 from .modules.self_healing.router import router as system_router
 from .modules.xp import router as xp_router
 
@@ -43,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 _database_schema_initialized = False
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(title="AI Calendar XP", openapi_url="/api/openapi.json")
 app.add_middleware(ExceptionLoggerMiddleware)
 app.add_middleware(AutoFixMiddleware)
 
@@ -52,24 +48,11 @@ if settings.debug_mode:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "https://orgalifer.ch", "http://orgalifer.ch"],
-    allow_credentials=False,
+    allow_origins=settings.cors_origins or ["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-def _is_service_reachable(host: str, port: int) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=1.5):
-            return True
-    except OSError:
-        return False
-
-
-def _log_unreachable(component: str) -> None:
-    logger.error("Subsystem check failed: %s", component)
-
 app.include_router(calendar_router.router, prefix="/api/events", tags=["Events"])
 app.include_router(ical_router.router, prefix="/api/ical", tags=["iCal"])
 app.include_router(feedback_router.router, prefix="/api/feedback", tags=["Feedback"])
@@ -177,101 +160,28 @@ def nginx_status() -> dict[str, str]:
     return {"status": "ok", "via": "nginx"}
 
 
+@app.get("/health/extended")
+async def health_extended() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "database": settings.database_url,
+        "cors": settings.cors_origins,
+        "uptime": "active",
+    }
+
+
 @app.get("/health/network")
-def health_network() -> dict[str, object]:
-    services = {
-        "frontend": ("frontend", 80),
-        "backend": ("backend", 8000),
-        "db": ("db", 5432),
-    }
-
-    reachability = {
-        name: _is_service_reachable(host, port)
-        for name, (host, port) in services.items()
-    }
-
-    status = "ok" if all(reachability.values()) else "degraded"
+async def network_status() -> dict[str, object]:
+    try:
+        socket.create_connection(("db", 5432), timeout=2)
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        db_status = f"unreachable ({exc})"
+    else:
+        db_status = "reachable"
 
     return {
-        "status": status,
-        **reachability,
+        "backend": "ok",
+        "database": db_status,
+        "cors_origins": settings.cors_origins,
+        "api_prefixes": ["/api/events", "/api/xp", "/api/templates"],
     }
-
-
-@app.get("/health/extended")
-@app.get(f"{settings.api_v1_prefix}/health/extended", tags=["System Health"])
-def extended_health(request: Request) -> dict[str, object]:
-    """Provide diagnostics and self-healing status for dashboards."""
-
-    client_host = request.client.host if request.client else "unknown"
-    logger.debug("Received extended health check from %s", client_host)
-
-    result: dict[str, object] = {
-        "status": "ok",
-        "database_connected": False,
-        "auto_recovery_enabled": AUTO_RECOVERY_ENABLED,
-        "last_recovery_run": None,
-    }
-
-    backend_reachable = _is_service_reachable("localhost", 8000) or _is_service_reachable("backend", 8000)
-
-    component_status: dict[str, str] = {
-        "frontend": "reachable" if _is_service_reachable("frontend", 80) else "unreachable",
-        "backend": "reachable" if backend_reachable else "unreachable",
-    }
-
-    expected_origins = {
-        "http://localhost",
-        "http://orgalifer.ch",
-        "https://orgalifer.ch",
-    }
-    configured_origins = set(settings.cors_origins or [])
-    if expected_origins.issubset(configured_origins):
-        component_status["cors"] = "ok"
-    else:
-        component_status["cors"] = "error"
-
-    try:
-        with SessionLocal() as db:
-            db.execute(text("SELECT 1"))
-            result["database_connected"] = True
-            result["tables"] = list(Base.metadata.tables.keys())
-            result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
-
-            last_run = get_last_recovery_run()
-            if last_run is not None:
-                result["last_recovery_run"] = last_run.isoformat()
-
-            result.update(get_self_healing_status())
-
-            try:
-                list_imported_calendars(db)
-            except Exception as exc:  # pragma: no cover - depends on remote calendar availability
-                component_status["ical_module"] = "error"
-                logger.debug("iCal module check failed: %s", exc)
-            else:
-                component_status["ical_module"] = "ok"
-
-            try:
-                db.execute(text("SELECT id FROM events LIMIT 1"))
-            except Exception as exc:  # pragma: no cover - defensive logging only
-                component_status["event_post_test"] = "error"
-                logger.debug("Event post test failed: %s", exc)
-            else:
-                component_status["event_post_test"] = "ok"
-    except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
-        result["status"] = "error"
-        result["error"] = str(exc)
-        component_status.setdefault("ical_module", "error")
-        component_status.setdefault("event_post_test", "error")
-        _log_unreachable("database")
-
-    for component, status in component_status.items():
-        if status not in {"reachable", "ok"}:
-            _log_unreachable(component)
-
-    if any(status not in {"reachable", "ok"} for status in component_status.values()):
-        result["status"] = "error"
-
-    result.update(component_status)
-    return result

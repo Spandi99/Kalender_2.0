@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { API_BASE_URL } from "./config";
+
 declare module "axios" {
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface AxiosRequestConfig {
@@ -7,18 +9,14 @@ declare module "axios" {
   }
 }
 
-const resolveBaseUrl = () => {
+const fallbackBaseUrl = () => {
   if (typeof window === "undefined") {
     return "http://localhost:8000/api";
   }
-
-  const hostname = window.location.hostname;
-  if (hostname.includes("orgalifer.ch")) {
-    return "/api";
-  }
-
-  return "http://localhost:8000/api";
+  return `${window.location.origin}/api`;
 };
+
+const resolveBaseUrl = () => API_BASE_URL || fallbackBaseUrl();
 
 const api = axios.create({
   baseURL: resolveBaseUrl(),
@@ -37,7 +35,7 @@ api.interceptors.response.use(
       !error.config?._retryWithFallback &&
       typeof window !== "undefined"
     ) {
-      const fallbackUrl = resolveBaseUrl();
+      const fallbackUrl = fallbackBaseUrl();
       if (api.defaults.baseURL !== fallbackUrl) {
         api.defaults.baseURL = fallbackUrl;
         if (error.config) {
