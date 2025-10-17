@@ -5,7 +5,7 @@ from ...core.database import get_db
 from .schemas import FeedbackCreate, FeedbackRead, FeedbackSummary
 from .service import create_feedback, get_feedback_summary
 
-router = APIRouter(prefix="/feedback", tags=["feedback"])
+router = APIRouter(tags=["Feedback"])
 
 
 @router.post("/", response_model=FeedbackRead, status_code=status.HTTP_201_CREATED)

@@ -22,7 +22,7 @@ from .service import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/events", tags=["events"])
+router = APIRouter(tags=["Events"])
 
 
 @router.get("/", response_model=list[EventRead])

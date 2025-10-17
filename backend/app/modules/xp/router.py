@@ -5,7 +5,7 @@ from ...core.database import get_db
 from .schemas import LevelStatus, XPSummary
 from .service import get_level_status, get_xp_summary
 
-router = APIRouter(prefix="/xp", tags=["xp"])
+router = APIRouter(tags=["XP"])
 
 
 @router.get("/summary", response_model=XPSummary)
