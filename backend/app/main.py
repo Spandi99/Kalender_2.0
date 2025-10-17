@@ -160,6 +160,7 @@ def nginx_status() -> dict[str, str]:
     return {"status": "ok", "via": "nginx"}
 
 
+@app.get("/api/health/extended")
 @app.get("/health/extended")
 async def health_extended() -> dict[str, object]:
     return {
