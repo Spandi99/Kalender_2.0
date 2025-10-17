@@ -25,3 +25,18 @@ class RequestResponseLoggerMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         logger.info("⬅️  %s %s %s", request.method, request.url.path, response.status_code)
         return response
+
+
+class AutoFixMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+        try:
+            return await call_next(request)
+        except Exception as exc:
+            import re
+
+            from app.core.recovery import auto_repair_schema
+
+            if re.search(r"relation .* does not exist", str(exc)):
+                logging.warning("🧩 Missing table detected – auto-fixing schema...")
+                auto_repair_schema()
+            raise

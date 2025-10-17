@@ -10,8 +10,14 @@ from .core.config import get_settings
 from .core.database import Base, SessionLocal
 from .core.migrations import run_migrations
 from .core.middleware import (
+    AutoFixMiddleware,
     ExceptionLoggerMiddleware,
     RequestResponseLoggerMiddleware,
+)
+from .core.recovery import (
+    AUTO_RECOVERY_ENABLED,
+    full_recovery_sequence_async,
+    get_last_recovery_run,
 )
 from .modules.ai_assist import router as ai_router
 from .modules.adaptive import router as adaptive_router
@@ -33,6 +39,7 @@ _database_schema_initialized = False
 
 app = FastAPI(title=settings.app_name)
 app.add_middleware(ExceptionLoggerMiddleware)
+app.add_middleware(AutoFixMiddleware)
 
 if settings.debug_mode:
     app.add_middleware(RequestResponseLoggerMiddleware)
@@ -104,6 +111,12 @@ async def initialize_database() -> None:
     backoff_seconds = 1.0
     max_attempts = 5
 
+    if AUTO_RECOVERY_ENABLED:
+        try:
+            await full_recovery_sequence_async()
+        except Exception as exc:  # pragma: no cover - defensive logging only
+            logger.exception("⚠️ Auto-Recovery failed: %s", exc)
+
     for attempt in range(1, max_attempts + 1):
         try:
             _initialize_database_schema()
@@ -140,13 +153,21 @@ if settings.debug_mode:
     def extended_health(request: Request) -> dict[str, object]:
         client_host = request.client.host if request.client else "unknown"
         logger.debug("Received extended health check from %s", client_host)
-        result: dict[str, object] = {"status": "ok", "database_connected": False}
+        result: dict[str, object] = {
+            "status": "ok",
+            "database_connected": False,
+            "auto_recovery_enabled": AUTO_RECOVERY_ENABLED,
+            "last_recovery_run": None,
+        }
         try:
             with SessionLocal() as db:
                 db.execute(text("SELECT 1"))
                 result["database_connected"] = True
                 result["tables"] = list(Base.metadata.tables.keys())
                 result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
+                last_run = get_last_recovery_run()
+                if last_run is not None:
+                    result["last_recovery_run"] = last_run.isoformat()
         except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
             result["status"] = "error"
             result["error"] = str(exc)
