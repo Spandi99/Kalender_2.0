@@ -1,14 +1,18 @@
 import asyncio
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
-from .core.database import SessionLocal, engine
+from .core.database import Base, SessionLocal
 from .core.migrations import run_migrations
+from .core.middleware import (
+    ExceptionLoggerMiddleware,
+    RequestResponseLoggerMiddleware,
+)
 from .modules.ai_assist import router as ai_router
 from .modules.adaptive import router as adaptive_router
 from .modules.calendar import router as calendar_router
@@ -28,6 +32,10 @@ logger = logging.getLogger(__name__)
 _database_schema_initialized = False
 
 app = FastAPI(title=settings.app_name)
+app.add_middleware(ExceptionLoggerMiddleware)
+
+if settings.debug_mode:
+    app.add_middleware(RequestResponseLoggerMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +59,10 @@ def _create_database_schema() -> None:
     logger.info("🧱 Running schema migrations...")
     run_migrations()
     logger.info("✅ Schema migration complete.")
+    with SessionLocal() as session:
+        event_count = session.execute(text("SELECT COUNT(*) FROM events")).scalar() or 0
+        logger.info("🧠 Diagnostics: Database OK, %s events found.", event_count)
+        logger.info("🧩 Schema validated successfully.")
 
 
 def _initialize_database_schema() -> None:
@@ -120,3 +132,20 @@ async def initialize_database() -> None:
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/health/extended")
+def extended_health(request: Request) -> dict[str, object]:
+    client_host = request.client.host if request.client else "unknown"
+    logger.debug("Received extended health check from %s", client_host)
+    result: dict[str, object] = {"status": "ok", "database_connected": False}
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+            result["database_connected"] = True
+            result["tables"] = list(Base.metadata.tables.keys())
+            result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
+    except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
+        result["status"] = "error"
+        result["error"] = str(exc)
+    return result
