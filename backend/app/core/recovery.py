@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from datetime import datetime, timezone
-from typing import Awaitable
+from typing import Awaitable, TypeVar
 
 import sqlalchemy
 from sqlalchemy.exc import OperationalError, ProgrammingError
@@ -55,27 +56,36 @@ def auto_repair_schema() -> None:
     logger.info("🧱 Schema repair successful.")
 
 
-def _run_coroutine_sync(coro: Awaitable[bool]) -> bool:
+T = TypeVar("T")
+
+
+def _run_coroutine_sync(coro: Awaitable[T]) -> T:
+    """Execute ``coro`` synchronously, reusing any active event loop."""
+
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
 
-    new_loop = asyncio.new_event_loop()
-    try:
-        return new_loop.run_until_complete(coro)
-    finally:
-        new_loop.close()
+    loop_thread_id = getattr(loop, "_thread_id", None)
+    if loop_thread_id is not None and loop_thread_id == threading.get_ident():
+        raise RuntimeError(
+            "Cannot synchronously execute coroutine while the current thread's event loop is running. "
+            "Use the asynchronous recovery API instead."
+        )
+
+    future = asyncio.run_coroutine_threadsafe(coro, loop)
+    return future.result()
 
 
-def full_recovery_sequence() -> None:
-    """Run the full recovery workflow synchronously."""
+async def full_recovery_sequence_async() -> None:
+    """Run the full recovery workflow inside an asyncio event loop."""
 
     global _LAST_RECOVERY_RUN
 
     logger.info("🧠 Running full recovery sequence...")
     try:
-        ready = _run_coroutine_sync(ensure_database_ready())
+        ready = await ensure_database_ready()
     except Exception as exc:  # pragma: no cover - defensive logging only
         logger.exception("Unexpected error during database readiness check: %s", exc)
         return
@@ -86,6 +96,12 @@ def full_recovery_sequence() -> None:
         logger.info("🚀 Auto-Recovery system online.")
     else:
         logger.error("Recovery aborted – database unavailable.")
+
+
+def full_recovery_sequence() -> None:
+    """Run the full recovery workflow synchronously."""
+
+    _run_coroutine_sync(full_recovery_sequence_async())
 
 
 def get_last_recovery_run() -> datetime | None:

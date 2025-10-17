@@ -16,7 +16,7 @@ from .core.middleware import (
 )
 from .core.recovery import (
     AUTO_RECOVERY_ENABLED,
-    full_recovery_sequence,
+    full_recovery_sequence_async,
     get_last_recovery_run,
 )
 from .modules.ai_assist import router as ai_router
@@ -34,11 +34,6 @@ from .modules.xp import router as xp_router
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-
-try:
-    full_recovery_sequence()
-except Exception as exc:  # pragma: no cover - defensive logging only
-    logger.exception("⚠️ Auto-Recovery failed: %s", exc)
 
 _database_schema_initialized = False
 
@@ -115,6 +110,12 @@ async def initialize_database() -> None:
 
     backoff_seconds = 1.0
     max_attempts = 5
+
+    if AUTO_RECOVERY_ENABLED:
+        try:
+            await full_recovery_sequence_async()
+        except Exception as exc:  # pragma: no cover - defensive logging only
+            logger.exception("⚠️ Auto-Recovery failed: %s", exc)
 
     for attempt in range(1, max_attempts + 1):
         try:
