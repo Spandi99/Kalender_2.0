@@ -391,9 +391,59 @@ Ziel ist es, dass zukünftige Probleme (z. B. fehlende Tabellen, fehlerhafte Mig
 
 ---
 
-**Ergebnis:**  
-Das System meldet proaktiv Probleme mit Datenbank, Schema oder API,  
+**Ergebnis:**
+Das System meldet proaktiv Probleme mit Datenbank, Schema oder API,
 ermöglicht vollständige Selbstdiagnose und stabilen Betrieb auch bei komplexeren Erweiterungen.
+
+### 🧩 Phase 10: Autonomous Debug & Recovery System
+
+**Ziel:**  
+Das System erkennt nicht nur Fehler, sondern versucht automatisch, diese zu reparieren oder einen korrekten Zustand wiederherzustellen — ohne manuelles Eingreifen oder Neustart.
+
+**Beschreibung:**  
+Das Debugging-System aus Phase 9 wird erweitert um eine automatisierte Selbstheilungslogik.  
+Fehlerhafte Zustände (z. B. DB nicht erreichbar, Migrations fehlen, ungültige iCal-Quellen) werden erkannt, geloggt, validiert und – wenn möglich – automatisch behoben.
+
+---
+
+#### 🧠 Hauptkomponenten
+
+1. **Automatischer DB-Recovery-Manager**
+   - Wenn Verbindung zu PostgreSQL fehlschlägt → warte und reconnecte mit Backoff.  
+   - Wenn Tabellen fehlen → führe `Base.metadata.create_all()` automatisch aus.
+   - Wenn Schema veraltet ist → führe Migration neu aus.
+   - Wenn DB korrupt → sichere Dump und initialisiere neue Instanz.
+
+2. **Smart API Recovery**
+   - Wenn FastAPI-Endpoints Exceptions werfen → Middleware erkennt Muster:
+     - `psycopg2.OperationalError` → „DB unavailable → retry connection“  
+     - `ProgrammingError: relation ... does not exist` → „missing schema → rerun migration“
+   - System ruft gezielt Reparatur-Routinen auf.
+
+3. **CORS & Network Auto-Fix**
+   - Wenn mehrfach `CORS`-Fehler im Log → erweitere dynamisch `allow_origins` temporär.
+   - Prüft, ob API-Ports 5432 / 8000 / 8080 erreichbar sind, sonst Hinweis:
+     ```
+     🌐 Network Diagnostics: Port 5432 unreachable – attempting restart...
+     ```
+
+4. **iCal Self-Healing**
+   - Wenn importierte iCal-Links fehlerhaft → prüfe Format, speichere Status in `ical_sources`.
+   - Nach 3 Fehlversuchen: automatisch deaktivieren und im Log melden.
+
+5. **Crash Recovery Hook**
+   - Wenn Backend abstürzt → beim Neustart:
+     - Logfile analysieren.
+     - Bekannte Ursachen (z. B. fehlende ENV, falsche DB-URL) automatisch patchen.
+     - Optional Notification (z. B. in Log oder API `/diagnostics/recovery`).
+
+6. **AI-Enhanced Debug Assistant (später in Phase 11 erweiterbar)**
+   - ML-Modul beobachtet Fehlerhistorie und schlägt Fixes vor (z. B. „DB init bei Startup fehlgeschlagen → mehr Delay hinzufügen“).
+
+---
+
+**Ergebnis:**
+Das System kann nach einem Crash oder Fehlerzustand **automatisch wieder in einen funktionierenden Zustand gelangen**, ohne Entwicklerintervention.
 
 
 #### 🔍 Hauptkomponenten
