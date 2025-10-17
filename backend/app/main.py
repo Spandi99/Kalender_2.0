@@ -134,18 +134,20 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/health/extended")
-def extended_health(request: Request) -> dict[str, object]:
-    client_host = request.client.host if request.client else "unknown"
-    logger.debug("Received extended health check from %s", client_host)
-    result: dict[str, object] = {"status": "ok", "database_connected": False}
-    try:
-        with SessionLocal() as db:
-            db.execute(text("SELECT 1"))
-            result["database_connected"] = True
-            result["tables"] = list(Base.metadata.tables.keys())
-            result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
-    except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
-        result["status"] = "error"
-        result["error"] = str(exc)
-    return result
+if settings.debug_mode:
+
+    @app.get("/health/extended")
+    def extended_health(request: Request) -> dict[str, object]:
+        client_host = request.client.host if request.client else "unknown"
+        logger.debug("Received extended health check from %s", client_host)
+        result: dict[str, object] = {"status": "ok", "database_connected": False}
+        try:
+            with SessionLocal() as db:
+                db.execute(text("SELECT 1"))
+                result["database_connected"] = True
+                result["tables"] = list(Base.metadata.tables.keys())
+                result["event_count"] = db.execute(text("SELECT COUNT(*) FROM events")).scalar()
+        except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
+            result["status"] = "error"
+            result["error"] = str(exc)
+        return result
