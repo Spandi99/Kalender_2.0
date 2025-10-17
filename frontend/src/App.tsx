@@ -6,6 +6,7 @@ import XPView from "./components/dashboard/XPView";
 import AIView from "./components/dashboard/AIView";
 import TemplatesView from "./components/dashboard/TemplatesView";
 import FeedbackView from "./components/dashboard/FeedbackView";
+import ICalView from "./components/dashboard/ICalView";
 import LegacyApp from "./LegacyApp";
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         <Route index element={<CalendarView />} />
         <Route path="calendar" element={<CalendarView />} />
         <Route path="xp" element={<XPView />} />
+        <Route path="ical" element={<ICalView />} />
         <Route path="ai" element={<AIView />} />
         <Route path="templates" element={<TemplatesView />} />
         <Route path="feedback" element={<FeedbackView />} />

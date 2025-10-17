@@ -38,8 +38,11 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         title: event.title,
         start: toLocalCalendarDate(event.start),
         end: toLocalCalendarDate(event.end),
-        classNames: event.completed ? ["opacity-60"] : [],
-        backgroundColor: event.completed ? "#22c55e" : undefined
+        classNames: [
+          "rounded-lg",
+          event.completed ? "bg-emerald-500/40" : "bg-blue-500/40",
+          event.completed ? "text-emerald-100" : "text-blue-100",
+        ],
       })),
     [events]
   );
@@ -56,7 +59,7 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
   };
 
   return (
-    <div className="h-full rounded-lg border bg-white p-4 shadow-sm">
+    <div className="h-full rounded-3xl border border-slate-700 bg-slate-950/90 p-4 text-slate-100 shadow-xl">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
@@ -72,9 +75,11 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         events={calendarEvents}
         select={handleSelect}
         eventClick={handleEventClick}
-        height="100%"
+        aspectRatio={1.45}
         eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
         slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+        dayHeaderClassNames={["bg-slate-900 text-slate-200"]}
+        height="100%"
       />
     </div>
   );

@@ -27,6 +27,7 @@ export function ExternalCalendars() {
 
   const invalidateCalendars = () => {
     queryClient.invalidateQueries({ queryKey: ["imported-calendars"] });
+    queryClient.invalidateQueries({ queryKey: ["imported-calendars", "overview"] });
     queryClient.invalidateQueries({ queryKey: ["events"] });
   };
 
@@ -84,49 +85,59 @@ export function ExternalCalendars() {
   const isLoading = calendarsQuery.isLoading || calendarsQuery.isRefetching;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">External Calendars</CardTitle>
+    <Card className="border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
+      <CardHeader className="border-b border-slate-800">
+        <CardTitle className="text-lg text-white">External Calendars</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="calendar-name">Name</Label>
+            <Label htmlFor="calendar-name" className="text-slate-200">
+              Name
+            </Label>
             <Input
               id="calendar-name"
               value={formState.name}
               onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
               placeholder="Work Calendar"
+              className="border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="calendar-url">iCal URL</Label>
+            <Label htmlFor="calendar-url" className="text-slate-200">
+              iCal URL
+            </Label>
             <Input
               id="calendar-url"
               value={formState.url}
               onChange={(event) => setFormState((prev) => ({ ...prev, url: event.target.value }))}
               placeholder="https://.../calendar.ics"
+              className="border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500"
             />
           </div>
-          {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
-          <Button type="submit" className="w-full" disabled={addCalendarMutation.isPending}>
+          {formError ? <p className="text-sm text-rose-300">{formError}</p> : null}
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 text-white hover:bg-blue-500"
+            disabled={addCalendarMutation.isPending}
+          >
             {addCalendarMutation.isPending ? "Adding..." : "Add Calendar"}
           </Button>
         </form>
 
-        <Separator />
+        <Separator className="border-slate-800" />
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">Connected Calendars</h3>
+            <h3 className="text-sm font-medium text-slate-300">Connected Calendars</h3>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
+              className="bg-slate-800 text-slate-100 hover:bg-slate-700"
               disabled={!calendars.length || syncCalendarMutation.isPending || isLoading}
               onClick={async () => {
                 for (const calendar of calendars) {
                   try {
-                    // sequential sync to avoid overwhelming the source endpoint
                     await syncCalendarMutation.mutateAsync(calendar.id);
                   } catch {
                     break;
@@ -138,20 +149,20 @@ export function ExternalCalendars() {
             </Button>
           </div>
           {calendarsQuery.isError ? (
-            <p className="text-sm text-destructive">Unable to load connected calendars.</p>
+            <p className="text-sm text-rose-300">Unable to load connected calendars.</p>
           ) : !calendars.length ? (
-            <p className="text-sm text-muted-foreground">No calendars connected yet.</p>
+            <p className="text-sm text-slate-400">No calendars connected yet.</p>
           ) : (
             <ul className="space-y-2">
               {calendars.map((calendar) => (
                 <li
                   key={calendar.id}
-                  className="flex flex-col gap-2 rounded-md border border-muted p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-2 rounded-xl border border-slate-700 bg-slate-900/80 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <p className="font-medium">{calendar.name}</p>
-                    <p className="text-xs text-muted-foreground break-all">{calendar.url}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-medium text-white">{calendar.name}</p>
+                    <p className="break-all text-xs text-slate-400">{calendar.url}</p>
+                    <p className="text-xs text-slate-500">
                       Last synced: {calendar.last_synced ? new Date(calendar.last_synced).toLocaleString() : "Never"}
                     </p>
                   </div>
@@ -159,6 +170,7 @@ export function ExternalCalendars() {
                     type="button"
                     variant="secondary"
                     size="sm"
+                    className="bg-slate-800 text-slate-100 hover:bg-slate-700"
                     disabled={syncCalendarMutation.isPending}
                     onClick={() => syncCalendarMutation.mutate(calendar.id)}
                   >
@@ -171,7 +183,7 @@ export function ExternalCalendars() {
         </div>
 
         {status ? (
-          <p className={`text-sm ${status.type === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+          <p className={`text-sm ${status.type === "error" ? "text-rose-300" : "text-slate-400"}`}>
             {status.message}
           </p>
         ) : null}

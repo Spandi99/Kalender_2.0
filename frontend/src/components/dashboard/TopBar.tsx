@@ -15,6 +15,7 @@ const NAV_LABELS: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/calendar": "Calendar",
   "/dashboard/xp": "XP & Level",
+  "/dashboard/ical": "Kalender-Import",
   "/dashboard/ai": "AI Insights",
   "/dashboard/templates": "Templates",
   "/dashboard/feedback": "Feedback",
@@ -23,18 +24,18 @@ const NAV_LABELS: Record<string, string> = {
 const STATUS_META = {
   ok: {
     label: "Stable",
-    tone: "text-emerald-600",
-    dot: "bg-emerald-500",
+    tone: "text-emerald-300",
+    dot: "bg-emerald-400",
   },
   recovering: {
     label: "Recovering",
-    tone: "text-amber-600",
-    dot: "bg-amber-500",
+    tone: "text-amber-300",
+    dot: "bg-amber-400",
   },
   error: {
     label: "Attention",
-    tone: "text-red-600",
-    dot: "bg-red-500",
+    tone: "text-rose-300",
+    dot: "bg-rose-400",
   },
 } satisfies Record<string, { label: string; tone: string; dot: string }>;
 
@@ -95,36 +96,36 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
   }, [location.pathname]);
 
   return (
-    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 bg-white/80 px-4 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/80 lg:px-8">
+    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/80 px-4 py-4 backdrop-blur lg:px-8">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="inline-flex rounded-full border border-gray-200 bg-white p-2 text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex rounded-full border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-500 dark:text-blue-300">Phase 11b</p>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{heading}</h1>
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Phase 11c</p>
+          <h1 className="text-2xl font-semibold text-white">{heading}</h1>
         </div>
       </div>
 
       <div className="flex flex-1 flex-wrap items-center justify-end gap-4 text-sm">
-        <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div className="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 shadow-sm">
           <span className={`inline-flex items-center gap-2 text-sm font-semibold ${statusMeta.tone}`}>
             <span className={`h-2 w-2 rounded-full ${statusMeta.dot}`} aria-hidden />
             {statusMeta.label}
           </span>
-          <span className="text-gray-600 dark:text-gray-300">
+          <span className="text-slate-300">
             {healthQuery.isLoading ? "Checking…" : healthQuery.data?.last_recovery_action ?? "Up to date"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-          <span className="text-sm font-semibold text-blue-600 dark:text-blue-300">XP Progress</span>
-          <span className="text-gray-700 dark:text-gray-300">{progress}%</span>
+        <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 shadow-sm">
+          <span className="text-sm font-semibold text-blue-300">XP Progress</span>
+          <span className="text-slate-200">{progress}%</span>
         </div>
 
         <Button variant="default" onClick={() => navigate("/dashboard/templates")}>Templates</Button>

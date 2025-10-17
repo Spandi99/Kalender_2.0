@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import socket
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,6 +57,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _is_service_reachable(host: str, port: int) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=1.5):
+            return True
+    except OSError:
+        return False
+
+
+def _log_unreachable(component: str) -> None:
+    logger.error("Subsystem check failed: %s", component)
 
 app.include_router(calendar_router.router, prefix=settings.api_v1_prefix)
 app.include_router(templates_router.router, prefix="/api/templates", tags=["Day Templates"])
@@ -154,6 +167,20 @@ def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/health/network")
+def health_network() -> dict[str, object]:
+    return {
+        "frontend_port": 80,
+        "backend_port": 8000,
+        "db_port": 5432,
+        "reachable": {
+            "frontend": socket.getfqdn("frontend"),
+            "backend": socket.getfqdn("backend"),
+            "db": socket.getfqdn("db"),
+        },
+    }
+
+
 @app.get("/health/extended")
 @app.get(f"{settings.api_v1_prefix}/health/extended", tags=["System Health"])
 def extended_health(request: Request) -> dict[str, object]:
@@ -169,6 +196,25 @@ def extended_health(request: Request) -> dict[str, object]:
         "last_recovery_run": None,
     }
 
+    backend_reachable = _is_service_reachable("localhost", 8000) or _is_service_reachable("backend", 8000)
+
+    component_status: dict[str, str] = {
+        "frontend": "reachable" if _is_service_reachable("frontend", 80) else "unreachable",
+        "backend": "reachable" if backend_reachable else "unreachable",
+    }
+
+    expected_origins = {
+        "http://localhost",
+        "http://orgalifer.ch",
+        "https://orgalifer.ch",
+        "http://192.168.1.136:8080",
+    }
+    configured_origins = set(settings.cors_origins or [])
+    if expected_origins.issubset(configured_origins):
+        component_status["cors"] = "ok"
+    else:
+        component_status["cors"] = "error"
+
     try:
         with SessionLocal() as db:
             db.execute(text("SELECT 1"))
@@ -181,8 +227,35 @@ def extended_health(request: Request) -> dict[str, object]:
                 result["last_recovery_run"] = last_run.isoformat()
 
             result.update(get_self_healing_status())
+
+            try:
+                list_imported_calendars(db)
+            except Exception as exc:  # pragma: no cover - depends on remote calendar availability
+                component_status["ical_module"] = "error"
+                logger.debug("iCal module check failed: %s", exc)
+            else:
+                component_status["ical_module"] = "ok"
+
+            try:
+                db.execute(text("SELECT id FROM events LIMIT 1"))
+            except Exception as exc:  # pragma: no cover - defensive logging only
+                component_status["event_post_test"] = "error"
+                logger.debug("Event post test failed: %s", exc)
+            else:
+                component_status["event_post_test"] = "ok"
     except Exception as exc:  # pragma: no cover - best-effort diagnostics endpoint
         result["status"] = "error"
         result["error"] = str(exc)
+        component_status.setdefault("ical_module", "error")
+        component_status.setdefault("event_post_test", "error")
+        _log_unreachable("database")
 
+    for component, status in component_status.items():
+        if status not in {"reachable", "ok"}:
+            _log_unreachable(component)
+
+    if any(status not in {"reachable", "ok"} for status in component_status.values()):
+        result["status"] = "error"
+
+    result.update(component_status)
     return result

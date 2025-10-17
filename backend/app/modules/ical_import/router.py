@@ -18,7 +18,7 @@ def read_calendars(db: Session = Depends(get_db)) -> list[schemas.ImportedCalend
     return [schemas.ImportedCalendarOut.from_orm(calendar) for calendar in calendars]
 
 
-@router.post("/add", response_model=schemas.ImportedCalendarOut, status_code=status.HTTP_201_CREATED)
+@router.post("/import", response_model=schemas.ImportedCalendarOut, status_code=status.HTTP_201_CREATED)
 def add_calendar(payload: schemas.ImportedCalendarCreate, db: Session = Depends(get_db)) -> schemas.ImportedCalendarOut:
     existing = db.query(ImportedCalendar).filter(ImportedCalendar.url == str(payload.url)).first()
     if existing:
@@ -28,7 +28,7 @@ def add_calendar(payload: schemas.ImportedCalendarCreate, db: Session = Depends(
     return schemas.ImportedCalendarOut.from_orm(calendar)
 
 
-@router.post("/{calendar_id}/sync")
+@router.post("/sync/{calendar_id}")
 def sync_calendar_endpoint(calendar_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
     try:
         calendar = sync_calendar(db, calendar_id)

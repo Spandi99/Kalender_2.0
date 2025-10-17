@@ -1,12 +1,62 @@
 import axios from "axios";
 
+declare module "axios" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  interface AxiosRequestConfig {
+    _retryWithFallback?: boolean;
+  }
+}
+
+const resolveFallbackBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    const origin = window.location.origin.replace(/\/$/, "");
+    if (origin.includes("orgalifer.ch")) {
+      return `${origin}/api`;
+    }
+    if (/localhost|127\.0\.0\.1/.test(origin)) {
+      return "http://localhost:8000/api";
+    }
+    return `${origin}/api`;
+  }
+  return "http://localhost:8000/api";
+};
+
+const computeInitialBaseUrl = () => {
+  const configured = import.meta.env.VITE_API_URL as string | undefined;
+  if (configured && configured.trim().length > 0) {
+    return configured.replace(/\/$/, "");
+  }
+  return resolveFallbackBaseUrl();
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://192.168.1.136:8000/api",
+  baseURL: computeInitialBaseUrl(),
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: false,
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (
+      error?.code === "ERR_NETWORK" &&
+      !error.config?._retryWithFallback &&
+      typeof window !== "undefined"
+    ) {
+      const fallbackUrl = resolveFallbackBaseUrl();
+      if (api.defaults.baseURL !== fallbackUrl) {
+        api.defaults.baseURL = fallbackUrl;
+        if (error.config) {
+          error.config._retryWithFallback = true;
+          return api.request(error.config);
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface CalendarEvent {
   id: number;
@@ -273,14 +323,14 @@ export const fetchImportedCalendars = async (): Promise<ImportedCalendar[]> => {
 };
 
 export const addICalCalendar = async (name: string, url: string): Promise<ImportedCalendar> => {
-  const { data } = await api.post<ImportedCalendar>("/ical/add", { name, url });
+  const { data } = await api.post<ImportedCalendar>("/ical/import", { name, url });
   return data;
 };
 
 export const syncICalCalendar = async (
   id: number,
 ): Promise<{ status: string; last_synced: string | null }> => {
-  const { data } = await api.post<{ status: string; last_synced: string | null }>(`/ical/${id}/sync`);
+  const { data } = await api.post<{ status: string; last_synced: string | null }>(`/ical/sync/${id}`);
   return data;
 };
 
@@ -330,7 +380,7 @@ export const fetchSystemHealth = async (): Promise<SystemHealthStatus> => {
 };
 
 export const fetchSystemLogs = async (): Promise<SystemLogEntry[]> => {
-  const { data } = await api.get<SystemLogEntry[]>("system/logs");
+  const { data } = await api.get<SystemLogEntry[]>("/system/logs");
   return data;
 };
 
