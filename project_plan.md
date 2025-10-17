@@ -319,6 +319,88 @@ aber ab 09:00 Uhr zu 90 %.
 → Das System schlägt automatisch vor, den „Morning Study“-Block um +1 h zu verschieben
 und die XP-Verteilung leicht anzupassen (mehr Fokus-XP für spätere Stunden)..
 
+### 🧩 Phase 9: Stability & Diagnostics Framework
+
+**Ziel:**  
+Ein robuster, selbstüberwachender Kalender-Stack, der automatisch prüft, ob Backend, Datenbank und API korrekt funktionieren,  
+und bei Fehlern konsistente, verständliche Diagnosen liefert.
+
+**Beschreibung:**  
+Diese Phase ergänzt das Projekt um ein Debugging- und Diagnosesystem auf Code-, Container- und API-Ebene.  
+Ziel ist es, dass zukünftige Probleme (z. B. fehlende Tabellen, fehlerhafte Migrations, nicht erreichbare DB oder CORS-Fehler) automatisch erkannt, geloggt und angezeigt werden, ohne dass manuell in Docker-Logs gesucht werden muss.
+
+---
+
+#### 🔍 Hauptkomponenten
+
+1. **Erweiterte Health-Checks**
+   - Neuer API-Endpunkt `/health/extended` liefert JSON-Status mit:
+     ```json
+     {
+       "status": "ok",
+       "database_connected": true,
+       "tables": ["events", "feedback", "xp_log"],
+       "event_count": 42,
+       "ai_status": "ready"
+     }
+     ```
+   - Prüft intern:
+     - PostgreSQL-Verbindung
+     - Tabellenexistenz
+     - Basis-Query („SELECT 1“)
+     - AI-Subsystem erreichbar
+
+2. **Startup Diagnostics**
+   - Beim Start prüft das Backend automatisch:
+     - Verbindung zur Datenbank
+     - Ob Tabellen existieren
+     - Ob Migration korrekt ausgeführt wurde
+   - Ausgabe im Log:
+     ```
+     🧠 Diagnostics: Database OK (events=128)
+     🧩 Schema validated successfully.
+     🚀 All modules initialized.
+     ```
+
+3. **Debug-Mode**
+   - Aktivierbar über `DEBUG_MODE=true`
+   - Features:
+     - Verboseres Logging (SQLAlchemy echo on)
+     - Request/Response-Logging in FastAPI
+     - Stacktrace-Ausgabe bei 4xx/5xx
+
+4. **Backend-Watchdog**
+   - Script oder Hintergrund-Task prüft periodisch:
+     - Ob DB-Verbindung noch besteht
+     - Ob kritische Tabellen erreichbar sind
+     - Schreibt Warnungen ins Log, wenn nicht
+
+5. **Frontend-Diagnostics (optional)**
+   - Developer-Seite oder Debug-Modal zeigt:
+     - Letzte Verbindung zur API
+     - Health-Status aus `/health/extended`
+     - Event-Count und AI-Status
+
+6. **Error-Logging**
+   - Middleware loggt alle Exceptions mit:
+     - Endpoint
+     - Request Body (anonymisiert)
+     - Fehlermeldung
+     - Zeitstempel
+   - Speicherung optional in `error_logs`-Tabelle
+
+---
+
+**Ergebnis:**  
+Das System meldet proaktiv Probleme mit Datenbank, Schema oder API,  
+ermöglicht vollständige Selbstdiagnose und stabilen Betrieb auch bei komplexeren Erweiterungen.
+
+
+
+
+
+
+
 Development Workflow:
 
 1. **Branches**
