@@ -9,6 +9,15 @@ RUN npm install -g npm@latest
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
+# Ensure critical FullCalendar modules are always present
+RUN npm install --legacy-peer-deps \
+    @fullcalendar/core@6.1.11 \
+    @fullcalendar/daygrid@6.1.11 \
+    @fullcalendar/timegrid@6.1.11 \
+    @fullcalendar/list@6.1.11 \
+    @fullcalendar/react@6.1.11 \
+    @fullcalendar/interaction@6.1.11
+
 # Copy source files
 COPY . .
 
