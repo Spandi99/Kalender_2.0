@@ -511,9 +511,34 @@ Fehlerhafte Zustände (z. B. DB nicht erreichbar, Migrations fehlen, ungültige 
 Das System kann nach einem Crash oder Fehlerzustand **automatisch wieder in einen funktionierenden Zustand gelangen**, ohne Entwicklerintervention.
 
 
+🔮 Phase 10b — Self-Healing AI System
 
+Ziel:
+Automatisches Erkennen, Analysieren und Beheben von Systemfehlern (z. B. Datenbank-Disconnects, API-Fehler, Sync-Fehler beim iCal-Import, fehlerhafte XP-Berechnungen).
 
+Kernfunktionen:
 
+Beobachtung von Logs, Exceptions und Response-Zeiten in Echtzeit
+
+Klassifizierung von Fehlern durch internes ML-Modul („known issue“, „unknown“)
+
+Automatisches Ausführen von Recovery-Aktionen (z. B. DB-Reconnect, Cache-Reset, API-Resync)
+
+Selbst-Dokumentation im neuen „System Health Dashboard“
+
+Optional: Benachrichtigung des Users über UI-Dialog oder Log-Widget
+
+Technische Hinweise:
+
+Nutzt Event Bus im Backend für asynchrone Überwachung
+
+Anbindung an bestehendes Diagnostics-System (Phase 9)
+
+Speicherung von Anomalien in system_logs-Tabelle
+
+Optional Integration eines Watchdog-Tasks, der periodisch Prüfungen ausführt
+
+Ziel ist: maximal 5 Sekunden Recovery-Zeit nach Ausfall
 
 Development Workflow:
 
