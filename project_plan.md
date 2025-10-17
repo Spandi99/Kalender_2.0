@@ -742,7 +742,74 @@ und dabei in einem klaren, modernen Illustrationsstil gehalten sein.
 #### Frontend
 - **Frameworks:** React, TailwindCSS, Framer Motion, Lottie React  
 - **Verzeichnisstruktur:**
+🏗️ Phase 13 – Persistent Infrastructure & Security Hardening
 
+Ziel:
+Diese Phase stellt sicher, dass die Orgalifer-Infrastruktur dauerhaft stabil, sicher und öffentlich erreichbar ist.
+Sie beseitigt die bisher auftretenden Fehler (502, 404, CORS, CSRF, Zertifikats-Probleme, Nginx-Restart-Loops) vollständig und sorgt für einen robusten, wartungsfreien Betrieb.
+
+🔹 Teilziele
+
+Dauerhaftes HTTPS & Domain-Stabilität
+
+Automatische Zertifikatserstellung und -erneuerung via Certbot
+
+Fallback auf selbstsigniertes Zertifikat, falls noch kein gültiges vorhanden
+
+Kein Abbruch oder Crash von Nginx mehr bei fehlenden Zertifikaten
+
+HTTPS läuft stabil auch bei Neustarts oder leeren Zertifikats-Volumes
+
+Frontend-Backend Synchronisation
+
+Sichere Proxy-Weiterleitung über HTTPS
+
+API-Pfad /api/... überall einheitlich erreichbar
+
+Keine 404- oder 502-Fehler mehr beim Zugriff auf /events, /templates, /ical, /feedback
+
+Mobile & Externer Zugriff
+
+Zugriff über https://orgalifer.ch auch von LTE- und IPv6-Netzwerken
+
+Fallback für IPv4-Clients, falls der ISP keine IPv6-Weiterleitung bietet
+
+DNS-Validierung & automatisches Rebinding, falls sich IP-Adressen ändern
+
+Security & Policy Hardening
+
+Entfernen aller überflüssigen Laravel/Pusher/CSRF-Referenzen
+
+Sichere CORS-Konfiguration nur für die benötigten Hosts (orgalifer.ch, 192.168.1.136, localhost)
+
+Aktivierte HSTS-Header für HTTPS
+
+Strikte CSP (Content Security Policy) für Scripts, Fonts, und API
+
+Self-Healing Logic
+
+Täglicher Health-Check: prüft Zertifikatsgültigkeit, API-Erreichbarkeit und Domain-Zugriff
+
+Automatischer Reload von Nginx bei Zertifikats- oder DNS-Änderungen
+
+Logging über /api/health/extended
+
+🧰 Ergebnis dieser Phase:
+
+Zugriff via:
+🔒 https://orgalifer.ch (öffentlich, mobil, IPv6/IPv4)
+🧩 http://192.168.1.136 (lokal)
+
+Funktionierende Module: Events, Templates, ICAL-Import, Feedback, XP-System
+
+Kein Nginx-Crash, keine CORS/CSRF/502-Fehler mehr
+
+Automatische Zertifikatserneuerung & Self-Healing-Mechanismus
+
+📎 Referenz:
+
+Branch: codex/implement-patch-11m+-for-api-and-https
+→ wird erweitert um Patch 12R1 – Self-Healing HTTPS & Domain Stability
 
 Development Workflow:
 
@@ -785,22 +852,6 @@ Development Workflow:
 
 ---
 
-## 🔮 Future Integration Ideas
-
-* Local AI Scheduler mit PyTorch / scikit-learn
-* Custom Feedback Form (Mood, Difficulty, Delay Reason)
-* Voice Input oder Shortcuts
-* Mobile-friendly PWA für iPhone-Sync
-
----
-## 🎮 Avatar & Level Progression (Planned)
-
-Once the XP and feedback systems are stable and integrated:
-- Introduce a personal avatar representing user progress.
-- Avatar changes visually based on XP level thresholds (e.g., novice → skilled → expert).
-- Different themes or items unlocked at milestones.
-- Animated reactions (e.g., happy on XP gain, tired when many tasks left).
-- Integration with XP Dashboard for seamless visual feedback.
 
 ## 💡 Guideline for Codex Requests
 
