@@ -34,6 +34,32 @@ function formatHourFromFloat(value: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
+function parseHourString(value: string): number | null {
+  const sanitized = value.trim();
+  const [hoursPart, minutesPart] = sanitized.split(":");
+  if (hoursPart === undefined || minutesPart === undefined) {
+    return null;
+  }
+
+  const hours = Number.parseInt(hoursPart, 10);
+  const minutes = Number.parseInt(minutesPart, 10);
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return null;
+  }
+
+  return hours + minutes / 60;
+}
+
+function formatHourFromString(value: string): string {
+  const parsed = parseHourString(value);
+  if (parsed === null) {
+    return value;
+  }
+
+  return formatHourFromFloat(parsed);
+}
+
 function formatDeltaMinutes(deltaMinutes: number): string {
   const absolute = Math.abs(deltaMinutes);
   const hours = Math.floor(absolute / 60);
@@ -159,11 +185,11 @@ export function LearningSuggestionsCard() {
   const updatedAt = stats?.snapshot_created_at ?? null;
 
   return (
-    <div className="rounded-lg border border-muted bg-white p-4 shadow-sm">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 text-gray-700 dark:text-gray-300">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">AI Optimization Suggestions</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">AI Optimization Suggestions</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Lernt aus abgeschlossenen Events, XP und Feedback.
           </p>
         </div>
@@ -173,75 +199,84 @@ export function LearningSuggestionsCard() {
       </div>
 
       {stats ? (
-        <div className="mb-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+        <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white/80 p-4 text-sm shadow-sm dark:border-gray-800 dark:bg-gray-900/60 sm:grid-cols-3">
           <div>
-            <p className="font-medium text-foreground">Produktive Cluster</p>
-            <p>{clusterTimes}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Produktive Cluster</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{clusterTimes}</p>
           </div>
           <div>
-            <p className="font-medium text-foreground">Ø Stimmung</p>
-            <p>{stats.average_mood != null ? stats.average_mood.toFixed(1) : "–"}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Ø Stimmung</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              {stats.average_mood != null ? stats.average_mood.toFixed(1) : "–"}
+            </p>
           </div>
           <div>
-            <p className="font-medium text-foreground">Letzte Analyse</p>
-            <p>{formatTimestamp(updatedAt)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Letzte Analyse</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{formatTimestamp(updatedAt)}</p>
           </div>
         </div>
       ) : (
-        <p className="mb-4 text-sm text-muted-foreground">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Noch keine Analyse durchgeführt. Starte die KI, um Vorschläge zu erhalten.
         </p>
       )}
 
       {status ? (
         <div
-          className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+          className={`rounded-md border px-3 py-2 text-sm ${
             status.type === "success"
-              ? "border-green-200 bg-green-50 text-green-700"
-              : "border-red-200 bg-red-50 text-red-700"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/40 dark:text-emerald-200"
+              : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-900/30 dark:text-red-200"
           }`}
         >
           {status.message}
         </div>
       ) : null}
 
-      {suggestions.length ? (
-        <ul className="space-y-3">
-          {suggestions.map((suggestion) => (
-            <li
+      <div className="space-y-3">
+        {suggestions.length ? (
+          suggestions.map((suggestion) => (
+            <label
               key={suggestion.block_id}
-              className="flex flex-col gap-3 rounded-md border border-muted bg-white/80 p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex cursor-pointer items-start justify-between gap-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/60 dark:hover:border-indigo-500"
             >
-              <div>
-                <p className="text-sm font-semibold text-foreground">{suggestion.block_label}</p>
-                <p className="text-sm text-muted-foreground">
-                  {suggestion.current_start} → {suggestion.suggested_start} ({formatDeltaMinutes(suggestion.delta_minutes)})
+              <div className="space-y-2">
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{suggestion.block_label}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {formatHourFromString(suggestion.suggested_start)} – {formatHourFromString(suggestion.suggested_end)}
                 </p>
-                <p className="text-xs text-muted-foreground">{suggestion.reason}</p>
+                <p className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
+                  Abweichung: {formatDeltaMinutes(suggestion.delta_minutes)}
+                </p>
               </div>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4"
-                  checked={selectedIds.includes(suggestion.block_id)}
-                  onChange={(event) => toggleSelection(suggestion.block_id, event.target.checked)}
-                />
-                Übernehmen
-              </label>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          {isLoading ? "Die KI wertet deine Daten aus…" : "Noch keine aktiven Vorschläge vorhanden."}
-        </p>
-      )}
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5 rounded border border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900"
+                checked={selectedIds.includes(suggestion.block_id)}
+                onChange={(event) => toggleSelection(suggestion.block_id, event.target.checked)}
+              />
+            </label>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-300 p-6 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
+            Keine Vorschläge verfügbar. Starte die Analyse oder passe Templates manuell an.
+          </div>
+        )}
+      </div>
 
-      {selectedIds.length ? (
-        <Button className="mt-4 w-full" onClick={handleApply} disabled={applyMutation.isPending}>
-          {applyMutation.isPending ? "Übernehme Änderungen…" : "Ausgewählte Vorschläge anwenden"}
-        </Button>
-      ) : null}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          Wähle Blöcke aus, um KI-Anpassungen direkt auf deine Templates anzuwenden.
+        </p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setSelectedIds([])} disabled={!selectedIds.length}>
+            Auswahl löschen
+          </Button>
+          <Button size="sm" onClick={handleApply} disabled={!selectedIds.length || applyMutation.isPending}>
+            {applyMutation.isPending ? "Übernehme…" : "Auswahl anwenden"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
