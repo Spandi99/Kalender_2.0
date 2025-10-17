@@ -34,6 +34,32 @@ function formatHourFromFloat(value: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
+function parseHourString(value: string): number | null {
+  const sanitized = value.trim();
+  const [hoursPart, minutesPart] = sanitized.split(":");
+  if (hoursPart === undefined || minutesPart === undefined) {
+    return null;
+  }
+
+  const hours = Number.parseInt(hoursPart, 10);
+  const minutes = Number.parseInt(minutesPart, 10);
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return null;
+  }
+
+  return hours + minutes / 60;
+}
+
+function formatHourFromString(value: string): string {
+  const parsed = parseHourString(value);
+  if (parsed === null) {
+    return value;
+  }
+
+  return formatHourFromFloat(parsed);
+}
+
 function formatDeltaMinutes(deltaMinutes: number): string {
   const absolute = Math.abs(deltaMinutes);
   const hours = Math.floor(absolute / 60);
@@ -217,7 +243,7 @@ export function LearningSuggestionsCard() {
               <div className="space-y-2">
                 <p className="text-base font-semibold text-gray-900 dark:text-gray-100">{suggestion.block_label}</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatHourFromFloat(suggestion.suggested_start)} – {formatHourFromFloat(suggestion.suggested_end)}
+                  {formatHourFromString(suggestion.suggested_start)} – {formatHourFromString(suggestion.suggested_end)}
                 </p>
                 <p className="text-xs uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
                   Abweichung: {formatDeltaMinutes(suggestion.delta_minutes)}
