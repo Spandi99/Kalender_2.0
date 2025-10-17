@@ -510,85 +510,53 @@ Das System kann nach einem Crash oder Fehlerzustand **automatisch wieder in eine
 Das System meldet proaktiv Probleme mit Datenbank, Schema oder API,  
 ermöglicht vollständige Selbstdiagnose und stabilen Betrieb auch bei komplexeren Erweiterungen.
 
-### 🧩 Phase 10: Autonomous Debug & Recovery System
 
-**Ziel:**  
-Das System erkennt nicht nur Fehler, sondern versucht automatisch, diese zu reparieren oder einen korrekten Zustand wiederherzustellen — ohne manuelles Eingreifen oder Neustart.
-
-**Beschreibung:**  
-Das Debugging-System aus Phase 9 wird erweitert um eine automatisierte Selbstheilungslogik.  
-Fehlerhafte Zustände (z. B. DB nicht erreichbar, Migrations fehlen, ungültige iCal-Quellen) werden erkannt, geloggt, validiert und – wenn möglich – automatisch behoben.
-
----
-
-#### 🧠 Hauptkomponenten
-
-1. **Automatischer DB-Recovery-Manager**
-   - Wenn Verbindung zu PostgreSQL fehlschlägt → warte und reconnecte mit Backoff.  
-   - Wenn Tabellen fehlen → führe `Base.metadata.create_all()` automatisch aus.
-   - Wenn Schema veraltet ist → führe Migration neu aus.
-   - Wenn DB korrupt → sichere Dump und initialisiere neue Instanz.
-
-2. **Smart API Recovery**
-   - Wenn FastAPI-Endpoints Exceptions werfen → Middleware erkennt Muster:
-     - `psycopg2.OperationalError` → „DB unavailable → retry connection“  
-     - `ProgrammingError: relation ... does not exist` → „missing schema → rerun migration“
-   - System ruft gezielt Reparatur-Routinen auf.
-
-3. **CORS & Network Auto-Fix**
-   - Wenn mehrfach `CORS`-Fehler im Log → erweitere dynamisch `allow_origins` temporär.
-   - Prüft, ob API-Ports 5432 / 8000 / 8080 erreichbar sind, sonst Hinweis:
-     ```
-     🌐 Network Diagnostics: Port 5432 unreachable – attempting restart...
-     ```
-
-4. **iCal Self-Healing**
-   - Wenn importierte iCal-Links fehlerhaft → prüfe Format, speichere Status in `ical_sources`.
-   - Nach 3 Fehlversuchen: automatisch deaktivieren und im Log melden.
-
-5. **Crash Recovery Hook**
-   - Wenn Backend abstürzt → beim Neustart:
-     - Logfile analysieren.
-     - Bekannte Ursachen (z. B. fehlende ENV, falsche DB-URL) automatisch patchen.
-     - Optional Notification (z. B. in Log oder API `/diagnostics/recovery`).
-
-6. **AI-Enhanced Debug Assistant (später in Phase 11 erweiterbar)**
-   - ML-Modul beobachtet Fehlerhistorie und schlägt Fixes vor (z. B. „DB init bei Startup fehlgeschlagen → mehr Delay hinzufügen“).
-
----
-
-**Ergebnis:**
-Das System kann nach einem Crash oder Fehlerzustand **automatisch wieder in einen funktionierenden Zustand gelangen**, ohne Entwicklerintervention.
-
-
-🔮 Phase 10b — Self-Healing AI System
+🧠 Phase 10b – Self-Healing AI System
 
 Ziel:
-Automatisches Erkennen, Analysieren und Beheben von Systemfehlern (z. B. Datenbank-Disconnects, API-Fehler, Sync-Fehler beim iCal-Import, fehlerhafte XP-Berechnungen).
+Das System soll nicht nur Fehler erkennen (wie in Phase 10), sondern auch
+automatisch Korrekturmaßnahmen ausführen und sich selbst stabilisieren.
 
-Kernfunktionen:
+Funktionsprinzip:
 
-Beobachtung von Logs, Exceptions und Response-Zeiten in Echtzeit
+Fehlerbeobachtung:
 
-Klassifizierung von Fehlern durch internes ML-Modul („known issue“, „unknown“)
+Lauscht auf Exceptions, Crashs, API-Timeouts, oder ungewöhnliche Antwortzeiten
 
-Automatisches Ausführen von Recovery-Aktionen (z. B. DB-Reconnect, Cache-Reset, API-Resync)
+Analysiert Log-Muster mit KI-Modul (z. B. „DB disconnected“, „Sync Error“, „Invalid Schema“)
 
-Selbst-Dokumentation im neuen „System Health Dashboard“
+Ursachenanalyse (Root Cause Analysis):
 
-Optional: Benachrichtigung des Users über UI-Dialog oder Log-Widget
+Greift auf historische Log- und Diagnosedaten zu
 
-Technische Hinweise:
+Erkennt bekannte Fehler anhand Signaturen
 
-Nutzt Event Bus im Backend für asynchrone Überwachung
+Automatische Maßnahmen:
 
-Anbindung an bestehendes Diagnostics-System (Phase 9)
+Neustart oder Reconnect einzelner Module
 
-Speicherung von Anomalien in system_logs-Tabelle
+Erneutes Laden von Konfigurationen (z. B. iCal-Sync)
 
-Optional Integration eines Watchdog-Tasks, der periodisch Prüfungen ausführt
+Rücksetzen fehlerhafter Caches oder Wiederherstellen letzter stabiler Datenbankzustände
 
-Ziel ist: maximal 5 Sekunden Recovery-Zeit nach Ausfall
+Selbstprotokollierung:
+
+Jeder Eingriff wird in system_logs gespeichert
+
+Optional: Benachrichtigung im UI (z. B. Toast „System recovered from sync error“)
+
+Adaptive Lernkomponente:
+
+Häufige Fehler werden priorisiert
+
+System lernt, welche Maßnahmen am effektivsten sind
+
+Ziel: < 5 Sekunden Recovery bei bekannten Problemen
+
+
+
+
+
 
 Development Workflow:
 
