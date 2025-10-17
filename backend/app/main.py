@@ -162,8 +162,13 @@ async def initialize_database() -> None:
             break
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health_check() -> dict[str, str]:
+    return {"status": "ok", "source": "backend"}
+
+
+@app.get("/health")
+def legacy_health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
