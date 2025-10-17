@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
 
   backend:
     build:
@@ -19,10 +19,7 @@ services:
     depends_on:
       - db
     environment:
-      POSTGRES_SERVER: db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: calendar_xp
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp
       BACKEND_CORS_ORIGINS: '["http://localhost:8080", "http://192.168.1.136:8080"]'
       TZ: Europe/Zurich
     ports:

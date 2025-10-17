@@ -1,15 +1,20 @@
 from functools import lru_cache
 import json
+import os
 from typing import Any, Optional
 
 from pydantic import BaseSettings, Field, validator
 
 
 class Settings(BaseSettings):
-    app_name: str = "AI Calendar XP Backend"
+    app_name: str = "Kalender"
     api_v1_prefix: str = "/api"
+    postgres_server: str = "db"
+    postgres_user: str = "postgres"
+    postgres_password: str = "postgres"
+    postgres_db: str = "calendar_xp"
     database_url: str = Field(
-        default="sqlite:///./calendar.db",
+        default_factory=lambda: "postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp",
         env="DATABASE_URL",
     )
     cors_origins: list[str] = Field(
@@ -18,8 +23,14 @@ class Settings(BaseSettings):
             "http://localhost:8080",
             "http://192.168.1.136:8080",
         ],
-        env="CORS_ORIGINS",
+        env="BACKEND_CORS_ORIGINS",
     )
+
+    @validator("database_url", pre=True, always=True)
+    def ensure_database_url(cls, _value: Optional[str]) -> str:
+        if os.getenv("DATABASE_URL"):
+            return os.environ["DATABASE_URL"]
+        raise RuntimeError("❌ DATABASE_URL not set – please configure environment properly.")
 
     @validator("cors_origins", pre=True)
     def parse_cors_origins(cls, value: Any) -> Optional[list[str]]:

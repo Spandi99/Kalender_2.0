@@ -3,10 +3,11 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import OperationalError
 
 from .core.config import get_settings
-from .core.database import SessionLocal
+from .core.database import SessionLocal, engine
 from .core.migrations import run_migrations
 from .modules.ai_assist import router as ai_router
 from .modules.adaptive import router as adaptive_router
@@ -47,25 +48,32 @@ app.include_router(learning_router.router, prefix=settings.api_v1_prefix)
 
 
 def _create_database_schema() -> None:
+    logger.info("🧱 Running schema migrations...")
     run_migrations()
+    logger.info("✅ Schema migration complete.")
 
 
-def _ensure_database_schema_eagerly() -> None:
-    global _database_schema_initialized
+def _has_existing_tables() -> bool:
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    return bool(tables)
 
-    if _database_schema_initialized:
+
+def _initialize_database_schema() -> None:
+    if _has_existing_tables():
+        logger.info("🗄️ Existing schema detected – skipping migration.")
         return
+    _create_database_schema()
 
+
+def _log_event_count() -> None:
     try:
-        _create_database_schema()
-    except OperationalError as exc:  # pragma: no cover - depends on DB availability
-        logger.warning("Eager database initialization failed: %s", exc)
+        with SessionLocal() as session:
+            count = session.execute(text("SELECT COUNT(*) FROM events")).scalar() or 0
+    except Exception as exc:  # pragma: no cover - defensive logging only
+        logger.debug("Unable to count events during startup: %s", exc)
     else:
-        _database_schema_initialized = True
-        logger.info("Database schema initialized eagerly.")
-
-
-_ensure_database_schema_eagerly()
+        logger.info("📅 Loaded %s events from database.", count)
 
 
 def _sync_imported_calendars_on_startup() -> None:
@@ -95,7 +103,7 @@ async def initialize_database() -> None:
 
     for attempt in range(1, max_attempts + 1):
         try:
-            run_migrations()
+            _initialize_database_schema()
         except OperationalError as exc:  # pragma: no cover - depends on DB availability
             if attempt == max_attempts:
                 logger.exception("Database initialization failed after %s attempts", attempt)
@@ -112,6 +120,7 @@ async def initialize_database() -> None:
             backoff_seconds *= 2
         else:
             _database_schema_initialized = True
+            _log_event_count()
             logger.info("Database initialization completed successfully.")
             _sync_imported_calendars_on_startup()
             break

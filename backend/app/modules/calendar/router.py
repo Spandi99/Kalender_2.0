@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
@@ -18,6 +20,8 @@ from .service import (
     update_event,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/events", tags=["events"])
 
 
@@ -32,6 +36,7 @@ def create_event_route(payload: EventCreate, db: Session = Depends(get_db)) -> E
     try:
         event = create_event(db, payload)
     except ValueError as exc:
+        logger.debug("Invalid event payload rejected: %s", exc)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return EventRead.from_orm(event)
 
