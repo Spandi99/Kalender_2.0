@@ -22,6 +22,9 @@ RUN npm install --legacy-peer-deps \
 COPY . .
 
 # Build production version
+# Ensure placeholder CSS exists before bundling
+RUN node scripts/prebuild.js
+
 RUN npm run build
 
 # ===== STAGE 2: Serve with Nginx =====
