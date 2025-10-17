@@ -9,20 +9,29 @@ import "./index.css";
 
 declare global {
   interface Window {
-    Laravel?: { csrfToken?: string | null };
+    Laravel?: Record<string, unknown>;
     Pusher?: unknown;
+    Echo?: unknown;
+    csrfToken?: string | null;
   }
 }
 
-// Disable CSRF until API stabilization
+// Remove legacy Laravel/Pusher bindings while the FastAPI stack stabilizes
 if (typeof window !== "undefined") {
-  window.Laravel = window.Laravel || {};
-  window.Laravel.csrfToken = null;
-
-  // Disable WebSockets for now (no SSL connection yet)
   if (window.Pusher) {
+    console.warn("Disabling legacy Pusher integration for FastAPI backend.");
     window.Pusher = undefined;
   }
+
+  if (window.Echo) {
+    window.Echo = undefined;
+  }
+
+  if (window.Laravel) {
+    Reflect.deleteProperty(window, "Laravel");
+  }
+
+  window.csrfToken = null;
 }
 
 const queryClient = new QueryClient();
