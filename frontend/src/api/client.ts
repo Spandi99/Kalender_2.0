@@ -113,28 +113,118 @@ export type FeedbackReason = "too_tired" | "no_time" | "forgot" | "low_motivatio
 export type FeedbackPunctuality = "on_time" | "late" | "early";
 
 export interface FeedbackPayload {
-  reason: FeedbackReason;
-  punctuality: FeedbackPunctuality;
-  event_id?: number;
-  additional_notes?: string;
+  event_id: number;
+  completed: boolean;
+  rating: number | null;
+  mood: string | null;
+  reason?: FeedbackReason | null;
+  punctuality?: FeedbackPunctuality | null;
+  arrival_delay_minutes?: number | null;
+  duration_variance_minutes?: number | null;
+  notes?: string | null;
 }
 
 export interface FeedbackSummary {
+  average_rating: number;
+  mood_counts: Record<string, number>;
   total_feedback: number;
-  punctuality_breakdown: Record<FeedbackPunctuality, number>;
-  reasons_breakdown: Record<FeedbackReason, number>;
+  completion_rate: number;
+  punctuality_distribution: Record<string, number>;
 }
 
 export interface XpSummary {
-  total_xp: number;
-  weekly_xp: number;
-  level: number;
+  total: number;
+  by_category: Record<string, number>;
 }
 
 export interface LevelStatus {
   current_level: number;
-  next_level_xp: number;
-  current_xp: number;
+  xp_current: number;
+  xp_previous: number;
+  xp_next: number | null;
+  progress: number;
+  avatar_state: string;
+  expression: string;
+}
+
+export interface AdaptiveAnalysis {
+  avg_completion_rate: number;
+  avg_mood: number;
+  productive_hours: number[];
+  discipline_streaks: Record<string, number>;
+}
+
+export interface AdaptiveResponse {
+  status: string;
+  analysis: AdaptiveAnalysis;
+}
+
+export interface LearningStats {
+  clusters: number[];
+  average_mood: number | null;
+  average_xp: number | null;
+  total_events: number;
+  feedback_samples: number;
+  xp_samples: number;
+  snapshot_id: number | null;
+  snapshot_created_at: string | null;
+}
+
+export interface LearningSuggestion {
+  block_id: number;
+  template_id: number;
+  block_label: string;
+  current_start: string;
+  current_end: string;
+  suggested_start: string;
+  suggested_end: string;
+  delta_minutes: number;
+  reason: string;
+}
+
+export interface LearningSuggestionsResponse {
+  stats: LearningStats | null;
+  suggestions: LearningSuggestion[];
+}
+
+export interface ApplyLearningSuggestionsPayload {
+  block_ids: number[];
+}
+
+export interface AppliedLearningSuggestion {
+  block_id: number;
+  template_id: number;
+  block_label: string;
+  previous_start: string;
+  previous_end: string;
+  new_start: string;
+  new_end: string;
+  delta_minutes: number;
+  reason: string;
+}
+
+export interface ApplyLearningSuggestionsResponse {
+  applied: number;
+  updated_blocks: AppliedLearningSuggestion[];
+  stats: LearningStats | null;
+}
+
+export interface AIRecommendation {
+  title: string;
+  description: string;
+  category?: string | null;
+  priority: "low" | "medium" | "high";
+}
+
+export interface AIInsightsResponse {
+  total_events: number;
+  completed_events: number;
+  completion_rate: number;
+  punctuality_stats: Record<string, number>;
+  frequent_reasons: Record<string, number>;
+  average_rating: number | null;
+  recommendations: AIRecommendation[];
+  summary?: string;
 }
 
 export interface SystemHealthStatus {
@@ -142,39 +232,27 @@ export interface SystemHealthStatus {
   database_connected: boolean;
   auto_recovery_enabled: boolean;
   last_recovery_run: string | null;
-  component_status: Record<string, string>;
+  self_healing_active: boolean;
+  last_recovery_action: string | null;
+  last_recovery_timestamp?: string | null;
+  system_log_entries: number;
+  error?: string;
 }
 
 export interface SystemLogEntry {
   id: number;
   timestamp: string;
-  level: string;
-  message: string;
-  context?: Record<string, unknown> | null;
+  component: string | null;
+  severity: string | null;
+  message: string | null;
+  action_taken: string | null;
+  resolved: boolean;
 }
 
-export interface AdaptiveResponse {
-  status: string;
-  summary: string;
-  recommendations: string[];
-}
-
-export interface AIInsightsResponse {
-  summary: string;
-  recommendations: string[];
-}
-
-export interface LearningSuggestionsResponse {
-  suggestions: string[];
-}
-
-export interface ApplyLearningSuggestionsPayload {
-  suggestions: string[];
-}
-
-export interface ApplyLearningSuggestionsResponse {
-  status: string;
-}
+export const fetchEvents = async (): Promise<CalendarEvent[]> => {
+  const { data } = await api.get<CalendarEvent[]>("/events/");
+  return data;
+};
 
 export const createEvent = async (payload: CreateEventPayload): Promise<CalendarEvent> => {
   const { data } = await api.post<CalendarEvent>("/events/", payload);
