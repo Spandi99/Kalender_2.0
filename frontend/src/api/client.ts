@@ -330,7 +330,7 @@ export const fetchSystemHealth = async (): Promise<SystemHealthStatus> => {
 };
 
 export const fetchSystemLogs = async (): Promise<SystemLogEntry[]> => {
-  const { data } = await api.get<SystemLogEntry[]>("/system/logs");
+  const { data } = await api.get<SystemLogEntry[]>("system/logs");
   return data;
 };
 
