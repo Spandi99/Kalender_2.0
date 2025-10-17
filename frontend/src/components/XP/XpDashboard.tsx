@@ -52,50 +52,52 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
     : `${levelInfo?.xp_current ?? 0} XP`;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="space-y-1 border-b bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-transparent">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+    <Card className="overflow-hidden border border-blue-100 shadow-xl dark:border-blue-900/40">
+      <CardHeader className="space-y-1 border-b border-blue-100 bg-gradient-to-r from-blue-500/10 via-blue-400/10 to-purple-500/10 dark:border-blue-900/40 dark:from-blue-900/40 dark:via-blue-900/20 dark:to-purple-900/20">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
           <span role="img" aria-label="trophy">
             🏆
           </span>
-          Your XP
+          XP Übersicht
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Track how each category contributes to your progress.
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          Verfolge, wie deine Kategorien zum Fortschritt beitragen.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4 p-6">
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <CardContent className="space-y-5 p-6">
+        <div className="space-y-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <div className="text-4xl font-bold text-indigo-600">{summary?.total ?? 0}</div>
-              <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Total XP</div>
-              <div className="text-sm text-muted-foreground">{xpLabel}</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-300">{summary?.total ?? 0}</div>
+              <div className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Gesamt-XP</div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">{xpLabel}</div>
             </div>
+            {levelInfo ? (
+              <AvatarDisplay
+                level={levelInfo.current_level}
+                avatarState={levelInfo.avatar_state}
+                expression={levelInfo.expression}
+                xpCurrent={levelInfo.xp_current}
+                xpNext={levelInfo.xp_next ?? undefined}
+                xpPrevious={levelInfo.xp_previous}
+                levelProgress={levelInfo.level_progress}
+                xpToNext={levelInfo.xp_to_next}
+              />
+            ) : null}
           </div>
-          {levelInfo ? (
-            <AvatarDisplay
-              level={levelInfo.current_level}
-              avatarState={levelInfo.avatar_state}
-              expression={levelInfo.expression}
-              xpCurrent={levelInfo.xp_current}
-              xpNext={levelInfo.xp_next ?? undefined}
-              xpPrevious={levelInfo.xp_previous}
-              levelProgress={levelInfo.level_progress}
-              xpToNext={levelInfo.xp_to_next}
-            />
+          {lastAwarded ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-inner dark:border-emerald-900/60 dark:bg-emerald-900/40 dark:text-emerald-200">
+              +{lastAwarded} XP erhalten!
+            </div>
           ) : null}
         </div>
-        {lastAwarded ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm">
-            +{lastAwarded} XP earned!
-          </div>
-        ) : null}
+
         <div className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Kategorien</h3>
           {categories.length ? (
             categories.map((category) => (
-              <div key={category.key} className="space-y-1">
-                <div className="flex items-center justify-between text-sm font-medium">
+              <div key={category.key} className="space-y-1 rounded-xl border border-gray-200 bg-white/80 p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
+                <div className="flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-200">
                   <div className="flex items-center gap-2">
                     <span aria-hidden>{category.icon}</span>
                     <span>{category.display}</span>
@@ -109,8 +111,8 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
               </div>
             ))
           ) : (
-            <div className="rounded-md border border-dashed border-muted-foreground/30 p-4 text-sm text-muted-foreground">
-              Complete events to start earning XP and unlock progress insights.
+            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+              Sammle XP, um hier Einblicke in deine stärksten Kategorien zu sehen.
             </div>
           )}
         </div>

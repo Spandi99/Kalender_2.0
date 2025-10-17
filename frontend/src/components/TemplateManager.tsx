@@ -207,17 +207,17 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
   const formatTime = (value: string) => value.slice(0, 5);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Day Templates</CardTitle>
+    <Card className="border border-indigo-100 shadow-xl dark:border-indigo-900/40">
+      <CardHeader className="border-b border-indigo-100 bg-gradient-to-r from-indigo-500/10 via-indigo-400/10 to-blue-400/10 dark:border-indigo-900/40 dark:from-indigo-900/40 dark:via-indigo-900/20 dark:to-blue-900/20">
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Day Templates</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-6 text-sm text-gray-700 dark:text-gray-300">
         {status && (
           <div
             className={`rounded-md border px-3 py-2 text-sm ${
               status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/40 dark:text-emerald-200"
+                : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-900/30 dark:text-red-200"
             }`}
           >
             {status.message}
@@ -232,16 +232,19 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
             </Button>
           </div>
           {templatesQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading templates…</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Loading templates…</p>
           ) : templates.length ? (
             <div className="space-y-4">
               {templates.map((template) => (
-                <div key={template.id} className="rounded-md border border-muted p-4">
+                <div
+                  key={template.id}
+                  className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60"
+                >
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="font-medium">{template.name}</p>
                       {template.description ? (
-                        <p className="text-sm text-muted-foreground">{template.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{template.description}</p>
                       ) : null}
                     </div>
                     <div className="flex gap-2">
@@ -268,10 +271,13 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                   </div>
                   <ul className="mt-3 space-y-2 text-sm">
                     {template.blocks.map((block) => (
-                      <li key={block.id} className="flex items-center justify-between rounded border border-muted px-3 py-2">
+                      <li
+                        key={block.id}
+                        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white/70 px-3 py-2 shadow-inner dark:border-gray-700 dark:bg-gray-800/60"
+                      >
                         <div>
                           <p className="font-medium">{block.label}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
                             {formatTime(block.start_time)} – {formatTime(block.end_time)}
                             {block.category ? ` • ${categoryLookup[block.category] ?? block.category}` : ""}
                           </p>
@@ -283,7 +289,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No templates yet. Create your first day template below.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">No templates yet. Create your first day template below.</p>
           )}
           {templatesQuery.isError ? (
             <p className="text-sm text-red-600">Failed to load templates.</p>
@@ -315,7 +321,10 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
 
             <div className="space-y-4">
               {formState.blocks.map((block, index) => (
-                <div key={index} className="rounded-md border border-dashed border-muted p-4">
+                <div
+                  key={index}
+                  className="rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/40"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <Label className="font-medium">Block {index + 1}</Label>
                     <Button
@@ -341,7 +350,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       <Label htmlFor={`block-category-${index}`}>Category</Label>
                       <select
                         id={`block-category-${index}`}
-                        className="h-10 w-full rounded-md border border-muted bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2"
+                        className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
                         value={block.category}
                         onChange={(event) => handleBlockChange(index, { category: event.target.value })}
                       >
