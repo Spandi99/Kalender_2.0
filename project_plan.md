@@ -742,74 +742,71 @@ und dabei in einem klaren, modernen Illustrationsstil gehalten sein.
 #### Frontend
 - **Frameworks:** React, TailwindCSS, Framer Motion, Lottie React  
 - **Verzeichnisstruktur:**
-🏗️ Phase 13 – Persistent Infrastructure & Security Hardening
+🧭 PHASE 13 – Persistent Infrastructure & Security Hardening
 
 Ziel:
-Diese Phase stellt sicher, dass die Orgalifer-Infrastruktur dauerhaft stabil, sicher und öffentlich erreichbar ist.
-Sie beseitigt die bisher auftretenden Fehler (502, 404, CORS, CSRF, Zertifikats-Probleme, Nginx-Restart-Loops) vollständig und sorgt für einen robusten, wartungsfreien Betrieb.
+Diese Phase garantiert, dass Orgalifer dauerhaft stabil, sicher und öffentlich erreichbar läuft — auch nach Neustarts, Zertifikatsverlusten oder Routeränderungen.
 
-🔹 Teilziele
+🎯 Fokus:
 
-Dauerhaftes HTTPS & Domain-Stabilität
+HTTPS funktioniert immer, selbst wenn Zertifikate fehlen.
 
-Automatische Zertifikatserstellung und -erneuerung via Certbot
+Zertifikate werden automatisch erstellt, überprüft und erneuert.
 
-Fallback auf selbstsigniertes Zertifikat, falls noch kein gültiges vorhanden
+Das System ist über https://orgalifer.ch
+ weltweit erreichbar (auch mobil).
 
-Kein Abbruch oder Crash von Nginx mehr bei fehlenden Zertifikaten
+Backend & Frontend sind synchron, alle Endpunkte erreichbar.
 
-HTTPS läuft stabil auch bei Neustarts oder leeren Zertifikats-Volumes
+Keine CORS-, CSRF-, 404- oder 502-Fehler mehr.
 
-Frontend-Backend Synchronisation
+Self-Healing-Health-Monitor prüft regelmäßig und repariert sich selbst.
 
-Sichere Proxy-Weiterleitung über HTTPS
+🔧 Teilziele
 
-API-Pfad /api/... überall einheitlich erreichbar
+Dauerhaftes HTTPS & Zertifikatsmanagement
 
-Keine 404- oder 502-Fehler mehr beim Zugriff auf /events, /templates, /ical, /feedback
+Certbot erstellt oder erneuert Zertifikate automatisch.
 
-Mobile & Externer Zugriff
+Bei fehlenden PEM-Dateien werden Dummy-Zertifikate generiert.
 
-Zugriff über https://orgalifer.ch auch von LTE- und IPv6-Netzwerken
+Keine Nginx-Restart-Loops mehr.
 
-Fallback für IPv4-Clients, falls der ISP keine IPv6-Weiterleitung bietet
+Mobile & Öffentlicher Zugriff
 
-DNS-Validierung & automatisches Rebinding, falls sich IP-Adressen ändern
+IPv4 und IPv6-kompatibel.
 
-Security & Policy Hardening
+Zugriff über Mobilfunknetze garantiert.
 
-Entfernen aller überflüssigen Laravel/Pusher/CSRF-Referenzen
+API-Konsistenz & Stabilität
 
-Sichere CORS-Konfiguration nur für die benötigten Hosts (orgalifer.ch, 192.168.1.136, localhost)
+Einheitliche Proxy-Routen (/api/...).
 
-Aktivierte HSTS-Header für HTTPS
+Events, Templates, ICAL-Import, XP-Log & Feedback laufen zuverlässig.
 
-Strikte CSP (Content Security Policy) für Scripts, Fonts, und API
+Security Hardening
 
-Self-Healing Logic
+Strict HTTPS-Header (HSTS, CSP, CORS) aktiv.
 
-Täglicher Health-Check: prüft Zertifikatsgültigkeit, API-Erreichbarkeit und Domain-Zugriff
+Keine Laravel- oder Pusher-Referenzen.
 
-Automatischer Reload von Nginx bei Zertifikats- oder DNS-Änderungen
+CSRF-Fehler eliminiert.
 
-Logging über /api/health/extended
+Self-Healing Monitoring
 
-🧰 Ergebnis dieser Phase:
+Automatischer Health-Check alle 10 Minuten.
 
-Zugriff via:
-🔒 https://orgalifer.ch (öffentlich, mobil, IPv6/IPv4)
-🧩 http://192.168.1.136 (lokal)
+Prüft Zertifikatsgültigkeit, API-Antworten & DNS-Status.
 
-Funktionierende Module: Events, Templates, ICAL-Import, Feedback, XP-System
+Kann Nginx reloaden, falls Fehler erkannt werden.
 
-Kein Nginx-Crash, keine CORS/CSRF/502-Fehler mehr
+📎 Branch:
 
-Automatische Zertifikatserneuerung & Self-Healing-Mechanismus
+codex/implement-patch-11m+-for-api-and-https
 
-📎 Referenz:
+📎 Patch:
 
-Branch: codex/implement-patch-11m+-for-api-and-https
-→ wird erweitert um Patch 12R1 – Self-Healing HTTPS & Domain Stability
+12R1 – Full Self-Healing HTTPS & Public Access
 
 Development Workflow:
 
