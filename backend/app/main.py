@@ -1,5 +1,7 @@
 import asyncio
+import datetime
 import logging
+import os
 import socket
 
 from fastapi import FastAPI
@@ -169,12 +171,14 @@ def nginx_status() -> dict[str, str]:
 
 @app.get("/api/health/extended")
 @app.get("/health/extended")
-async def health_extended() -> dict[str, object]:
+def health_extended() -> dict[str, object]:
     return {
         "status": "ok",
-        "database": settings.database_url,
-        "cors": origins,
-        "uptime": "active",
+        "time": datetime.datetime.utcnow().isoformat(),
+        "cert_exists": os.path.exists(
+            "/etc/letsencrypt/live/orgalifer.ch/fullchain.pem"
+        ),
+        "services": ["frontend", "backend", "db", "nginx", "certbot"],
     }
 
 
