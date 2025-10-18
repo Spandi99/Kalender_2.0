@@ -27,8 +27,12 @@ RUN node scripts/prebuild.js
 
 RUN npm run build
 
-# ===== STAGE 2: Serve with Nginx =====
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+# ===== STAGE 2: Prepare distributable assets =====
+FROM nginx:1.25-alpine
+
+COPY --from=build /app/dist /var/www/dist
+RUN mkdir -p /usr/share/nginx/html
+COPY docker-entrypoint.d/ /docker-entrypoint.d/
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

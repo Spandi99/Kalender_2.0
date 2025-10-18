@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { CloudDownload, RefreshCcw } from "lucide-react";
+import { DownloadCloud, RefreshCcw } from "lucide-react";
 
 import { fetchImportedCalendars } from "../../api/client";
 import { Button } from "../ui/button";
@@ -47,7 +47,7 @@ export default function ICalView() {
           className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur"
         >
           <div className="mb-4 flex items-center gap-3 text-slate-200">
-            <CloudDownload className="h-5 w-5 text-blue-400" />
+            <DownloadCloud className="h-5 w-5 text-blue-400" />
             <h3 className="text-xl font-semibold text-white">Verbundene Kalender</h3>
           </div>
           <ExternalCalendars />

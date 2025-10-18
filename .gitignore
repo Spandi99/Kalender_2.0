@@ -4,6 +4,11 @@ dist/
 build/
 *.log
 
+# Keep the prepared production bundle placeholder committed
+!frontend/dist/
+frontend/dist/*
+!frontend/dist/index.html
+
 # Python
 __pycache__/
 *.pyc

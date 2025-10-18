@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
   CalendarDays,
-  CloudDownload,
+  DownloadCloud,
   LayoutDashboard,
   MessageSquare,
   NotebookPen,
@@ -16,7 +16,7 @@ const navItems = [
   { label: "Overview", to: "/dashboard", icon: LayoutDashboard },
   { label: "Calendar", to: "/dashboard/calendar", icon: CalendarDays },
   { label: "XP & Level", to: "/dashboard/xp", icon: Sparkles },
-  { label: "Kalender-Import", to: "/dashboard/ical", icon: CloudDownload },
+  { label: "Kalender-Import", to: "/dashboard/ical", icon: DownloadCloud },
   { label: "AI Insights", to: "/dashboard/ai", icon: Bot },
   { label: "Templates", to: "/dashboard/templates", icon: NotebookPen },
   { label: "Feedback", to: "/dashboard/feedback", icon: MessageSquare },
