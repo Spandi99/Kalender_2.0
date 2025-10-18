@@ -10,16 +10,16 @@ services:
       POSTGRES_DB: calendar_xp
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: kalender-backend
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp
       BACKEND_CORS_ORIGINS: '["https://orgalifer.ch", "http://orgalifer.ch", "https://192.168.1.136", "http://192.168.1.136", "https://localhost", "http://localhost"]'
-    ports:
-      - "8000:8000"
     depends_on:
       - db
     restart: unless-stopped
@@ -40,7 +40,8 @@ services:
     container_name: kalender-nginx
     depends_on:
       - backend
-      - frontend
+      - db
+      - certbot
     ports:
       - "80:80"
       - "443:443"
@@ -75,19 +76,7 @@ services:
         certbot certonly --webroot -w /var/www/certbot -d orgalifer.ch $EMAIL_ARGS --agree-tos --non-interactive || true;
       fi;
       while :; do
-        certbot renew;
+        certbot renew --webroot -w /var/www/certbot || true;
         sleep 12h & wait $${!};
       done;'
-    restart: unless-stopped
-
-  monitor:
-    image: docker:24-cli
-    container_name: kalender-monitor
-    depends_on:
-      - backend
-      - nginx
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./scripts/health_monitor.sh:/app/scripts/health_monitor.sh:ro
-    entrypoint: "/bin/sh -c 'apk add --no-cache curl >/dev/null && chmod +x /app/scripts/health_monitor.sh && /app/scripts/health_monitor.sh'"
     restart: unless-stopped
