@@ -1,0 +1,64 @@
+events {}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile      on;
+    keepalive_timeout 65;
+
+    # ------------------------------------------------------------
+    # FRONTEND (React App)
+    # ------------------------------------------------------------
+    server {
+        listen 80;
+        server_name orgalifer.ch www.orgalifer.ch;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name orgalifer.ch www.orgalifer.ch;
+
+        ssl_certificate     /etc/letsencrypt/live/orgalifer.ch/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/orgalifer.ch/privkey.pem;
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+            try_files $uri /index.html;
+        }
+
+        # Frontend calls to /api → forward to API domain
+        location /api/ {
+            return 301 https://api.orgalifer.ch$request_uri;
+        }
+    }
+
+    # ------------------------------------------------------------
+    # BACKEND (FastAPI)
+    # ------------------------------------------------------------
+    server {
+        listen 80;
+        server_name api.orgalifer.ch;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name api.orgalifer.ch;
+
+        ssl_certificate     /etc/letsencrypt/live/orgalifer.ch/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/orgalifer.ch/privkey.pem;
+
+        location / {
+            proxy_pass http://kalender-backend:8000/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}

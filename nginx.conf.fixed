@@ -1,0 +1,62 @@
+# ==========================
+# NGINX CONFIGURATION - ORGALIFER
+# Stable Production Edition (Oct 2025)
+# ==========================
+
+# --- Redirect all HTTP to HTTPS ---
+server {
+    listen 80;
+    server_name orgalifer.ch www.orgalifer.ch api.orgalifer.ch;
+    return 301 https://$host$request_uri;
+}
+
+# --- Main HTTPS Server ---
+server {
+    listen 443 ssl http2;
+    server_name orgalifer.ch www.orgalifer.ch api.orgalifer.ch;
+
+    ssl_certificate     /etc/letsencrypt/live/orgalifer.ch/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/orgalifer.ch/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/orgalifer.ch/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # --- Serve Frontend ---
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Cache static assets for better performance
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|ttf|svg)$ {
+        expires 30d;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    # --- Frontend Routes (React SPA fallback) ---
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # --- Proxy API requests to backend ---
+    location /api/ {
+        proxy_pass http://kalender-backend:8000/;
+        proxy_http_version 1.1;
+
+        # Forward headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Increase timeouts for long responses
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    # --- Security Headers ---
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
+    add_header X-XSS-Protection "1; mode=block";
+}
