@@ -4,10 +4,12 @@ WORKDIR /app
 
 # Install npm updates first
 RUN npm install -g npm@latest
+RUN chmod +x /usr/local/bin/* || true
 
 # Copy manifest and install dependencies (allow rebuild)
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
+RUN npm rebuild vite --force || true
 
 # Ensure critical FullCalendar modules are always present
 RUN npm install --legacy-peer-deps \
@@ -31,7 +33,8 @@ RUN npm run build
 FROM nginx:1.25-alpine
 
 COPY --from=build /app/dist /var/www/dist
-RUN mkdir -p /usr/share/nginx/html
+RUN mkdir -p /usr/share/nginx/html \
+    && cp -a /var/www/dist/. /usr/share/nginx/html/
 COPY docker-entrypoint.d/ /docker-entrypoint.d/
 
 EXPOSE 80
