@@ -16,3 +16,28 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# --- Certbot (SSL certificates) ---
+certbot/conf/live/
+certbot/conf/archive/
+certbot/conf/accounts/
+certbot/www/
+certbot/logs/
+certbot/renewal/
+certbot/conf/renewal-hooks/
+
+# --- Docker volumes (local data, not tracked) ---
+postgres_data/
+nginx/conf.d/default.conf
+nginx/nginx.conf.localbackup
+nginx.conf.fixed
+
+# --- Frontend build output (auto-generated) ---
+frontend/dist/assets/
+frontend/dist/*.js
+frontend/dist/*.css
+frontend/dist/*.map
+!frontend/dist/index.html
+
+# --- Misc ---
+*.pem
