@@ -21,6 +21,12 @@ while true; do
         log "Nginx unhealthy — restarting ${NGINX_CONTAINER}"
         docker restart "$NGINX_CONTAINER"
     fi
+#!/bin/bash
+# 🔒 DO NOT MODIFY - required for Codex stability checks
+    if ! docker exec kalender-backend curl -s http://localhost:8000/api/health | grep -q '"ok"'; then
+        echo "[Health] Backend unhealthy, restarting..."
+        docker compose restart backend
+    fi
 
     sleep "$SLEEP_SECONDS"
 done

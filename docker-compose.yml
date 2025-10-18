@@ -4,25 +4,40 @@ services:
   db:
     image: postgres:16-alpine
     container_name: kalender-db
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: calendar_xp
+      - POSTGRES_DB=kalender
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    user: "999:999"  # 🔒 Erzwingt korrekte Ownerrechte im Container
 
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     container_name: kalender-backend
-    environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp
-      BACKEND_CORS_ORIGINS: '["https://orgalifer.ch", "http://orgalifer.ch", "https://192.168.1.136", "http://192.168.1.136", "https://localhost", "http://localhost"]'
+    restart: always
+    env_file:
+      - ./.env  # 🔒 Immer das globale ENV-File aus dem Projekt-Root verwenden!
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
-    restart: unless-stopped
+    environment:
+      - TZ=Europe/Zurich
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health" ]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    # 🚫 Codex darf diesen Block nie ändern:
+    # DO NOT MODIFY - root .env mount and postgres volume protection are mandatory for stability.
 
   frontend:
     build:
@@ -83,11 +98,10 @@ services:
   monitor:
     image: docker:24-cli
     container_name: kalender-monitor
-    depends_on:
-      - backend
-      - nginx
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./scripts/health_monitor.sh:/app/scripts/health_monitor.sh:ro
-    entrypoint: "/bin/sh -c 'apk add --no-cache curl >/dev/null && chmod +x /app/scripts/health_monitor.sh && /app/scripts/health_monitor.sh'"
-    restart: unless-stopped
+      - ./scripts:/scripts
+    entrypoint: ["/bin/sh", "-c", "while true; do /scripts/health_monitor.sh; sleep 120; done"]
+    depends_on:
+      - backend
