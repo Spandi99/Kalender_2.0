@@ -55,10 +55,29 @@ services:
   certbot:
     image: certbot/certbot
     container_name: kalender-certbot
+    environment:
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    entrypoint: >-
+      /bin/sh -c '
+      trap "exit 0" TERM;
+      EMAIL_ARGS="";
+      if [ -n "$CERTBOT_EMAIL" ]; then
+        EMAIL_ARGS="--email $CERTBOT_EMAIL";
+      else
+        echo "[certbot] CERTBOT_EMAIL not set, registering without email";
+        EMAIL_ARGS="--register-unsafely-without-email";
+      fi;
+      if [ ! -f /etc/letsencrypt/live/orgalifer.ch/fullchain.pem ]; then
+        echo "[certbot] No existing certificate found, requesting initial certificate";
+        certbot certonly --webroot -w /var/www/certbot -d orgalifer.ch $EMAIL_ARGS --agree-tos --non-interactive || true;
+      fi;
+      while :; do
+        certbot renew;
+        sleep 12h & wait $${!};
+      done;'
     restart: unless-stopped
 
   monitor:
