@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
@@ -13,13 +13,17 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
+import { useUserProfile, type UserProfile } from "../../lib/useUserProfile";
+import { getReadableTextColor, withAlpha } from "../../utils/colorUtils";
+import OrgaliferLogo from "../Brand/OrgaliferLogo";
+import UserAvatar from "../Avatar/UserAvatar";
 import { Progress } from "../ui/progress";
 
 const navItems = [
   { label: "Overview", to: "/dashboard", icon: LayoutDashboard },
   { label: "Calendar", to: "/dashboard/calendar", icon: CalendarDays },
   { label: "XP & Level", to: "/dashboard/xp", icon: Sparkles },
-  { label: "Kalender-Import", to: "/dashboard/ical", icon: DownloadCloud },
+  { label: "Calendar Import", to: "/dashboard/ical", icon: DownloadCloud },
   { label: "AI Insights", to: "/dashboard/ai", icon: Bot },
   { label: "Templates", to: "/dashboard/templates", icon: NotebookPen },
   { label: "Feedback", to: "/dashboard/feedback", icon: MessageSquare },
@@ -34,9 +38,14 @@ interface SidebarContentProps {
   onClose?: () => void;
   avatarStatus?: AvatarStatus;
   isAvatarLoading?: boolean;
+  profile: UserProfile;
 }
 
-function SidebarContent({ onClose, avatarStatus, isAvatarLoading }: SidebarContentProps) {
+const SIDEBAR_BACKGROUND = "rgba(2, 6, 23, 0.92)";
+const ACTIVE_NAV_BACKGROUND = withAlpha("#0066FF", 0.2);
+const HOVER_NAV_BACKGROUND = "rgba(15, 23, 42, 0.7)";
+
+function SidebarContent({ onClose, avatarStatus, isAvatarLoading, profile }: SidebarContentProps) {
   const location = useLocation();
 
   const xpProgress = avatarStatus ? Math.round(Math.min(Math.max(avatarStatus.level_progress, 0), 1) * 100) : 0;
@@ -47,42 +56,56 @@ function SidebarContent({ onClose, avatarStatus, isAvatarLoading }: SidebarConte
     : "–";
   const xpRemaining = avatarStatus
     ? avatarStatus.xp_to_next != null
-      ? `${avatarStatus.xp_to_next} XP bis Level ${avatarStatus.current_level + 1}`
-      : "Max Level erreicht"
+      ? `${avatarStatus.xp_to_next} XP to level ${avatarStatus.current_level + 1}`
+      : "Max level reached"
     : isAvatarLoading
-    ? "Lädt…"
-    : "Noch keine Daten";
-  const avatarLevelLabel = avatarStatus ? `Level ${avatarStatus.current_level}` : isAvatarLoading ? "Lädt…" : "Avatar Status";
+    ? "Loading…"
+    : "No data yet";
+  const avatarLevelLabel = avatarStatus ? `Level ${avatarStatus.current_level}` : isAvatarLoading ? "Loading…" : "Avatar Status";
   const displayedAvatarState = avatarStatus
     ? avatarStatus.avatar_state.replace(/_/g, " ")
     : isAvatarLoading
-    ? "Wird geladen…"
-    : "Noch inaktiv";
-  const moodLabel = avatarStatus ? `Stimmung: ${avatarStatus.expression}` : "";
+    ? "Fetching status…"
+    : "Inactive";
+  const moodLabel = avatarStatus ? `Mood: ${avatarStatus.expression}` : "";
   const xpProgressLabel = avatarStatus ? `${xpProgress}%` : isAvatarLoading ? "…" : "–";
 
+  const sidebarTextColor = useMemo(() => getReadableTextColor(SIDEBAR_BACKGROUND), []);
+  const xpCardBackground = "rgba(15, 23, 42, 0.82)";
+  const xpCardTextColor = useMemo(() => getReadableTextColor(xpCardBackground), []);
+  const inactiveNavColor = "rgba(221, 229, 255, 0.82)";
+
   return (
-    <div className="flex h-full flex-col border-r border-slate-800 bg-slate-950/90 px-6 py-6 shadow-xl backdrop-blur">
-      <div className="mb-8 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-300">
-            <LayoutDashboard className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Kalender 2.0</p>
-            <p className="text-lg font-semibold text-white">Unified Dashboard</p>
-          </div>
+    <div
+      className="flex h-full flex-col border-r border-slate-800/80 bg-slate-950/90 px-6 py-6 shadow-xl backdrop-blur"
+      style={{ color: sidebarTextColor }}
+    >
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <OrgaliferLogo size={32} />
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">
+            Smart Calendar
+          </p>
         </div>
         {onClose ? (
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="rounded-full border border-slate-800/80 bg-slate-900/60 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label="Close navigation"
           >
             <X className="h-5 w-5" />
           </button>
         ) : null}
+      </div>
+
+      <div className="mb-8 flex items-center gap-3 rounded-2xl border border-slate-800/70 bg-slate-900/70 px-4 py-3 shadow-inner">
+        <UserAvatar name={profile.name} imageUrl={profile.avatarUrl} aiPreviewUrl={profile.aiAvatarUrl} size={48} />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-100">{profile.name}</p>
+          {profile.email ? <p className="text-xs text-slate-400">{profile.email}</p> : null}
+          <p className="text-xs text-slate-500">Personalized insights ready</p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-2">
@@ -92,34 +115,45 @@ function SidebarContent({ onClose, avatarStatus, isAvatarLoading }: SidebarConte
             to={item.to}
             onClick={onClose}
             className={({ isActive }) => {
-              const active =
-                isActive ||
-                (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
-              return `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                active
-                  ? "bg-blue-500/20 text-blue-200"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-              }`;
+              const active = isActive || (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
+              return [
+                "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0",
+                active ? "shadow-inner shadow-blue-900/50" : "hover:bg-slate-800/60",
+              ].join(" ");
+            }}
+            style={({ isActive }) => {
+              const active = isActive || (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
+              const background = active ? ACTIVE_NAV_BACKGROUND : "transparent";
+              const textColor = getReadableTextColor(background || SIDEBAR_BACKGROUND);
+              return {
+                backgroundColor: background,
+                color: active ? textColor : inactiveNavColor,
+              };
             }}
             end={item.to === "/dashboard"}
           >
-            <item.icon className="h-5 w-5" />
+            <item.icon className="h-5 w-5" aria-hidden />
             {item.label}
           </NavLink>
         ))}
       </nav>
+
       <div className="mt-auto space-y-3 pt-6">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm shadow-inner">
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400">
-            <span>XP Fortschritt</span>
+        <div
+          className="rounded-2xl border border-slate-800/70 p-4 text-sm shadow-inner"
+          style={{ backgroundColor: xpCardBackground, color: xpCardTextColor }}
+        >
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-300/90">
+            <span>XP Progress</span>
             <span>{xpProgressLabel}</span>
           </div>
-          <div className="mt-2 text-lg font-semibold text-white">{avatarLevelLabel}</div>
-          <div className="text-xs text-slate-400">{displayedAvatarState}</div>
-          {moodLabel ? <div className="text-xs text-slate-500">{moodLabel}</div> : null}
-          <Progress value={xpProgress} className="mt-3 h-2" />
-          <div className="mt-3 text-xs text-slate-300">{xpLabel}</div>
-          <div className="text-xs text-slate-500">{xpRemaining}</div>
+          <div className="mt-2 text-lg font-semibold text-slate-100">{avatarLevelLabel}</div>
+          <div className="text-xs text-slate-300/90">{displayedAvatarState}</div>
+          {moodLabel ? <div className="text-xs text-slate-400/90">{moodLabel}</div> : null}
+          <Progress value={xpProgress} className="mt-3 h-2 bg-slate-800/60" />
+          <div className="mt-3 text-xs text-slate-200/90">{xpLabel}</div>
+          <div className="text-xs text-slate-400/80">{xpRemaining}</div>
         </div>
       </div>
     </div>
@@ -130,11 +164,12 @@ export function Sidebar({ isMobileOpen, onClose }: SidebarProps) {
   const avatarQuery = useAvatar();
   const avatarStatus = avatarQuery.data;
   const isAvatarLoading = avatarQuery.isLoading || avatarQuery.isFetching;
+  const { profile } = useUserProfile();
 
   return (
     <Fragment>
       <div className="hidden h-full w-72 lg:block">
-        <SidebarContent avatarStatus={avatarStatus} isAvatarLoading={isAvatarLoading} />
+        <SidebarContent profile={profile} avatarStatus={avatarStatus} isAvatarLoading={isAvatarLoading} />
       </div>
 
       <AnimatePresence>
@@ -161,6 +196,7 @@ export function Sidebar({ isMobileOpen, onClose }: SidebarProps) {
             >
               <SidebarContent
                 onClose={onClose}
+                profile={profile}
                 avatarStatus={avatarStatus}
                 isAvatarLoading={isAvatarLoading}
               />

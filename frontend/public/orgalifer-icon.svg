@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="orgalifer-favicon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066FF" />
+      <stop offset="100%" stop-color="#00C896" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#orgalifer-favicon)" />
+  <path d="M20 42c0-10.493 8.507-19 19-19h8v8h-8c-6.075 0-11 4.925-11 11v8h-8z" fill="#ffffff" opacity="0.92" />
+  <path d="M34 16h8v32h-8z" fill="#ffffff" opacity="0.88" />
+</svg>

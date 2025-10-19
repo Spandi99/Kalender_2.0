@@ -5,6 +5,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import type { LevelStatus, SystemHealthStatus } from "../../api/client";
 import { fetchLevelStatus, fetchSystemHealth } from "../../api/client";
+import { useUserProfile } from "../../lib/useUserProfile";
+import { getReadableTextColor, withAlpha } from "../../utils/colorUtils";
+import OrgaliferLogo from "../Brand/OrgaliferLogo";
+import UserAvatar from "../Avatar/UserAvatar";
 import { Button } from "../ui/button";
 
 interface TopBarProps {
@@ -15,7 +19,7 @@ const NAV_LABELS: Record<string, string> = {
   "/dashboard": "Overview",
   "/dashboard/calendar": "Calendar",
   "/dashboard/xp": "XP & Level",
-  "/dashboard/ical": "Kalender-Import",
+  "/dashboard/ical": "Calendar Import",
   "/dashboard/ai": "AI Insights",
   "/dashboard/templates": "Templates",
   "/dashboard/feedback": "Feedback",
@@ -23,21 +27,21 @@ const NAV_LABELS: Record<string, string> = {
 
 const STATUS_META = {
   ok: {
-    label: "Stable",
-    tone: "text-emerald-300",
-    dot: "bg-emerald-400",
+    label: "Systems Stable",
+    dot: "#00C896",
+    background: withAlpha("#00C896", 0.18),
   },
   recovering: {
     label: "Recovering",
-    tone: "text-amber-300",
-    dot: "bg-amber-400",
+    dot: "#F59E0B",
+    background: withAlpha("#F59E0B", 0.18),
   },
   error: {
     label: "Attention",
-    tone: "text-rose-300",
-    dot: "bg-rose-400",
+    dot: "#F97316",
+    background: withAlpha("#F97316", 0.24),
   },
-} satisfies Record<string, { label: string; tone: string; dot: string }>;
+} satisfies Record<string, { label: string; dot: string; background: string }>;
 
 function resolveStatus(health?: SystemHealthStatus) {
   if (!health) {
@@ -65,9 +69,13 @@ function computeProgress(level?: LevelStatus) {
   return Math.min(100, Math.max(0, Math.round((gained / total) * 100)));
 }
 
+const HEADER_BACKGROUND = "rgba(2, 6, 23, 0.85)";
+const CHIP_BACKGROUND = "rgba(15, 23, 42, 0.78)";
+
 export function TopBar({ onToggleSidebar }: TopBarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useUserProfile();
 
   const healthQuery = useQuery({
     queryKey: ["system", "health", "topbar"],
@@ -82,8 +90,9 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
   });
 
   const statusMeta = resolveStatus(healthQuery.data);
+  const statusTextColor = getReadableTextColor(statusMeta.background);
+  const chipTextColor = getReadableTextColor(CHIP_BACKGROUND);
   const progress = computeProgress(levelStatusQuery.data);
-
   const heading = useMemo(() => {
     const pathname = location.pathname.replace(/\/$/, "");
     if (NAV_LABELS[pathname]) {
@@ -96,39 +105,62 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
   }, [location.pathname]);
 
   return (
-    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/80 px-4 py-4 backdrop-blur lg:px-8">
-      <div className="flex items-center gap-3">
+    <header
+      className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 bg-slate-950/80 px-4 py-4 backdrop-blur lg:px-8"
+      style={{ color: getReadableTextColor(HEADER_BACKGROUND) }}
+    >
+      <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="inline-flex rounded-full border border-slate-700 bg-slate-900 p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="inline-flex rounded-full border border-slate-700 bg-slate-900/80 p-2 text-slate-200 transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Phase 11c</p>
-          <h1 className="text-2xl font-semibold text-white">{heading}</h1>
+        <div className="flex items-center gap-3">
+          <OrgaliferLogo showWordmark={false} size={28} />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-300">Orgalifer</p>
+            <h1 className="text-2xl font-semibold text-slate-100">{heading}</h1>
+          </div>
         </div>
       </div>
 
       <div className="flex flex-1 flex-wrap items-center justify-end gap-4 text-sm">
-        <div className="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 shadow-sm">
-          <span className={`inline-flex items-center gap-2 text-sm font-semibold ${statusMeta.tone}`}>
-            <span className={`h-2 w-2 rounded-full ${statusMeta.dot}`} aria-hidden />
+        <div
+          className="flex items-center gap-2 rounded-full border border-slate-700/80 px-4 py-2 shadow-sm"
+          style={{ backgroundColor: statusMeta.background, color: statusTextColor }}
+        >
+          <span className="inline-flex items-center gap-2 text-sm font-semibold">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: statusMeta.dot }} aria-hidden />
             {statusMeta.label}
           </span>
-          <span className="text-slate-300">
+          <span>
             {healthQuery.isLoading ? "Checking…" : healthQuery.data?.last_recovery_action ?? "Up to date"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 shadow-sm">
-          <span className="text-sm font-semibold text-blue-300">XP Progress</span>
-          <span className="text-slate-200">{progress}%</span>
+        <div
+          className="flex items-center gap-2 rounded-full border border-slate-700/80 px-4 py-2 shadow-sm"
+          style={{ backgroundColor: CHIP_BACKGROUND, color: chipTextColor }}
+        >
+          <span className="text-sm font-semibold">XP Progress</span>
+          <span>{progress}%</span>
         </div>
 
-        <Button variant="default" onClick={() => navigate("/dashboard/templates")}>Templates</Button>
+        <Button variant="secondary" backgroundColor={CHIP_BACKGROUND} onClick={() => navigate("/dashboard/templates")}
+        >
+          Templates
+        </Button>
+
+        <div className="flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-2 shadow-sm">
+          <UserAvatar name={profile.name} imageUrl={profile.avatarUrl} aiPreviewUrl={profile.aiAvatarUrl} size={36} showBadge={false} />
+          <div className="hidden text-right sm:block">
+            <p className="text-sm font-semibold text-slate-100">{profile.name}</p>
+            <p className="text-xs text-slate-400">Ready for focus mode</p>
+          </div>
+        </div>
       </div>
     </header>
   );

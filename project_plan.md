@@ -873,4 +873,27 @@ Damit hat Codex bei jedem Request:
 * und unseren Entwicklungsworkflow.
 
 ---
+---
+
+## 🎨 UI & Contrast Overhaul – Orgalifer
+
+### Problem Summary (Before → After)
+- Legacy UI misused light text on pale surfaces and dark text on nearly black panels, especially on cards, dialogs, and calendar events.
+- Hover and active states lacked contrast consistency, and branding still displayed the deprecated "Kalender 2.0" identity.
+- After the overhaul, all critical surfaces now derive text color from computed contrast, event pills adapt per category tone, and the interface carries the Orgalifer logo, favicon, and naming.
+
+### Dynamic Contrast Logic
+- Added `src/utils/colorUtils.ts` to parse HEX/RGB/HSL colors, compute luminance, ensure WCAG ≥4.5 contrast, and mix or adjust colors when needed.
+- UI primitives (`Button`, `Card`, `Dialog`, inputs) consume the helper to set text color automatically based on their surface background.
+- FullCalendar events now hash categories to palette colors, tint completed items, and pick readable `textColor`/`borderColor` on the fly.
+
+### Updated Components & Surfaces
+- Navigation + header: `src/components/dashboard/Sidebar.tsx`, `TopBar.tsx` integrate Orgalifer branding, dicebear-ready avatars, and contrast-safe badges.
+- UI primitives: `Button`, `Card`, `Dialog`, `Input`, `Textarea`, `Label`, and `Progress` adopt the new palette and readable text defaults.
+- Branding assets: favicon (`public/orgalifer-icon.svg`), `OrgaliferLogo`, and `UserAvatar` components prepare for AI-generated avatars.
+- Calendar events & modals: `CalendarView/index.tsx`, `CalendarView.tsx` rely on dynamic background colors and improved legibility in modals and tooltips.
+
+### Follow-up Ideas
+- Surface per-category color configuration from the backend so admins can fine tune palette assignments instead of hash-mapping.
+- Expand the avatar hook to pull AI-generated art once the service is ready and persist uploads via API.
 

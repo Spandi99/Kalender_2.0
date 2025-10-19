@@ -24,8 +24,8 @@ export default function ICalView() {
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Kalender-Import</p>
-            <h2 className="text-3xl font-bold text-white">Externe Kalender synchronisieren</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Calendar Import</p>
+            <h2 className="text-3xl font-bold text-white">Synchronize external calendars</h2>
             <p className="text-sm text-slate-300">
               Verbinde iCal-Feeds, synchronisiere Termine und halte alle Quellen in deinem Unified Dashboard aktuell.
             </p>

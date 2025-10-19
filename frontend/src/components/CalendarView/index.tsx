@@ -12,6 +12,7 @@ import "@fullcalendar/list/main.css";
 // ----------------------------------------------------------
 
 import type { CalendarEvent } from "../../api/client";
+import { adjustLuminance, getReadableTextColor, mixColors, withAlpha } from "../../utils/colorUtils";
 
 export interface CalendarViewProps {
   events: CalendarEvent[];
@@ -20,6 +21,8 @@ export interface CalendarViewProps {
   timeZone?: string;
   locale?: string;
 }
+
+const CATEGORY_COLORS = ["#0066FF", "#00C896", "#F97316", "#A855F7", "#EC4899", "#38BDF8", "#F59E0B", "#22D3EE"];
 
 const toLocalCalendarDate = (value: string) => {
   if (!value) {
@@ -30,27 +33,62 @@ const toLocalCalendarDate = (value: string) => {
   return new Date(date.getTime() - offsetMs).toISOString().replace(/\.\d{3}Z$/, "");
 };
 
+function hashCategory(category: string) {
+  let hash = 0;
+  for (let index = 0; index < category.length; index += 1) {
+    hash = (hash << 5) - hash + category.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function resolveCategoryColor(category: string) {
+  if (!category) {
+    return CATEGORY_COLORS[0];
+  }
+  const hash = hashCategory(category);
+  return CATEGORY_COLORS[hash % CATEGORY_COLORS.length];
+}
+
 export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
   const calendarEvents = useMemo(
     () =>
-      events.map((event) => ({
-        id: String(event.id),
-        title: event.title,
-        start: toLocalCalendarDate(event.start),
-        end: toLocalCalendarDate(event.end),
-        classNames: [
-          "rounded-lg",
-          event.completed ? "bg-emerald-500/40" : "bg-blue-500/40",
-          event.completed ? "text-emerald-100" : "text-blue-100",
-        ],
-      })),
+      events.map((event) => {
+        const categoryColor = resolveCategoryColor(event.category);
+        const surface = event.completed ? adjustLuminance(categoryColor, -0.15) : categoryColor;
+        const backgroundColor = withAlpha(surface, event.completed ? 0.72 : 0.85);
+        const borderColor = mixColors(surface, "#020617", 0.65);
+        const textColor = getReadableTextColor(backgroundColor, {
+          lightColor: "#ffffff",
+          darkColor: "#0f172a",
+        });
+
+        return {
+          id: String(event.id),
+          title: event.title,
+          start: toLocalCalendarDate(event.start),
+          end: toLocalCalendarDate(event.end),
+          classNames: [
+            "rounded-xl",
+            "px-2",
+            "py-1",
+            "text-sm",
+            "font-semibold",
+            "shadow",
+            "shadow-slate-900/20",
+          ],
+          backgroundColor,
+          borderColor,
+          textColor,
+        };
+      }),
     [events]
   );
 
   const handleSelect = (selectionInfo: DateSelectArg) => {
     onSelectRange({
       start: new Date(selectionInfo.start.getTime()),
-      end: new Date(selectionInfo.end.getTime())
+      end: new Date(selectionInfo.end.getTime()),
     });
   };
 
@@ -68,7 +106,7 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth,timeGridWeek,listWeek"
+          right: "dayGridMonth,timeGridWeek,listWeek",
         }}
         selectable
         selectMirror

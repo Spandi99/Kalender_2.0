@@ -4,31 +4,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "hsl(0 0% 100%)",
-        foreground: "hsl(222.2 47.4% 11.2%)",
+        background: "#020617",
+        foreground: "#f8fafc",
+        brand: {
+          primary: "#0066FF",
+          accent: "#00C896",
+          deep: "#0F172A",
+        },
         muted: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(215.4 16.3% 46.9%)"
+          DEFAULT: "#1E293B",
+          foreground: "#94A3B8",
         },
         accent: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 47.4% 11.2%)"
+          DEFAULT: "#0F172A",
+          foreground: "#E2E8F0",
         },
         primary: {
-          DEFAULT: "hsl(222.2 47.4% 11.2%)",
-          foreground: "hsl(210 40% 98%)"
+          DEFAULT: "#0066FF",
+          foreground: "#F8FBFF",
         },
         secondary: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 47.4% 11.2%)"
-        }
+          DEFAULT: "#1E293B",
+          foreground: "#E2E8F0",
+        },
       },
       borderRadius: {
         lg: "0.5rem",
         md: "calc(0.5rem - 2px)",
-        sm: "calc(0.5rem - 4px)"
-      }
-    }
+        sm: "calc(0.5rem - 4px)",
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
