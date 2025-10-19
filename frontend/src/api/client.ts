@@ -287,7 +287,7 @@ export const fetchLevelStatus = async (): Promise<LevelStatus> => {
 };
 
 export const submitFeedback = async (payload: FeedbackPayload) => {
-  const { data } = await api.post("/feedback/", payload);
+  const { data } = await api.post("/feedback/submit", payload);
   return data;
 };
 

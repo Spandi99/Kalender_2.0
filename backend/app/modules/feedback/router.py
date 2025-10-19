@@ -9,6 +9,7 @@ router = APIRouter(tags=["Feedback"])
 
 
 @router.post("/", response_model=FeedbackRead, status_code=status.HTTP_201_CREATED)
+@router.post("/submit", response_model=FeedbackRead, status_code=status.HTTP_200_OK)
 def submit_feedback(payload: FeedbackCreate, db: Session = Depends(get_db)) -> FeedbackRead:
     try:
         feedback = create_feedback(db, payload)

@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Award, RefreshCcw } from "lucide-react";
 
-import type { LevelStatus, XpSummary } from "../../api/client";
-import { fetchLevelStatus, fetchXpSummary } from "../../api/client";
+import type { XpSummary } from "../../api/client";
+import { fetchXpSummary } from "../../api/client";
+import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
 import { XpDashboard } from "../XP/XpDashboard";
 import { Button } from "../ui/button";
 
-function computeDailyAverage(summary?: XpSummary, level?: LevelStatus) {
+function computeDailyAverage(summary?: XpSummary, level?: AvatarStatus) {
   if (!summary) return 0;
   const days = level?.current_level ? Math.max(1, level.current_level) : 1;
   return Math.round(summary.total / days);
@@ -21,15 +22,11 @@ export default function XPView() {
     refetchInterval: 60_000,
   });
 
-  const levelStatusQuery = useQuery({
-    queryKey: ["xp", "level-status", "dashboard"],
-    queryFn: fetchLevelStatus,
-    refetchInterval: 60_000,
-  });
+  const avatarQuery = useAvatar();
 
   const averagePerDay = useMemo(
-    () => computeDailyAverage(xpSummaryQuery.data, levelStatusQuery.data),
-    [xpSummaryQuery.data, levelStatusQuery.data]
+    () => computeDailyAverage(xpSummaryQuery.data, avatarQuery.data),
+    [xpSummaryQuery.data, avatarQuery.data]
   );
 
   return (
@@ -57,11 +54,11 @@ export default function XPView() {
               variant="outline"
               onClick={() => {
                 xpSummaryQuery.refetch();
-                levelStatusQuery.refetch();
+                avatarQuery.refetch();
               }}
-              disabled={xpSummaryQuery.isFetching || levelStatusQuery.isFetching}
+              disabled={xpSummaryQuery.isFetching || avatarQuery.isFetching || avatarQuery.isRefetching}
             >
-              <RefreshCcw className={`mr-2 h-4 w-4 ${xpSummaryQuery.isFetching || levelStatusQuery.isFetching ? "animate-spin" : ""}`} />
+              <RefreshCcw className={`mr-2 h-4 w-4 ${xpSummaryQuery.isFetching || avatarQuery.isFetching || avatarQuery.isRefetching ? "animate-spin" : ""}`} />
               Aktualisieren
             </Button>
           </div>
@@ -70,7 +67,7 @@ export default function XPView() {
 
       <XpDashboard
         summary={xpSummaryQuery.data}
-        levelInfo={levelStatusQuery.data as LevelStatus | undefined}
+        levelInfo={avatarQuery.data ?? undefined}
         lastAwarded={undefined}
       />
     </motion.div>

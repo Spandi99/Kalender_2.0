@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
+import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
+import { Progress } from "../ui/progress";
+
 const navItems = [
   { label: "Overview", to: "/dashboard", icon: LayoutDashboard },
   { label: "Calendar", to: "/dashboard/calendar", icon: CalendarDays },
@@ -27,8 +30,36 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-function SidebarContent({ onClose }: { onClose?: () => void }) {
+interface SidebarContentProps {
+  onClose?: () => void;
+  avatarStatus?: AvatarStatus;
+  isAvatarLoading?: boolean;
+}
+
+function SidebarContent({ onClose, avatarStatus, isAvatarLoading }: SidebarContentProps) {
   const location = useLocation();
+
+  const xpProgress = avatarStatus ? Math.round(Math.min(Math.max(avatarStatus.level_progress, 0), 1) * 100) : 0;
+  const xpLabel = avatarStatus
+    ? avatarStatus.xp_next != null
+      ? `${avatarStatus.xp_current} / ${avatarStatus.xp_next} XP`
+      : `${avatarStatus.xp_current} XP`
+    : "–";
+  const xpRemaining = avatarStatus
+    ? avatarStatus.xp_to_next != null
+      ? `${avatarStatus.xp_to_next} XP bis Level ${avatarStatus.current_level + 1}`
+      : "Max Level erreicht"
+    : isAvatarLoading
+    ? "Lädt…"
+    : "Noch keine Daten";
+  const avatarLevelLabel = avatarStatus ? `Level ${avatarStatus.current_level}` : isAvatarLoading ? "Lädt…" : "Avatar Status";
+  const displayedAvatarState = avatarStatus
+    ? avatarStatus.avatar_state.replace(/_/g, " ")
+    : isAvatarLoading
+    ? "Wird geladen…"
+    : "Noch inaktiv";
+  const moodLabel = avatarStatus ? `Stimmung: ${avatarStatus.expression}` : "";
+  const xpProgressLabel = avatarStatus ? `${xpProgress}%` : isAvatarLoading ? "…" : "–";
 
   return (
     <div className="flex h-full flex-col border-r border-slate-800 bg-slate-950/90 px-6 py-6 shadow-xl backdrop-blur">
@@ -77,15 +108,33 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </NavLink>
         ))}
       </nav>
+      <div className="mt-auto space-y-3 pt-6">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm shadow-inner">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <span>XP Fortschritt</span>
+            <span>{xpProgressLabel}</span>
+          </div>
+          <div className="mt-2 text-lg font-semibold text-white">{avatarLevelLabel}</div>
+          <div className="text-xs text-slate-400">{displayedAvatarState}</div>
+          {moodLabel ? <div className="text-xs text-slate-500">{moodLabel}</div> : null}
+          <Progress value={xpProgress} className="mt-3 h-2" />
+          <div className="mt-3 text-xs text-slate-300">{xpLabel}</div>
+          <div className="text-xs text-slate-500">{xpRemaining}</div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function Sidebar({ isMobileOpen, onClose }: SidebarProps) {
+  const avatarQuery = useAvatar();
+  const avatarStatus = avatarQuery.data;
+  const isAvatarLoading = avatarQuery.isLoading || avatarQuery.isFetching;
+
   return (
     <Fragment>
       <div className="hidden h-full w-72 lg:block">
-        <SidebarContent />
+        <SidebarContent avatarStatus={avatarStatus} isAvatarLoading={isAvatarLoading} />
       </div>
 
       <AnimatePresence>
@@ -110,7 +159,11 @@ export function Sidebar({ isMobileOpen, onClose }: SidebarProps) {
               exit={{ x: -320 }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
             >
-              <SidebarContent onClose={onClose} />
+              <SidebarContent
+                onClose={onClose}
+                avatarStatus={avatarStatus}
+                isAvatarLoading={isAvatarLoading}
+              />
             </motion.div>
           </motion.div>
         ) : null}

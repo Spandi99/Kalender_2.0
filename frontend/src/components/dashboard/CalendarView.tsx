@@ -16,8 +16,12 @@ import {
   fetchEvents,
   fetchSystemHealth,
   fetchSystemLogs,
+  submitFeedback,
+  type FeedbackPayload,
 } from "../../api/client";
+import { AVATAR_QUERY_KEY } from "../../lib/useAvatar";
 import { CalendarView as SchedulerCalendar } from "../CalendarView";
+import { FeedbackModal } from "../Feedback/FeedbackModal";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -42,6 +46,8 @@ interface NewEventFormState {
   category: string;
   description: string;
 }
+
+type FeedbackFormPayload = Omit<FeedbackPayload, "event_id">;
 
 function resolveNextEvent(events: CalendarEvent[]) {
   const now = Date.now();
@@ -74,7 +80,7 @@ const STATUS_BADGES: Record<SystemHealthStatus["status"] | "recovering", string>
   recovering: "bg-amber-500/20 text-amber-200",
 };
 
-const DEFAULT_EVENT_CATEGORY = "general";
+const DEFAULT_EVENT_CATEGORY = "work";
 
 const toDateTimeLocalValue = (date: Date) => {
   const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -96,6 +102,10 @@ export default function CalendarView() {
   const [logsOpen, setLogsOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackTarget, setFeedbackTarget] = useState<CalendarEvent | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
   const [createForm, setCreateForm] = useState<NewEventFormState>(() => {
     const now = new Date();
     const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
@@ -170,6 +180,33 @@ export default function CalendarView() {
     },
   });
 
+  const feedbackMutation = useMutation({
+    mutationFn: ({ eventId, payload }: { eventId: number; payload: FeedbackFormPayload }) =>
+      submitFeedback({ ...payload, event_id: eventId }),
+    onMutate: () => {
+      setFeedbackError(null);
+    },
+    onSuccess: () => {
+      setFeedbackModalOpen(false);
+      setFeedbackTarget(null);
+      setFeedbackError(null);
+      queryClient.invalidateQueries({ queryKey: ["feedback", "summary", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["ai", "insights", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["xp", "summary", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["xp", "level-status", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: AVATAR_QUERY_KEY });
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Feedback konnte nicht gespeichert werden. Bitte erneut versuchen.";
+      setFeedbackError(message);
+    },
+  });
+
   const handleOpenCreateModal = (range?: { start: Date; end: Date }) => {
     const start = range?.start ?? new Date();
     const end = range?.end ?? new Date(start.getTime() + 60 * 60 * 1000);
@@ -209,6 +246,23 @@ export default function CalendarView() {
       category,
       description: description || undefined,
     });
+  };
+
+  const handleFeedbackSubmit = async (payload: FeedbackFormPayload) => {
+    if (!feedbackTarget) {
+      return;
+    }
+    try {
+      await feedbackMutation.mutateAsync({ eventId: feedbackTarget.id, payload });
+    } catch {
+      /* Mutation error handled via onError */
+    }
+  };
+
+  const openFeedbackForEvent = (event: CalendarEvent) => {
+    setFeedbackTarget(event);
+    setFeedbackError(null);
+    setFeedbackModalOpen(true);
   };
 
   const calendarSection = (
@@ -344,7 +398,16 @@ export default function CalendarView() {
               <p className="mt-2 text-slate-300">{details.event.description}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => navigate("/dashboard/feedback")}>Feedback einsehen</Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (details?.event) {
+                    openFeedbackForEvent(details.event);
+                  }
+                }}
+              >
+                Feedback öffnen
+              </Button>
               <Button
                 size="sm"
                 variant="secondary"
@@ -468,7 +531,7 @@ export default function CalendarView() {
                   </option>
                 ))}
                 {!categories.length ? (
-                  <option value={DEFAULT_EVENT_CATEGORY}>Allgemein</option>
+                  <option value={DEFAULT_EVENT_CATEGORY}>Work (Standard)</option>
                 ) : null}
               </select>
             </div>
@@ -526,7 +589,16 @@ export default function CalendarView() {
                 >
                   Schließen
                 </Button>
-                <Button onClick={() => navigate("/dashboard/feedback")}>Feedback öffnen</Button>
+                <Button
+                  onClick={() => {
+                    if (details?.event) {
+                      openFeedbackForEvent(details.event);
+                      setDetails(null);
+                    }
+                  }}
+                >
+                  Feedback öffnen
+                </Button>
               </div>
             </>
           ) : null}
@@ -580,6 +652,19 @@ export default function CalendarView() {
           )}
         </DialogContent>
       </Dialog>
+      <FeedbackModal
+        open={feedbackModalOpen}
+        onOpenChange={(open) => {
+          setFeedbackModalOpen(open);
+          if (!open) {
+            setFeedbackTarget(null);
+            setFeedbackError(null);
+          }
+        }}
+        onSubmit={handleFeedbackSubmit}
+        eventTitle={feedbackTarget?.title}
+        errorMessage={feedbackError}
+      />
     </motion.div>
   );
 }

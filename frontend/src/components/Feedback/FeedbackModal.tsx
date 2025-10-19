@@ -34,9 +34,10 @@ interface FeedbackModalProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (payload: FeedbackFormPayload) => Promise<void>;
   eventTitle?: string;
+  errorMessage?: string | null;
 }
 
-export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle }: FeedbackModalProps) {
+export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorMessage }: FeedbackModalProps) {
   const [completed, setCompleted] = useState(true);
   const [rating, setRating] = useState(4);
   const [mood, setMood] = useState(MOODS[0]?.value ?? "😊");
@@ -253,6 +254,11 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle }: Feed
               placeholder="What went well? What could improve?"
             />
           </div>
+          {errorMessage ? (
+            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 shadow-inner dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-200">
+              {errorMessage}
+            </div>
+          ) : null}
           <Button className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit feedback"}
           </Button>
