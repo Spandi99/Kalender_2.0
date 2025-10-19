@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import FullCalendar, { DateSelectArg, EventClickArg } from "@fullcalendar/react";
+import type { EventContentArg, EventMountArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -51,6 +52,98 @@ function resolveCategoryColor(category: string) {
 }
 
 export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
+
+  const renderEventContent = useCallback((info: EventContentArg) => {
+    const viewType = info.view.type;
+    const isTimeGridView = viewType.startsWith("timeGrid");
+    const root = document.createElement("div");
+    root.style.whiteSpace = "normal";
+    root.style.wordBreak = "break-word";
+
+    const timeText = info.timeText ? info.timeText.replace(/\s+/g, " ").trim() : "";
+    const title = info.event.title?.trim() ?? "";
+    const description = typeof info.event.extendedProps?.description === "string"
+      ? info.event.extendedProps.description.trim()
+      : "";
+
+    if (isTimeGridView) {
+      root.className = "org-event-content org-event-timegrid";
+
+      const localeOption = info.view.calendar.getOption("locale");
+      const locale = (typeof localeOption === "string" && localeOption) ||
+        (typeof window !== "undefined" && window.navigator?.language) ||
+        "en-US";
+      const formatter = typeof Intl !== "undefined"
+        ? new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false })
+        : null;
+
+      const startDate = info.event.start instanceof Date ? info.event.start : null;
+      const endDate = info.event.end instanceof Date ? info.event.end : null;
+      const rangeText = formatter && startDate
+        ? endDate
+          ? `${formatter.format(startDate)} – ${formatter.format(endDate)}`
+          : formatter.format(startDate)
+        : info.timeText ?? "";
+      const headline = [rangeText, title].filter(Boolean).join(" ").trim();
+
+      const headlineEl = document.createElement("div");
+      headlineEl.className = "org-event-line org-timegrid-headline";
+      headlineEl.textContent = headline || title || rangeText || "Event";
+      root.appendChild(headlineEl);
+
+      if (!title && description) {
+        const descriptionEl = document.createElement("div");
+        descriptionEl.className = "org-event-line org-timegrid-description";
+        descriptionEl.textContent = description;
+        root.appendChild(descriptionEl);
+      }
+    } else {
+      root.className = "org-event-content org-event-daygrid";
+
+      if (timeText) {
+        const timeEl = document.createElement("div");
+        timeEl.className = "org-event-line org-daygrid-time";
+        timeEl.textContent = timeText;
+        root.appendChild(timeEl);
+      }
+
+      if (title) {
+        const titleEl = document.createElement("div");
+        titleEl.className = "org-event-line org-daygrid-title";
+        titleEl.textContent = title;
+        root.appendChild(titleEl);
+      }
+
+      if (description) {
+        const descriptionEl = document.createElement("div");
+        descriptionEl.className = "org-event-line org-daygrid-description";
+        descriptionEl.textContent = description;
+        root.appendChild(descriptionEl);
+      }
+
+    }
+
+    const tooltip = [timeText, title, description].filter(Boolean).join(" • ");
+    if (tooltip) {
+      root.setAttribute("title", tooltip);
+    }
+
+    return { domNodes: [root] };
+  }, []);
+
+  const handleEventDidMount = useCallback((info: EventMountArg) => {
+    const timeText = info.timeText ? info.timeText.replace(/\s+/g, " ").trim() : "";
+    const title = info.event.title?.trim() ?? "";
+    const description = typeof info.event.extendedProps?.description === "string"
+      ? info.event.extendedProps.description.trim()
+      : "";
+    const tooltip = [timeText, title, description].filter(Boolean).join(" • ");
+    if (tooltip) {
+      info.el.setAttribute("title", tooltip);
+    }
+  }, []);
+
+
   const calendarEvents = useMemo(
     () =>
       events.map((event) => {
@@ -64,14 +157,16 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         });
 
         return {
+          display: "block",
           id: String(event.id),
           title: event.title,
           start: toLocalCalendarDate(event.start),
           end: toLocalCalendarDate(event.end),
           classNames: [
+            "fc-orgalifer-event",
             "rounded-xl",
-            "px-2",
-            "py-1",
+            "px-3",
+            "py-2",
             "text-sm",
             "font-semibold",
             "shadow",
@@ -80,6 +175,9 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
           backgroundColor,
           borderColor,
           textColor,
+          extendedProps: {
+            description: event.description ?? "",
+          },
         };
       }),
     [events]
@@ -97,7 +195,7 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
   };
 
   return (
-    <div className="h-full rounded-3xl border border-slate-700 bg-slate-950/90 p-4 text-slate-100 shadow-xl">
+    <div className="fc-orgalifer h-full rounded-3xl border border-slate-700 bg-slate-950/90 p-4 text-slate-100 shadow-xl">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
@@ -113,6 +211,11 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         events={calendarEvents}
         select={handleSelect}
         eventClick={handleEventClick}
+        eventContent={renderEventContent}
+        eventDidMount={handleEventDidMount}
+        slotEventOverlap={false}
+        eventOverlap={false}
+        eventMaxStack={3}
         aspectRatio={1.45}
         eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
         slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}

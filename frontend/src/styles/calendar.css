@@ -1,0 +1,137 @@
+.fc-orgalifer {
+  --fc-border-color: rgba(148, 163, 184, 0.25);
+  --fc-event-border-color: transparent;
+  --fc-page-bg-color: transparent;
+  --fc-today-bg-color: rgba(37, 99, 235, 0.15);
+  --fc-timegrid-event-min-height: 4.2rem;
+  --fc-list-event-hover-bg-color: rgba(15, 23, 42, 0.75);
+}
+
+.fc-orgalifer .fc-scrollgrid,
+.fc-orgalifer .fc-daygrid-day-top,
+.fc-orgalifer .fc-timegrid-slot,
+.fc-orgalifer .fc-timegrid-axis {
+  border-color: rgba(71, 85, 105, 0.35);
+}
+
+.fc-orgalifer .fc-timegrid-slot {
+  height: 4.6rem;
+}
+
+.fc-orgalifer .fc-timegrid-slot-label {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.9);
+  font-weight: 600;
+}
+
+.fc-orgalifer .fc-timegrid-slot-minor {
+  border-top-style: dashed;
+}
+
+.fc-orgalifer .fc-timegrid-event {
+  border-radius: 0.85rem;
+  overflow: visible;
+  min-height: 4.2rem;
+}
+
+.fc-orgalifer .fc-daygrid-day-frame {
+  min-height: 150px;
+  padding: 0.5rem;
+}
+
+.fc-orgalifer .fc-daygrid-day-top {
+  padding: 0.45rem 0.5rem 0;
+}
+
+.fc-orgalifer .fc-daygrid-event {
+  margin-top: 0.45rem;
+  border-radius: 0.9rem;
+}
+
+.fc-orgalifer .fc-daygrid-event-dot {
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+@media (min-width: 1280px) {
+  .fc-orgalifer .fc-timegrid-slot {
+    height: 5.2rem;
+  }
+
+  .fc-orgalifer .fc-timegrid-event {
+    min-height: 4.6rem;
+  }
+}
+
+/* reset default padding so custom content controls spacing */
+.fc-orgalifer .fc-timegrid-event .fc-event-main,
+.fc-orgalifer .fc-daygrid-event .fc-event-main {
+  padding: 0;
+  display: block;
+}
+
+/* shared event content styling */
+.fc-orgalifer .org-event-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  line-height: 1.25;
+}
+
+.fc-orgalifer .org-event-content .org-event-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* week/day (time grid) */
+.fc-orgalifer .org-event-timegrid {
+  padding: 0.28rem 0.5rem 0.3rem;
+}
+
+.fc-orgalifer .org-event-timegrid .org-event-line {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+
+.fc-orgalifer .org-event-timegrid .org-timegrid-headline {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fc-orgalifer .org-event-timegrid .org-timegrid-description {
+  font-size: 0.62rem;
+  opacity: 0.8;
+}
+
+/* month (day grid) */
+.fc-orgalifer .org-event-daygrid {
+  padding: 0.45rem 0.65rem 0.5rem;
+}
+
+.fc-orgalifer .org-event-daygrid .org-event-line {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+
+.fc-orgalifer .org-event-daygrid .org-daygrid-time {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.fc-orgalifer .org-event-daygrid .org-daygrid-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.fc-orgalifer .org-event-daygrid .org-daygrid-description {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}

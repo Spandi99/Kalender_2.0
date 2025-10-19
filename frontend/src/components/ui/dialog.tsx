@@ -30,7 +30,7 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
 >(({ className, children, style, backgroundColor, ...props }, ref) => {
-  const surfaceColor = backgroundColor ?? (style?.backgroundColor as string | undefined) ?? "#ffffff";
+  const surfaceColor = backgroundColor ?? (style?.backgroundColor as string | undefined) ?? "#0f172a";
   const hasExplicitTextColor = typeof style?.color !== "undefined";
   const textColor = React.useMemo(() => getReadableTextColor(surfaceColor), [surfaceColor]);
 
@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur",
+          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-slate-700 bg-slate-950/95 p-6 shadow-2xl backdrop-blur",
           className
         )}
         style={mergedStyle}
@@ -59,7 +59,7 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/60 text-slate-500 transition hover:bg-white hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+        <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
           <X className="h-4 w-4" aria-hidden />
           <span className="sr-only">Close dialog</span>
         </DialogPrimitive.Close>
@@ -92,7 +92,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-slate-600", className)}
+    className={cn("text-sm text-slate-300", className)}
     {...props}
   />
 ));

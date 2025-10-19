@@ -27,6 +27,14 @@ const PUNCTUALITY_OPTIONS = [
   { value: "early", label: "Early" },
 ];
 
+const TOGGLE_BASE_CLASS = "flex h-11 items-center justify-center rounded-md border border-slate-700 bg-slate-900/60 text-sm font-medium text-slate-200 transition shadow-sm hover:bg-slate-900/70";
+const TOGGLE_ACTIVE_CLASS = "border-brand-primary bg-brand-primary/20 text-brand-primary";
+const MOOD_BUTTON_CLASS = "flex h-12 w-full flex-1 flex-col items-center justify-center rounded-md border border-slate-700 bg-slate-900/60 text-lg text-slate-200 transition shadow-sm hover:bg-slate-900/70";
+const MOOD_BUTTON_ACTIVE_CLASS = "border-brand-primary bg-brand-primary/20 text-brand-primary";
+const RATING_BUTTON_CLASS = "flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-900/60 text-lg text-slate-200 transition hover:bg-slate-900/70";
+const RATING_BUTTON_ACTIVE_CLASS = "border-amber-500 bg-amber-500/20 text-amber-200";
+const INPUT_CLASS = "border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500";
+
 type FeedbackFormPayload = Omit<FeedbackPayload, "event_id">;
 
 interface FeedbackModalProps {
@@ -47,6 +55,7 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
   const [durationVariance, setDurationVariance] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -58,10 +67,16 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
       setArrivalDelay("");
       setDurationVariance("");
       setNotes("");
+      setFormError(null);
     }
   }, [open]);
 
   const handleSubmit = async () => {
+    setFormError(null);
+    if (completed && punctuality === "late" && arrivalDelay.trim() === "") {
+      setFormError("Bitte gib an, wie viele Minuten du zu spät warst.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const trimmedNotes = notes.trim();
@@ -94,14 +109,14 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md text-slate-200" backgroundColor="#0f172a">
         <DialogHeader>
-          <DialogTitle>Share feedback for {eventTitle ?? "this event"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl font-semibold text-slate-100">Share feedback for {eventTitle ?? "this event"}</DialogTitle>
+          <DialogDescription className="text-slate-300">
             Your reflections help the planner learn what energises you.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-5">
+        <div className="space-y-5 rounded-2xl border border-slate-700 bg-slate-900/60 p-4 shadow-inner">
           <div className="space-y-2">
             <span className="text-sm font-medium">Event completed?</span>
             <div className="grid grid-cols-2 gap-2">
@@ -113,10 +128,8 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                     type="button"
                     onClick={() => setCompleted(value)}
                     className={cn(
-                      "flex h-11 items-center justify-center rounded-md border text-sm font-medium transition",
-                      completed === value
-                        ? "border-indigo-500 bg-indigo-50 text-indigo-600"
-                        : "border-muted bg-white text-muted-foreground hover:border-indigo-200"
+                      TOGGLE_BASE_CLASS,
+                      completed === value ? TOGGLE_ACTIVE_CLASS : ""
                     )}
                   >
                     {label}
@@ -135,7 +148,7 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                 id="feedback-reason"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                className="h-10 w-full rounded-md border border-muted bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2"
+                className="h-10 w-full rounded-md border border-slate-700 bg-slate-900/80 px-3 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
               >
                 <option value="">Select a reason</option>
                 {REASONS.map((item) => (
@@ -156,10 +169,8 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                       type="button"
                       onClick={() => setMood(item.value)}
                       className={cn(
-                        "flex h-12 w-full flex-1 flex-col items-center justify-center rounded-md border text-lg transition",
-                        mood === item.value
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-600"
-                          : "border-muted bg-white text-muted-foreground hover:border-indigo-200"
+                        MOOD_BUTTON_CLASS,
+                        mood === item.value ? MOOD_BUTTON_ACTIVE_CLASS : ""
                       )}
                       aria-label={item.label}
                     >
@@ -178,10 +189,8 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                       type="button"
                       onClick={() => setRating(value)}
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-full border text-lg transition",
-                        value <= rating
-                          ? "border-amber-500 bg-amber-50 text-amber-500"
-                          : "border-muted bg-white text-muted-foreground hover:border-amber-200"
+                        RATING_BUTTON_CLASS,
+                        value <= rating ? RATING_BUTTON_ACTIVE_CLASS : ""
                       )}
                       aria-label={`Rate ${value} out of 5`}
                     >
@@ -199,10 +208,8 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                       type="button"
                       onClick={() => setPunctuality(option.value)}
                       className={cn(
-                        "flex h-11 flex-1 items-center justify-center rounded-md border text-sm font-medium transition",
-                        punctuality === option.value
-                          ? "border-emerald-500 bg-emerald-50 text-emerald-600"
-                          : "border-muted bg-white text-muted-foreground hover:border-emerald-200"
+                        TOGGLE_BASE_CLASS,
+                        punctuality === option.value ? "border-emerald-500 bg-emerald-500/15 text-emerald-200" : ""
                       )}
                     >
                       {option.label}
@@ -212,7 +219,7 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                 {punctuality === "late" && (
                   <div className="space-y-2">
                     <label
-                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                      className="text-xs font-medium uppercase tracking-wide text-slate-400"
                       htmlFor="arrival-delay"
                     >
                       Minutes late
@@ -220,6 +227,7 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                     <Input
                       id="arrival-delay"
                       type="number"
+                      className={INPUT_CLASS}
                       min={0}
                       value={arrivalDelay}
                       onChange={(event) => setArrivalDelay(event.target.value)}
@@ -235,6 +243,7 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
                 <Input
                   id="duration-variance"
                   type="number"
+                  className={INPUT_CLASS}
                   value={durationVariance}
                   onChange={(event) => setDurationVariance(event.target.value)}
                   placeholder="Difference from planned duration"
@@ -249,13 +258,19 @@ export function FeedbackModal({ open, onOpenChange, onSubmit, eventTitle, errorM
             </label>
             <Textarea
               id="feedback-notes"
+              className={INPUT_CLASS}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               placeholder="What went well? What could improve?"
             />
           </div>
+          {formError ? (
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 shadow-inner">
+              {formError}
+            </div>
+          ) : null}
           {errorMessage ? (
-            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 shadow-inner dark:border-rose-900/60 dark:bg-rose-900/30 dark:text-rose-200">
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/15 px-3 py-2 text-sm text-rose-200 shadow-inner">
               {errorMessage}
             </div>
           ) : null}

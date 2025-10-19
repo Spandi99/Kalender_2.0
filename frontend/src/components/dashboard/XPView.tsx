@@ -6,6 +6,8 @@ import { Award, RefreshCcw } from "lucide-react";
 import type { XpSummary } from "../../api/client";
 import { fetchXpSummary } from "../../api/client";
 import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
+import { useUserProfile } from "../../lib/useUserProfile";
+import UserAvatar from "../Avatar/UserAvatar";
 import { XpDashboard } from "../XP/XpDashboard";
 import { Button } from "../ui/button";
 
@@ -23,6 +25,7 @@ export default function XPView() {
   });
 
   const avatarQuery = useAvatar();
+  const { profile } = useUserProfile();
 
   const averagePerDay = useMemo(
     () => computeDailyAverage(xpSummaryQuery.data, avatarQuery.data),
@@ -35,23 +38,38 @@ export default function XPView() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="flex flex-col gap-4 rounded-3xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-rose-50 px-6 py-5 shadow-lg dark:border-amber-900/40 dark:from-amber-950 dark:via-gray-950 dark:to-rose-950"
+        className="flex flex-col gap-5 rounded-3xl border border-slate-700/80 bg-slate-950/85 px-6 py-6 shadow-2xl"
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-semibold uppercase tracking-wide text-amber-500 dark:text-amber-300">XP &amp; Level</p>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gamified Progress</h2>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-accent">XP &amp; Level</p>
+            <h2 className="text-3xl font-bold text-slate-100">Gamified Progress</h2>
+            <p className="text-sm text-slate-300">
               Analysiere deinen Fortschritt nach Kategorie, Level und Stimmung deines Avatars.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-2 text-sm text-gray-700 shadow-sm dark:border-amber-900/40 dark:bg-gray-900/60 dark:text-gray-200">
-              <Award className="h-4 w-4 text-amber-500" />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 shadow-inner">
+              <UserAvatar
+                name={profile.name}
+                imageUrl={profile.avatarUrl}
+                aiPreviewUrl={profile.aiAvatarUrl}
+                size={44}
+              />
+              <div className="text-sm leading-tight">
+                <p className="font-semibold text-slate-100">{profile.name}</p>
+                <p className="text-xs text-slate-400">
+                  Level {avatarQuery.data?.current_level ?? "–"} • Stimmung {avatarQuery.data?.expression ?? "–"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-brand-primary/40 bg-brand-primary/15 px-3 py-2 text-sm font-semibold text-brand-primary shadow-sm">
+              <Award className="h-4 w-4" />
               {averagePerDay} XP pro Level
             </div>
             <Button
-              variant="outline"
+              variant="secondary"
+              className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
               onClick={() => {
                 xpSummaryQuery.refetch();
                 avatarQuery.refetch();

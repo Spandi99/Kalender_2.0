@@ -52,25 +52,25 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
     : `${levelInfo?.xp_current ?? 0} XP`;
 
   return (
-    <Card className="overflow-hidden border border-blue-100 shadow-xl dark:border-blue-900/40">
-      <CardHeader className="space-y-1 border-b border-blue-100 bg-gradient-to-r from-blue-500/10 via-blue-400/10 to-purple-500/10 dark:border-blue-900/40 dark:from-blue-900/40 dark:via-blue-900/20 dark:to-purple-900/20">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+    <Card className="overflow-hidden border border-slate-700/80 bg-slate-950/85 text-slate-100 shadow-2xl">
+      <CardHeader className="space-y-1 border-b border-slate-700/70 bg-slate-900/60">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-100">
           <span role="img" aria-label="trophy">
             🏆
           </span>
           XP Übersicht
         </CardTitle>
-        <p className="text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-sm text-slate-300">
           Verfolge, wie deine Kategorien zum Fortschritt beitragen.
         </p>
       </CardHeader>
-      <CardContent className="space-y-5 p-6">
-        <div className="space-y-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
+      <CardContent className="space-y-5 p-6 text-slate-200">
+        <div className="space-y-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-300">{summary?.total ?? 0}</div>
-              <div className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Gesamt-XP</div>
-              <div className="text-sm text-gray-700 dark:text-gray-300">{xpLabel}</div>
+              <div className="text-4xl font-bold text-brand-primary">{summary?.total ?? 0}</div>
+              <div className="text-sm font-semibold uppercase tracking-wide text-slate-400">Gesamt-XP</div>
+              <div className="text-sm text-slate-300">{xpLabel}</div>
             </div>
             {levelInfo ? (
               <AvatarDisplay
@@ -86,18 +86,18 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
             ) : null}
           </div>
           {lastAwarded ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-inner dark:border-emerald-900/60 dark:bg-emerald-900/40 dark:text-emerald-200">
+            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200 shadow-inner">
               +{lastAwarded} XP erhalten!
             </div>
           ) : null}
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Kategorien</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Kategorien</h3>
           {categories.length ? (
             categories.map((category) => (
-              <div key={category.key} className="space-y-1 rounded-xl border border-gray-200 bg-white/80 p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900/60">
-                <div className="flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-200">
+              <div key={category.key} className="space-y-1 rounded-xl border border-slate-700 bg-slate-900/70 p-3 shadow-lg">
+                <div className="flex items-center justify-between text-sm font-medium text-slate-200">
                   <div className="flex items-center gap-2">
                     <span aria-hidden>{category.icon}</span>
                     <span>{category.display}</span>
@@ -106,12 +106,12 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
                 </div>
                 <Progress
                   value={maxValue ? Math.min(100, (category.value / maxValue) * 100) : 0}
-                  className="h-2"
+                  className="h-2 bg-slate-800/80"
                 />
               </div>
             ))
           ) : (
-            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+            <div className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-400">
               Sammle XP, um hier Einblicke in deine stärksten Kategorien zu sehen.
             </div>
           )}

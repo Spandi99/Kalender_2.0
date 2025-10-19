@@ -268,7 +268,7 @@ export default function CalendarView() {
   const calendarSection = (
     <motion.section
       layout
-      className="flex min-h-[560px] flex-col rounded-3xl border border-slate-700/70 bg-slate-900/80 p-6 shadow-2xl backdrop-blur"
+      className="flex min-h-[820px] flex-col rounded-3xl border border-slate-700/70 bg-slate-900/80 p-6 shadow-2xl backdrop-blur"
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-slate-200">
@@ -460,7 +460,7 @@ export default function CalendarView() {
         </div>
       </motion.div>
 
-      <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,2.6fr)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,2.9fr)_minmax(0,0.9fr)]">
         {calendarSection}
         {asideSection}
       </div>

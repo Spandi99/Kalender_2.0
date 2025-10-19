@@ -74,13 +74,13 @@ export function AvatarDisplay({
   }, [xpNext, xpToNext]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-white p-4 shadow-sm">
+    <div className="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
             <div
               className={clsx(
-                "absolute inset-0 rounded-full bg-indigo-300/40 blur-xl transition-opacity duration-700",
+                "absolute inset-0 rounded-full bg-brand-primary/30 blur-xl transition-opacity duration-700",
                 showLevelUp ? "opacity-100" : "opacity-0"
               )}
             />
@@ -88,26 +88,26 @@ export function AvatarDisplay({
               src={avatarSrc}
               alt={`Avatar for level ${level}`}
               className={clsx(
-                "relative h-20 w-20 rounded-full border-4 border-white object-cover shadow-lg transition-transform duration-700",
+                "relative h-20 w-20 rounded-full border-4 border-slate-900 object-cover shadow-lg transition-transform duration-700",
                 showLevelUp ? "scale-110" : "scale-100"
               )}
             />
           </div>
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Your avatar</div>
-            <div className="text-2xl font-bold text-slate-900">Level {level}</div>
-            <div className="text-sm capitalize text-muted-foreground">{avatarState}</div>
-            <div className="text-sm text-muted-foreground">Mood: {expression}</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-brand-accent">Your avatar</div>
+            <div className="text-2xl font-bold text-slate-100">Level {level}</div>
+            <div className="text-sm capitalize text-slate-300">{avatarState}</div>
+            <div className="text-sm text-slate-400">Mood: {expression}</div>
           </div>
         </div>
         <div className="flex min-w-[180px] flex-col gap-2">
-          <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-400">
             <span>Progress</span>
             <span>{progressValue}%</span>
           </div>
-          <Progress value={progressValue} className="h-2" />
-          <div className="text-sm font-medium text-slate-700">{xpLabel}</div>
-          <div className="text-xs text-muted-foreground">{remainingLabel}</div>
+          <Progress value={progressValue} className="h-2 bg-slate-800/80" />
+          <div className="text-sm font-medium text-slate-200">{xpLabel}</div>
+          <div className="text-xs text-slate-400">{remainingLabel}</div>
         </div>
       </div>
       {showLevelUp ? (

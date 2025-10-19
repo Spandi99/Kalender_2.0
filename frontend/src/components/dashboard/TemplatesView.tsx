@@ -19,27 +19,28 @@ export default function TemplatesView() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="flex flex-col gap-4 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-blue-50 px-6 py-5 shadow-lg dark:border-indigo-900/40 dark:from-indigo-950 dark:via-gray-950 dark:to-blue-950"
+        className="flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-950/85 px-6 py-6 shadow-2xl"
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">Templates</p>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Zeitblöcke orchestrieren</h2>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-accent">Templates</p>
+            <h2 className="text-3xl font-bold text-slate-100">Zeitblöcke orchestrieren</h2>
+            <p className="text-sm text-slate-300">
               Verwalte Tagesvorlagen, optimiere Blöcke mit KI-Empfehlungen und plane mit einem Klick.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
-              variant="outline"
+              variant="secondary"
+              className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
               onClick={() => categoriesQuery.refetch()}
               disabled={categoriesQuery.isFetching}
             >
               <RefreshCcw className={`mr-2 h-4 w-4 ${categoriesQuery.isFetching ? "animate-spin" : ""}`} />
               Kategorien aktualisieren
             </Button>
-            <div className="flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-3 py-2 text-sm text-gray-700 shadow-sm dark:border-indigo-900/40 dark:bg-gray-900/60 dark:text-gray-200">
-              <Blocks className="h-4 w-4 text-indigo-500" />
+            <div className="flex items-center gap-2 rounded-full border border-brand-primary/30 bg-brand-primary/15 px-3 py-2 text-sm font-semibold text-brand-primary">
+              <Blocks className="h-4 w-4" />
               {categoriesQuery.data?.length ?? 0} Kategorien
             </div>
           </div>

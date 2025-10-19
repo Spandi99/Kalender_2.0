@@ -82,7 +82,7 @@ function SidebarContent({ onClose, avatarStatus, isAvatarLoading, profile }: Sid
     >
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <OrgaliferLogo size={32} />
+          <OrgaliferLogo size={120} />
           <p className="mt-2 text-xs font-semibold uppercase tracking-[0.32em] text-slate-400">
             Smart Calendar
           </p>

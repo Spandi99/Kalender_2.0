@@ -106,10 +106,10 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
 
   return (
     <header
-      className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 bg-slate-950/80 px-4 py-4 backdrop-blur lg:px-8"
+      className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-800/80 bg-slate-950/85 px-4 py-2 backdrop-blur lg:px-5"
       style={{ color: getReadableTextColor(HEADER_BACKGROUND) }}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onToggleSidebar}
@@ -118,12 +118,9 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-3">
-          <OrgaliferLogo showWordmark={false} size={28} />
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blue-300">Orgalifer</p>
-            <h1 className="text-2xl font-semibold text-slate-100">{heading}</h1>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <OrgaliferLogo size={105} />
+          <h1 className="text-2xl font-semibold text-slate-100">{heading}</h1>
         </div>
       </div>
 

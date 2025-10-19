@@ -207,17 +207,17 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
   const formatTime = (value: string) => value.slice(0, 5);
 
   return (
-    <Card className="border border-indigo-100 shadow-xl dark:border-indigo-900/40">
-      <CardHeader className="border-b border-indigo-100 bg-gradient-to-r from-indigo-500/10 via-indigo-400/10 to-blue-400/10 dark:border-indigo-900/40 dark:from-indigo-900/40 dark:via-indigo-900/20 dark:to-blue-900/20">
-        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">Day Templates</CardTitle>
+    <Card className="border border-slate-700/80 bg-slate-950/85 shadow-2xl">
+      <CardHeader className="border-b border-slate-700/70 bg-slate-900/60">
+        <CardTitle className="text-lg font-semibold text-slate-100">Day Templates</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 p-6 text-sm text-gray-700 dark:text-gray-300">
+      <CardContent className="space-y-6 p-6 text-sm text-slate-200">
         {status && (
           <div
-            className={`rounded-md border px-3 py-2 text-sm ${
+            className={`rounded-md border px-3 py-2 text-sm shadow-inner ${
               status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/40 dark:text-emerald-200"
-                : "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-900/30 dark:text-red-200"
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+                : "border-rose-500/40 bg-rose-500/15 text-rose-200"
             }`}
           >
             {status.message}
@@ -226,25 +226,31 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold">Saved templates</h3>
-            <Button variant="outline" size="sm" onClick={() => templatesQuery.refetch()} disabled={templatesQuery.isFetching}>
+            <h3 className="text-base font-semibold text-slate-100">Saved templates</h3>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
+              onClick={() => templatesQuery.refetch()}
+              disabled={templatesQuery.isFetching}
+            >
               Refresh
             </Button>
           </div>
           {templatesQuery.isLoading ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400">Loading templates…</p>
+            <p className="text-sm text-slate-400">Loading templates…</p>
           ) : templates.length ? (
             <div className="space-y-4">
               {templates.map((template) => (
                 <div
                   key={template.id}
-                  className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/60"
+                  className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg"
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="font-medium">{template.name}</p>
                       {template.description ? (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{template.description}</p>
+                        <p className="text-sm text-slate-400">{template.description}</p>
                       ) : null}
                     </div>
                     <div className="flex gap-2">
@@ -257,7 +263,8 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="destructive"
+                        className="bg-rose-600/90 text-slate-50 hover:bg-rose-500"
                         onClick={() => {
                           if (confirm("Delete this template?")) {
                             deleteTemplateMutation.mutate(template.id);
@@ -273,11 +280,11 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                     {template.blocks.map((block) => (
                       <li
                         key={block.id}
-                        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white/70 px-3 py-2 shadow-inner dark:border-gray-700 dark:bg-gray-800/60"
+                        className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 shadow-inner"
                       >
                         <div>
                           <p className="font-medium">{block.label}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <p className="text-xs text-slate-400">
                             {formatTime(block.start_time)} – {formatTime(block.end_time)}
                             {block.category ? ` • ${categoryLookup[block.category] ?? block.category}` : ""}
                           </p>
@@ -289,7 +296,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-600 dark:text-gray-400">No templates yet. Create your first day template below.</p>
+            <p className="text-sm text-slate-400">No templates yet. Create your first day template below.</p>
           )}
           {templatesQuery.isError ? (
             <p className="text-sm text-red-600">Failed to load templates.</p>
@@ -305,6 +312,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
               <Label htmlFor="template-name">Name</Label>
               <Input
                 id="template-name"
+                className="border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500"
                 value={formState.name}
                 onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
               />
@@ -313,6 +321,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
               <Label htmlFor="template-description">Description</Label>
               <Textarea
                 id="template-description"
+                className="border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500"
                 value={formState.description}
                 onChange={(event) => setFormState((prev) => ({ ...prev, description: event.target.value }))}
                 placeholder="Optional details about this template"
@@ -323,14 +332,15 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
               {formState.blocks.map((block, index) => (
                 <div
                   key={index}
-                  className="rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/40"
+                  className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-4 shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <Label className="font-medium">Block {index + 1}</Label>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
+                      className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
                       onClick={() => handleRemoveBlock(index)}
                       disabled={formState.blocks.length === 1}
                     >
@@ -342,6 +352,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       <Label htmlFor={`block-label-${index}`}>Label</Label>
                       <Input
                         id={`block-label-${index}`}
+                        className="border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500"
                         value={block.label}
                         onChange={(event) => handleBlockChange(index, { label: event.target.value })}
                       />
@@ -350,7 +361,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       <Label htmlFor={`block-category-${index}`}>Category</Label>
                       <select
                         id={`block-category-${index}`}
-                        className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                        className="h-10 w-full rounded-md border border-slate-700 bg-slate-900/80 px-3 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
                         value={block.category}
                         onChange={(event) => handleBlockChange(index, { category: event.target.value })}
                       >
@@ -369,6 +380,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       <Input
                         id={`block-start-${index}`}
                         type="time"
+                        className="border-slate-700 bg-slate-900/80 text-slate-100"
                         value={block.start_time}
                         onChange={(event) => handleBlockChange(index, { start_time: event.target.value })}
                       />
@@ -378,6 +390,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                       <Input
                         id={`block-end-${index}`}
                         type="time"
+                        className="border-slate-700 bg-slate-900/80 text-slate-100"
                         value={block.end_time}
                         onChange={(event) => handleBlockChange(index, { end_time: event.target.value })}
                       />
@@ -386,7 +399,12 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                 </div>
               ))}
             </div>
-            <Button type="button" variant="outline" onClick={handleAddBlock}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
+              onClick={handleAddBlock}
+            >
               Add block
             </Button>
             <div className="flex justify-end">
