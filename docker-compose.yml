@@ -62,6 +62,7 @@ services:
   nginx:
     build:
       context: ./nginx
+    container_name: kalender-nginx
     hostname: nginx
     depends_on:
       volume_init:
@@ -79,6 +80,7 @@ services:
       - frontend_static:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+      - /home/spandi/.cloudflared:/etc/cloudflared:ro
     restart: unless-stopped
 
   certbot:
@@ -122,6 +124,21 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./scripts/health_monitor.sh:/app/scripts/health_monitor.sh:ro
     entrypoint: "/bin/sh -c 'apk add --no-cache curl >/dev/null && chmod +x /app/scripts/health_monitor.sh && /app/scripts/health_monitor.sh'"
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    depends_on:
+      nginx:
+        condition: service_started
+    command: tunnel --config /etc/cloudflared/config.yml --protocol http2 run
+    volumes:
+      - /home/spandi/.cloudflared:/etc/cloudflared
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+      - 8.8.8.8
     restart: unless-stopped
 
 volumes:

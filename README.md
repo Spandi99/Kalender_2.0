@@ -85,3 +85,23 @@ GitHub Actions workflow (`.github/workflows/test.yml`) installs dependencies and
 ## Raspberry Pi Notes
 - Docker images are based on `python:3.11-slim` and `node:20-slim`, both supporting ARM64.
 - Postgres uses the `postgres:16-alpine` image, compatible with Raspberry Pi 5.
+
+## Cloudflare Tunnel
+The Docker Compose stack now starts Cloudflare Tunnel alongside nginx, so one command brings the entire system online:
+
+```bash
+# start or update the whole stack (db, backend, frontend, nginx, certbot, cloudflared)
+docker compose up -d
+```
+
+Key details:
+- The Cloudflare volume `/home/spandi/.cloudflared` must contain `config.yml`, the tunnel credentials JSON, and the Cloudflare origin `cert.pem`/`cert.key` pair.
+- `nginx/docker-entrypoint.d/10-generate-cert.sh` copies the origin certificate into `/etc/letsencrypt/live/orgalifer.ch/` on every start, so nginx always serves the right TLS chain.
+- `cloudflared` reads the same directory and routes both `orgalifer.ch` and `api.orgalifer.ch` to `https://kalender-nginx:443` using HTTP/2.
+
+Common operations:
+- Apply config changes (e.g., new origin certificate) by updating the files under `/home/spandi/.cloudflared` and running `docker compose up -d nginx cloudflared`.
+- Check tunnel health with `docker logs cloudflared --tail 20` or `curl https://orgalifer.ch/api/health`.
+
+Optional hardening:
+- Drop the Cloudflare Origin CA root certificate into `/home/spandi/.cloudflared` and set `noTLSVerify: false` in `config.yml` once you are ready to enforce full verification.
