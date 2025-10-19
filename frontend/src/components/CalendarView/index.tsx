@@ -51,98 +51,144 @@ function resolveCategoryColor(category: string) {
   return CATEGORY_COLORS[hash % CATEGORY_COLORS.length];
 }
 
+function resolveLocale(view: EventContentArg["view"]) {
+  const localeOption = view?.calendar?.getOption?.("locale");
+  if (typeof localeOption === "string" && localeOption.length > 0) {
+    return localeOption;
+  }
+  if (typeof window !== "undefined" && typeof window.navigator?.language === "string" && window.navigator.language.length > 0) {
+    return window.navigator.language;
+  }
+  return "en-US";
+}
+
+function formatEventTimeRange(event: EventContentArg["event"], locale: string, fallback: string) {
+  if (!event.start) {
+    return fallback;
+  }
+
+  if (event.allDay) {
+    const multiDay = event.end && event.end.getTime() - event.start.getTime() > 24 * 60 * 60 * 1000;
+    if (!multiDay) {
+      return locale.toLowerCase().startsWith("de") ? "Ganztägig" : "All Day";
+    }
+  }
+
+  if (typeof Intl === "undefined" || typeof Intl.DateTimeFormat === "undefined") {
+    return fallback || "";
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
+  const startText = event.start ? formatter.format(event.start) : "";
+  let endText = "";
+
+  if (event.end) {
+    const effectiveEnd = event.allDay ? new Date(event.end.getTime() - 60_000) : event.end;
+    endText = formatter.format(effectiveEnd);
+  }
+
+  if (endText && endText !== startText) {
+    return `${startText} – ${endText}`;
+  }
+
+  return startText || fallback || "";
+}
+
+function resolveTitleLimit(viewType: string) {
+  if (viewType.startsWith("timeGrid")) {
+    return 90;
+  }
+  if (viewType.startsWith("list")) {
+    return 120;
+  }
+  return 60;
+}
+
+function truncateWithEllipsis(text: string, maxLength: number) {
+  const clean = text.trim();
+  if (clean.length <= maxLength) {
+    return clean;
+  }
+
+  const slice = clean.slice(0, maxLength);
+  const candidates = [slice.lastIndexOf(" "), slice.lastIndexOf("-"), slice.lastIndexOf("·"), slice.lastIndexOf(":"), slice.lastIndexOf("/")];
+  const cutIndex = Math.max(...candidates);
+  const safeSlice = cutIndex > 16 ? slice.slice(0, cutIndex) : slice;
+  return `${safeSlice.replace(/[\s\-·:/]+$/, "")}…`;
+}
+
 export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
 
   const renderEventContent = useCallback((info: EventContentArg) => {
-    const viewType = info.view.type;
-    const isTimeGridView = viewType.startsWith("timeGrid");
+    const localeForEvent = resolveLocale(info.view);
     const root = document.createElement("div");
+    root.className = `org-event-content org-event-${info.view.type}`;
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+    root.style.gap = "0.25rem";
     root.style.whiteSpace = "normal";
     root.style.wordBreak = "break-word";
 
-    const timeText = info.timeText ? info.timeText.replace(/\s+/g, " ").trim() : "";
+    const timeText = formatEventTimeRange(info.event, localeForEvent, info.timeText ?? "");
     const title = info.event.title?.trim() ?? "";
     const description = typeof info.event.extendedProps?.description === "string"
       ? info.event.extendedProps.description.trim()
       : "";
 
-    if (isTimeGridView) {
-      root.className = "org-event-content org-event-timegrid";
-
-      const localeOption = info.view.calendar.getOption("locale");
-      const locale = (typeof localeOption === "string" && localeOption) ||
-        (typeof window !== "undefined" && window.navigator?.language) ||
-        "en-US";
-      const formatter = typeof Intl !== "undefined"
-        ? new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false })
-        : null;
-
-      const startDate = info.event.start instanceof Date ? info.event.start : null;
-      const endDate = info.event.end instanceof Date ? info.event.end : null;
-      const rangeText = formatter && startDate
-        ? endDate
-          ? `${formatter.format(startDate)} – ${formatter.format(endDate)}`
-          : formatter.format(startDate)
-        : info.timeText ?? "";
-      const headline = [rangeText, title].filter(Boolean).join(" ").trim();
-
-      const headlineEl = document.createElement("div");
-      headlineEl.className = "org-event-line org-timegrid-headline";
-      headlineEl.textContent = headline || title || rangeText || "Event";
-      root.appendChild(headlineEl);
-
-      if (!title && description) {
-        const descriptionEl = document.createElement("div");
-        descriptionEl.className = "org-event-line org-timegrid-description";
-        descriptionEl.textContent = description;
-        root.appendChild(descriptionEl);
-      }
-    } else {
-      root.className = "org-event-content org-event-daygrid";
-
-      if (timeText) {
-        const timeEl = document.createElement("div");
-        timeEl.className = "org-event-line org-daygrid-time";
-        timeEl.textContent = timeText;
-        root.appendChild(timeEl);
-      }
-
-      if (title) {
-        const titleEl = document.createElement("div");
-        titleEl.className = "org-event-line org-daygrid-title";
-        titleEl.textContent = title;
-        root.appendChild(titleEl);
-      }
-
-      if (description) {
-        const descriptionEl = document.createElement("div");
-        descriptionEl.className = "org-event-line org-daygrid-description";
-        descriptionEl.textContent = description;
-        root.appendChild(descriptionEl);
-      }
-
+    if (timeText) {
+      const timeEl = document.createElement("div");
+      timeEl.className = "org-event-line org-event-time";
+      timeEl.textContent = timeText;
+      root.appendChild(timeEl);
     }
 
-    const tooltip = [timeText, title, description].filter(Boolean).join(" • ");
-    if (tooltip) {
-      root.setAttribute("title", tooltip);
+    const titleLimit = resolveTitleLimit(info.view.type);
+    if (title) {
+      const displayTitle = truncateWithEllipsis(title, titleLimit);
+      const titleEl = document.createElement("div");
+      titleEl.className = "org-event-line org-event-title";
+      titleEl.textContent = displayTitle;
+      titleEl.style.display = "-webkit-box";
+      titleEl.style.setProperty("-webkit-line-clamp", "2");
+      titleEl.style.setProperty("-webkit-box-orient", "vertical");
+      titleEl.style.overflow = "hidden";
+      titleEl.style.textOverflow = "ellipsis";
+      titleEl.style.wordBreak = "break-word";
+      root.appendChild(titleEl);
+    } else if (description) {
+      const displayDescription = truncateWithEllipsis(description, titleLimit);
+      const descriptionEl = document.createElement("div");
+      descriptionEl.className = "org-event-line org-event-description";
+      descriptionEl.textContent = displayDescription;
+      descriptionEl.style.display = "-webkit-box";
+      descriptionEl.style.setProperty("-webkit-line-clamp", "2");
+      descriptionEl.style.setProperty("-webkit-box-orient", "vertical");
+      descriptionEl.style.overflow = "hidden";
+      descriptionEl.style.textOverflow = "ellipsis";
+      descriptionEl.style.wordBreak = "break-word";
+      root.appendChild(descriptionEl);
+    }
+
+    const tooltipParts = [timeText || info.timeText || "", title, description].filter(Boolean);
+    if (tooltipParts.length > 0) {
+      root.setAttribute("title", tooltipParts.join(" • "));
     }
 
     return { domNodes: [root] };
   }, []);
 
   const handleEventDidMount = useCallback((info: EventMountArg) => {
-    const timeText = info.timeText ? info.timeText.replace(/\s+/g, " ").trim() : "";
+    const localeForEvent = resolveLocale(info.view);
+    const timeText = formatEventTimeRange(info.event, localeForEvent, info.timeText ?? "");
     const title = info.event.title?.trim() ?? "";
     const description = typeof info.event.extendedProps?.description === "string"
       ? info.event.extendedProps.description.trim()
       : "";
-    const tooltip = [timeText, title, description].filter(Boolean).join(" • ");
-    if (tooltip) {
-      info.el.setAttribute("title", tooltip);
+    const tooltipParts = [timeText || info.timeText || "", title, description].filter(Boolean);
+    if (tooltipParts.length > 0) {
+      info.el.setAttribute("title", tooltipParts.join(" • "));
     }
   }, []);
-
 
   const calendarEvents = useMemo(
     () =>
