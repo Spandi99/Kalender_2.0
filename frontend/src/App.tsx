@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useInRouterContext } from "react-router-dom";
 
 import Dashboard from "./components/dashboard/Dashboard";
 import CalendarView from "./components/dashboard/CalendarView";
@@ -9,7 +9,7 @@ import FeedbackView from "./components/dashboard/FeedbackView";
 import ICalView from "./components/dashboard/ICalView";
 import LegacyApp from "./LegacyApp";
 
-export default function App() {
+function AppRoutes() {
   return (
     <Routes>
       <Route path="/dashboard" element={<Dashboard />}>
@@ -25,5 +25,19 @@ export default function App() {
       <Route path="/" element={<Navigate to="/dashboard/calendar" replace />} />
       <Route path="*" element={<Navigate to="/dashboard/calendar" replace />} />
     </Routes>
+  );
+}
+
+export default function App() {
+  const isInRouter = useInRouterContext();
+
+  if (isInRouter) {
+    return <AppRoutes />;
+  }
+
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
