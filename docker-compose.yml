@@ -1,60 +1,89 @@
 version: "3.9"
 
 services:
+  volume_init:
+    image: postgres:16-alpine
+    hostname: volume-init
+    user: "0:0"
+    entrypoint: ["/bootstrap/bootstrap_volumes.sh"]
+    volumes:
+      - ./postgres_data:/volumes/postgres_data
+      - ./certbot/conf:/volumes/certbot_conf
+      - ./scripts/bootstrap_volumes.sh:/bootstrap/bootstrap_volumes.sh:ro
+    restart: "no"
+
   db:
     image: postgres:16-alpine
-    container_name: kalender-db
+    hostname: db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: calendar_xp
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"${POSTGRES_USER:-postgres}\" -d \"${POSTGRES_DB:-calendar_xp}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   backend:
     build:
-      context: ./backend
-    container_name: kalender-backend
-    environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/calendar_xp
-      BACKEND_CORS_ORIGINS: '["https://orgalifer.ch", "http://orgalifer.ch", "https://192.168.1.136", "http://192.168.1.136", "https://localhost", "http://localhost"]'
-    ports:
-      - "8000:8000"
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        BUILD_ENV_FILE: .env
+    hostname: backend
+    env_file:
+      - .env
     depends_on:
-      - db
+      volume_init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
-    container_name: kalender-frontend
+    hostname: frontend
     depends_on:
-      - backend
+      volume_init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
     volumes:
-      - ./frontend/dist:/usr/share/nginx/html
+      - frontend_static:/usr/share/nginx/html
     restart: unless-stopped
 
   nginx:
     build:
       context: ./nginx
-    container_name: kalender-nginx
+    hostname: nginx
     depends_on:
-      - backend
-      - frontend
+      volume_init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      - frontend_static:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     restart: unless-stopped
 
   certbot:
     image: certbot/certbot
-    container_name: kalender-certbot
+    hostname: certbot
     environment:
       CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
     volumes:
@@ -72,17 +101,20 @@ services:
       fi;
       if [ ! -f /etc/letsencrypt/live/orgalifer.ch/fullchain.pem ]; then
         echo "[certbot] No existing certificate found, requesting initial certificate";
-        certbot certonly --webroot -w /var/www/certbot -d orgalifer.ch $EMAIL_ARGS --agree-tos --non-interactive || true;
+        certbot certonly --webroot -w /var/www/certbot -d orgalifer.ch -d api.orgalifer.ch $EMAIL_ARGS --agree-tos --non-interactive || true;
       fi;
       while :; do
-        certbot renew;
+        certbot renew --keep-until-expiring;
         sleep 12h & wait $${!};
       done;'
     restart: unless-stopped
+    depends_on:
+      volume_init:
+        condition: service_completed_successfully
 
   monitor:
     image: docker:24-cli
-    container_name: kalender-monitor
+    hostname: monitor
     depends_on:
       - backend
       - nginx
@@ -91,3 +123,6 @@ services:
       - ./scripts/health_monitor.sh:/app/scripts/health_monitor.sh:ro
     entrypoint: "/bin/sh -c 'apk add --no-cache curl >/dev/null && chmod +x /app/scripts/health_monitor.sh && /app/scripts/health_monitor.sh'"
     restart: unless-stopped
+
+volumes:
+  frontend_static:

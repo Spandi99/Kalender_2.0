@@ -30,10 +30,13 @@ print("✅ NumPy configuration summary:")
 numpy.__config__.show()
 PY
 
-COPY requirements.txt ./
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt || \
     pip install --no-cache-dir --prefer-binary -r requirements.txt
 
-COPY app ./app
+COPY backend/app ./app
+
+ARG BUILD_ENV_FILE=.env
+COPY ${BUILD_ENV_FILE} /app/.env
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

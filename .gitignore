@@ -4,10 +4,11 @@ dist/
 build/
 *.log
 
-# Keep the prepared production bundle placeholder committed
-!frontend/dist/
-frontend/dist/*
-!frontend/dist/index.html
+# Docker volumes and generated assets
+certbot/conf/accounts/
+certbot/conf/live/
+frontend/dist/
+postgres_data/
 
 # Python
 __pycache__/
