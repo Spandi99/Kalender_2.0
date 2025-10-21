@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 
 import { AvatarStatus } from "../lib/useAvatar";
+import { DynamicAvatar } from "./Avatar/DynamicAvatar";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Progress } from "./ui/progress";
@@ -21,15 +22,17 @@ export function TopBar({ totalXp, onAddEvent, levelInfo, isLevelLoading }: TopBa
   const xpLabel = levelInfo?.xp_next
     ? `${levelInfo.xp_current} / ${levelInfo.xp_next} XP`
     : `${levelInfo?.xp_current ?? totalXp} XP`;
-  const avatarSrc = `/assets/avatars/level${Math.max(1, Math.min(level, 5))}.svg`;
+
 
   return (
     <Card className="flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm">
       <div className="flex items-center gap-4">
-        <img
-          src={avatarSrc}
-          alt="Avatar preview"
-          className="h-14 w-14 rounded-full border-2 border-indigo-200 object-cover shadow-sm"
+        <DynamicAvatar
+          level={level}
+          animated={!isLevelLoading}
+          variant="badge"
+          className="h-16 w-16"
+          ariaLabel={`Avatar Level ${level}`}
         />
         <div className="space-y-2">
           <div className="text-sm font-medium uppercase tracking-wider text-muted-foreground">XP Progress</div>

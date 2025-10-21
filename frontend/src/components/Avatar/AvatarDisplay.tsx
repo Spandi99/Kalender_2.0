@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 
+import { DynamicAvatar } from "./DynamicAvatar";
 import { Progress } from "../ui/progress";
 
 export interface AvatarDisplayProps {
@@ -31,18 +32,12 @@ export function AvatarDisplay({
     if (level > previousLevelRef.current) {
       setShowLevelUp(true);
       previousLevelRef.current = level;
-      const timeout = setTimeout(() => setShowLevelUp(false), 2200);
+      const timeout = setTimeout(() => setShowLevelUp(false), 2000);
       return () => clearTimeout(timeout);
     }
     previousLevelRef.current = level;
     return undefined;
   }, [level]);
-
-  const cappedLevel = Math.max(1, Math.min(level, 5));
-  const avatarSrc = useMemo(
-    () => `/assets/avatars/level${cappedLevel}.svg`,
-    [cappedLevel]
-  );
 
   const progressValue = useMemo(() => {
     if (typeof levelProgress === "number") {
@@ -74,35 +69,33 @@ export function AvatarDisplay({
   }, [xpNext, xpToNext]);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div
-              className={clsx(
-                "absolute inset-0 rounded-full bg-brand-primary/30 blur-xl transition-opacity duration-700",
-                showLevelUp ? "opacity-100" : "opacity-0"
-              )}
-            />
-            <img
-              src={avatarSrc}
-              alt={`Avatar for level ${level}`}
-              className={clsx(
-                "relative h-20 w-20 rounded-full border-4 border-slate-900 object-cover shadow-lg transition-transform duration-700",
-                showLevelUp ? "scale-110" : "scale-100"
-              )}
-            />
-          </div>
+    <div
+      className={clsx(
+        "relative overflow-hidden rounded-xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg transition",
+        showLevelUp && "border-emerald-400/70 shadow-[0_0_35px_rgba(74,222,128,0.25)]"
+      )}
+    >
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-5">
+          <DynamicAvatar
+            level={level}
+            animated
+            variant="full"
+            className="h-32 w-32 sm:h-36 sm:w-36"
+            ariaLabel={`Avatar level ${level}`}
+          />
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-brand-accent">Your avatar</div>
-            <div className="text-2xl font-bold text-slate-100">Level {level}</div>
-            <div className="text-sm capitalize text-slate-300">{avatarState}</div>
-            <div className="text-sm text-slate-400">Mood: {expression}</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-brand-accent">Dein Avatar</div>
+            <div className="text-3xl font-bold text-slate-100 transition-transform duration-700">
+              Level {level}
+            </div>
+            <div className="text-sm capitalize text-slate-300">{avatarState.replace(/_/g, " ")}</div>
+            <div className="text-sm text-slate-400">Stimmung: {expression}</div>
           </div>
         </div>
-        <div className="flex min-w-[180px] flex-col gap-2">
-          <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-400">
-            <span>Progress</span>
+        <div className="flex min-w-[220px] flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <span>Fortschritt</span>
             <span>{progressValue}%</span>
           </div>
           <Progress value={progressValue} className="h-2 bg-slate-800/80" />
@@ -112,7 +105,7 @@ export function AvatarDisplay({
       </div>
       {showLevelUp ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rounded-full bg-indigo-600/90 px-6 py-2 text-sm font-bold uppercase tracking-wide text-white shadow-lg">
+          <div className="rounded-full bg-emerald-500/90 px-6 py-2 text-sm font-bold uppercase tracking-wide text-slate-950 shadow-lg animate-levelup-badge">
             Level Up!
           </div>
         </div>

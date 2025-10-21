@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 160" fill="none">
+  <defs>
+    <linearGradient id="avatar-skin" x1="64" x2="64" y1="28" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8d0b5" />
+      <stop offset="1" stop-color="#f1b28b" />
+    </linearGradient>
+    <linearGradient id="avatar-hair" x1="64" x2="64" y1="12" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f2937" />
+      <stop offset="1" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="avatar-tunic" x1="64" x2="64" y1="88" y2="148" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#334155" />
+      <stop offset="1" stop-color="#1e293b" />
+    </linearGradient>
+    <clipPath id="avatar-base-clip">
+      <path d="M40 88c0-20.986 10.745-38 24-38s24 17.014 24 38v26c0 17.673-10.745 32-24 32s-24-14.327-24-32V88z" />
+    </clipPath>
+  </defs>
+  <g id="base">
+    <path d="M64 18c-14.35 0-26 11.65-26 26 0 12.64 8.81 23.21 20.48 25.54.27 2.27 2.25 4.02 4.52 4.02s4.25-1.75 4.52-4.02C81.19 67.21 90 56.64 90 44c0-14.35-11.65-26-26-26z" fill="url(#avatar-skin)" />
+    <path d="M64 14c-15.99 0-28 10.66-28 25.5 0 2.98.54 5.79 1.55 8.36 2.68-10.61 12.41-11.86 13.59-20.3C55.49 34.33 59.42 32 64 32s8.51 2.33 12.86-4.44c1.18 8.44 10.91 9.69 13.59 20.3C91.46 45.29 92 42.48 92 39.5 92 24.66 79.99 14 64 14z" fill="url(#avatar-hair)" />
+    <path d="M54 44a4 4 0 11-8 0 4 4 0 018 0zm28 0a4 4 0 11-8 0 4 4 0 018 0z" fill="#1f2933" />
+    <path d="M56 60c1.6 2.4 4.8 4 8 4s6.4-1.6 8-4" stroke="#b45309" stroke-width="2" stroke-linecap="round" />
+    <g clip-path="url(#avatar-base-clip)">
+      <path d="M38 92c0-13.255 11.64-24 26-24s26 10.745 26 24v26c0 13.255-11.64 24-26 24s-26-10.745-26-24V92z" fill="url(#avatar-tunic)" />
+      <path d="M42 114.5c0-9.665 9.55-17.5 22-17.5s22 7.835 22 17.5V140H42v-25.5z" fill="#0f172a" opacity="0.6" />
+    </g>
+    <path d="M36 108c4.3 7.2 14 11.5 28 11.5S87.7 115.2 92 108c-2.1 13.1-12.8 23-28 23s-25.9-9.9-28-23z" fill="#0f172a" opacity="0.4" />
+  </g>
+</svg>

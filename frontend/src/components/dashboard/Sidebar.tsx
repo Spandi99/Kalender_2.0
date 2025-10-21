@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
   CalendarDays,
+  CheckSquare,
   DownloadCloud,
   LayoutDashboard,
   MessageSquare,
@@ -16,7 +17,7 @@ import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
 import { useUserProfile, type UserProfile } from "../../lib/useUserProfile";
 import { getReadableTextColor, withAlpha } from "../../utils/colorUtils";
 import OrgaliferLogo from "../Brand/OrgaliferLogo";
-import UserAvatar from "../Avatar/UserAvatar";
+import { DynamicAvatar } from "../Avatar/DynamicAvatar";
 import { Progress } from "../ui/progress";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Calendar Import", to: "/dashboard/ical", icon: DownloadCloud },
   { label: "AI Insights", to: "/dashboard/ai", icon: Bot },
   { label: "Templates", to: "/dashboard/templates", icon: NotebookPen },
+  { label: "Tasks", to: "/dashboard/tasks", icon: CheckSquare },
   { label: "Feedback", to: "/dashboard/feedback", icon: MessageSquare },
 ];
 
@@ -69,6 +71,11 @@ function SidebarContent({ onClose, avatarStatus, isAvatarLoading, profile }: Sid
     : "Inactive";
   const moodLabel = avatarStatus ? `Mood: ${avatarStatus.expression}` : "";
   const xpProgressLabel = avatarStatus ? `${xpProgress}%` : isAvatarLoading ? "…" : "–";
+  const avatarSummaryLine = avatarStatus
+    ? `${avatarLevelLabel} • Stimmung ${avatarStatus.expression}`
+    : isAvatarLoading
+    ? "Avatar wird geladen…"
+    : displayedAvatarState;
 
   const sidebarTextColor = useMemo(() => getReadableTextColor(SIDEBAR_BACKGROUND), []);
   const xpCardBackground = "rgba(15, 23, 42, 0.82)";
@@ -99,12 +106,18 @@ function SidebarContent({ onClose, avatarStatus, isAvatarLoading, profile }: Sid
         ) : null}
       </div>
 
-      <div className="mb-8 flex items-center gap-3 rounded-2xl border border-slate-800/70 bg-slate-900/70 px-4 py-3 shadow-inner">
-        <UserAvatar name={profile.name} imageUrl={profile.avatarUrl} aiPreviewUrl={profile.aiAvatarUrl} size={48} />
+      <div className="group mb-8 flex items-center gap-4 rounded-2xl border border-slate-800/70 bg-slate-900/70 px-4 py-3 shadow-inner transition hover:border-emerald-400/60 hover:shadow-emerald-500/20">
+        <DynamicAvatar
+          level={avatarStatus?.current_level ?? 1}
+          animated={!isAvatarLoading}
+          variant="bust"
+          className="h-20 w-20"
+          ariaLabel={`${profile.name} avatar`}
+        />
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-100">{profile.name}</p>
           {profile.email ? <p className="text-xs text-slate-400">{profile.email}</p> : null}
-          <p className="text-xs text-slate-500">Personalized insights ready</p>
+          <p className="text-xs text-slate-400">{avatarSummaryLine}</p>
         </div>
       </div>
 

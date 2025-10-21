@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 160" fill="none">
+  <defs>
+    <radialGradient id="orb-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(92 58) scale(14)">
+      <stop offset="0" stop-color="#fef3c7" />
+      <stop offset="0.6" stop-color="#fde68a" />
+      <stop offset="1" stop-color="#facc15" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <g id="light_orb">
+    <circle cx="92" cy="58" r="12" fill="url(#orb-glow)" opacity="0.8" />
+    <circle cx="92" cy="58" r="6" fill="#fcd34d" opacity="0.8" />
+    <circle cx="94.5" cy="55.5" r="2" fill="#fef9c3" />
+  </g>
+</svg>

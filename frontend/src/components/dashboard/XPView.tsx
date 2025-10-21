@@ -7,7 +7,7 @@ import type { XpSummary } from "../../api/client";
 import { fetchXpSummary } from "../../api/client";
 import { useAvatar, type AvatarStatus } from "../../lib/useAvatar";
 import { useUserProfile } from "../../lib/useUserProfile";
-import UserAvatar from "../Avatar/UserAvatar";
+import { DynamicAvatar } from "../Avatar/DynamicAvatar";
 import { XpDashboard } from "../XP/XpDashboard";
 import { Button } from "../ui/button";
 
@@ -32,6 +32,16 @@ export default function XPView() {
     [xpSummaryQuery.data, avatarQuery.data]
   );
 
+  const avatarHeaderSummary = useMemo(() => {
+    if (avatarQuery.data) {
+      return `Level ${avatarQuery.data.current_level} • Stimmung ${avatarQuery.data.expression}`;
+    }
+    if (avatarQuery.isLoading || avatarQuery.isFetching) {
+      return "Avatar wird geladen…";
+    }
+    return "Avatar bereit";
+  }, [avatarQuery.data, avatarQuery.isFetching, avatarQuery.isLoading]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
       <motion.div
@@ -49,18 +59,17 @@ export default function XPView() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 shadow-inner">
-              <UserAvatar
-                name={profile.name}
-                imageUrl={profile.avatarUrl}
-                aiPreviewUrl={profile.aiAvatarUrl}
-                size={44}
+            <div className="group flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-900/70 px-3 py-2 shadow-inner transition hover:border-emerald-400/60">
+              <DynamicAvatar
+                level={avatarQuery.data?.current_level ?? 1}
+                animated={!(avatarQuery.isLoading || avatarQuery.isFetching)}
+                variant="badge"
+                className="h-16 w-16"
+                ariaLabel={`${profile.name} avatar`}
               />
               <div className="text-sm leading-tight">
                 <p className="font-semibold text-slate-100">{profile.name}</p>
-                <p className="text-xs text-slate-400">
-                  Level {avatarQuery.data?.current_level ?? "–"} • Stimmung {avatarQuery.data?.expression ?? "–"}
-                </p>
+                <p className="text-xs text-slate-400">{avatarHeaderSummary}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-brand-primary/40 bg-brand-primary/15 px-3 py-2 text-sm font-semibold text-brand-primary shadow-sm">

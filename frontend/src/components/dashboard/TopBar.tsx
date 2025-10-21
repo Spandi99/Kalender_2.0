@@ -8,7 +8,7 @@ import { fetchLevelStatus } from "../../api/client";
 import { useUserProfile } from "../../lib/useUserProfile";
 import { getReadableTextColor } from "../../utils/colorUtils";
 import OrgaliferLogo from "../Brand/OrgaliferLogo";
-import UserAvatar from "../Avatar/UserAvatar";
+import { DynamicAvatar } from "../Avatar/DynamicAvatar";
 
 interface TopBarProps {
   onToggleSidebar: () => void;
@@ -53,6 +53,8 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
 
   const chipTextColor = getReadableTextColor(CHIP_BACKGROUND);
   const progress = computeProgress(levelStatusQuery.data);
+  const avatarLevel = levelStatusQuery.data?.current_level ?? 1;
+  const avatarBusy = levelStatusQuery.isLoading || levelStatusQuery.isFetching;
   const heading = useMemo(() => {
     const pathname = location.pathname.replace(/\/$/, "");
     if (NAV_LABELS[pathname]) {
@@ -92,8 +94,14 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
           <span>{progress}%</span>
         </div>
 
-        <div className="flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-2 shadow-sm">
-          <UserAvatar name={profile.name} imageUrl={profile.avatarUrl} aiPreviewUrl={profile.aiAvatarUrl} size={36} showBadge={false} />
+        <div className="group flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-2 shadow-sm transition hover:border-emerald-400/60">
+          <DynamicAvatar
+            level={avatarLevel}
+            animated={!avatarBusy}
+            variant="badge"
+            className="h-12 w-12"
+            ariaLabel={`${profile.name} avatar`}
+          />
           <div className="hidden text-right sm:block">
             <p className="text-sm font-semibold text-slate-100">{profile.name}</p>
             <p className="text-xs text-slate-400">Ready for focus mode</p>

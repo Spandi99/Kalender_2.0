@@ -11,11 +11,11 @@ export interface UserProfile {
 
 const FALLBACK_PROFILE: UserProfile = {
   id: "local-user",
-  name: "Spandi Orgalifer",
+  name: "Andreas",
   email: "spandi@orgalifer.com",
   avatarUrl: null,
   aiAvatarUrl: null,
-  dicebearSeed: "Spandi Orgalifer",
+  dicebearSeed: "Andreas",
 };
 
 const STORAGE_KEY = "orgalifer.profile";
