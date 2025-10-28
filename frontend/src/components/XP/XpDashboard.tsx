@@ -64,11 +64,11 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
           Verfolge, wie deine Kategorien zum Fortschritt beitragen.
         </p>
       </CardHeader>
-      <CardContent className="space-y-5 p-6 text-slate-200">
+      <CardContent className="space-y-5 p-4 text-slate-200 sm:p-6">
         <div className="space-y-4 rounded-2xl border border-slate-700 bg-slate-900/70 p-4 shadow-lg">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-4xl font-bold text-brand-primary">{summary?.total ?? 0}</div>
+              <div className="text-3xl font-bold text-brand-primary sm:text-4xl">{summary?.total ?? 0}</div>
               <div className="text-sm font-semibold uppercase tracking-wide text-slate-400">Gesamt-XP</div>
               <div className="text-sm text-slate-300">{xpLabel}</div>
             </div>
@@ -97,12 +97,12 @@ export function XpDashboard({ summary, lastAwarded, levelInfo }: XpDashboardProp
           {categories.length ? (
             categories.map((category) => (
               <div key={category.key} className="space-y-1 rounded-xl border border-slate-700 bg-slate-900/70 p-3 shadow-lg">
-                <div className="flex items-center justify-between text-sm font-medium text-slate-200">
+                <div className="flex flex-col gap-2 text-sm font-medium text-slate-200 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <span aria-hidden>{category.icon}</span>
                     <span>{category.display}</span>
                   </div>
-                  <span>{category.value} XP</span>
+                  <span className="text-sm text-slate-300 sm:text-right">{category.value} XP</span>
                 </div>
                 <Progress
                   value={maxValue ? Math.min(100, (category.value / maxValue) * 100) : 0}

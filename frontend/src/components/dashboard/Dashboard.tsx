@@ -16,13 +16,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex min-h-[100dvh] w-full overflow-x-hidden bg-slate-950 text-slate-100">
       <Sidebar isMobileOpen={sidebarOpen} onClose={handleCloseSidebar} />
 
       <div className="flex flex-1 flex-col">
         <TopBar onToggleSidebar={handleToggleSidebar} />
 
-        <main className="flex-1 overflow-y-auto bg-slate-950">
+        <main className="flex-1 overflow-y-auto bg-slate-950 pb-[env(safe-area-inset-bottom)]">
           <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
             <Outlet />
           </div>

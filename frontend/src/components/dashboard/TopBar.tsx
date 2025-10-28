@@ -67,34 +67,39 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
   }, [location.pathname]);
   return (
     <header
-      className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/85 px-5 py-3 backdrop-blur lg:px-6"
+      className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/85 px-4 py-3 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] backdrop-blur md:px-6"
       style={{ color: getReadableTextColor(HEADER_BACKGROUND) }}
       aria-label={heading}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="inline-flex rounded-full border border-slate-700 bg-slate-900/80 p-2.5 text-slate-200 transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="inline-flex rounded-full border border-slate-700 bg-slate-900/80 p-2.5 text-slate-200 transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:hidden"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-2.5">
-          <OrgaliferLogo size={84} className="ml-1" />
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center gap-2.5">
+            <OrgaliferLogo size={72} className="ml-1" />
+          </div>
+          <span className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400/80 sm:hidden">
+            {heading}
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-wrap items-center justify-end gap-4 text-sm">
+      <div className="flex w-full flex-wrap items-center justify-start gap-3 text-sm sm:flex-1 sm:justify-end">
         <div
-          className="flex items-center gap-2 rounded-full border border-slate-700/80 px-4 py-2 shadow-sm"
+          className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-700/80 px-4 py-2 shadow-sm sm:w-auto sm:justify-center"
           style={{ backgroundColor: CHIP_BACKGROUND, color: chipTextColor }}
         >
           <span className="text-sm font-semibold">XP Progress</span>
           <span>{progress}%</span>
         </div>
 
-        <div className="group flex items-center gap-3 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-2 shadow-sm transition hover:border-emerald-400/60">
+        <div className="group flex w-full items-center justify-between gap-3 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-2 shadow-sm transition hover:border-emerald-400/60 sm:w-auto sm:justify-start">
           <DynamicAvatar
             level={avatarLevel}
             animated={!avatarBusy}

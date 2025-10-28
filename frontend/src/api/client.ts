@@ -107,6 +107,65 @@ export interface EventCategory {
   xp_value: number;
 }
 
+export type TaskFrequency = "daily" | "weekly" | "monthly" | "yearly" | "custom";
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskIntervalUnit = "day" | "week" | "month" | "year";
+
+export interface Task {
+  id: number;
+  title: string;
+  frequency: TaskFrequency;
+  interval_unit: TaskIntervalUnit;
+  interval_value: number;
+  duration_minutes: number;
+  preferred_time: string | null;
+  priority: TaskPriority;
+  category: string | null;
+  last_completed: string | null;
+  next_due: string | null;
+  last_scheduled_at: string | null;
+  created_at: string;
+}
+
+export interface CreateTaskPayload {
+  title: string;
+  frequency: TaskFrequency;
+  duration_minutes: number;
+  priority: TaskPriority;
+  category?: string | null;
+  preferred_time?: string | null;
+  interval_value?: number;
+  interval_unit?: TaskIntervalUnit;
+}
+
+export interface TaskStats {
+  total_tasks: number;
+  overdue_tasks: number;
+  upcoming_tasks: number;
+  scheduled_events: number;
+  productive_hours: number[];
+  next_due: string | null;
+}
+
+export interface ScheduledTaskEvent {
+  task_id: number;
+  event_id: number;
+  title: string;
+  start: string;
+  end: string;
+}
+
+export interface ScheduleTasksResponse {
+  scheduled: number;
+  skipped: number;
+  entries: ScheduledTaskEvent[];
+}
+
+export interface OptimalTaskTimeResponse {
+  category: string | null;
+  optimal_time: string | null;
+}
+
 export type FeedbackReason = "too_tired" | "no_time" | "forgot" | "low_motivation" | "other";
 export type FeedbackPunctuality = "on_time" | "late" | "early";
 
@@ -298,6 +357,33 @@ export const fetchFeedbackSummary = async (): Promise<FeedbackSummary> => {
 
 export const fetchEventCategories = async (): Promise<EventCategory[]> => {
   const { data } = await api.get<EventCategory[]>("/events/categories");
+  return data;
+};
+
+export const fetchTasks = async (): Promise<Task[]> => {
+  const { data } = await api.get<Task[]>("/tasks/");
+  return data;
+};
+
+export const createTask = async (payload: CreateTaskPayload): Promise<Task> => {
+  const { data } = await api.post<Task>("/tasks/", payload);
+  return data;
+};
+
+export const scheduleTasks = async (): Promise<ScheduleTasksResponse> => {
+  const { data } = await api.post<ScheduleTasksResponse>("/tasks/schedule");
+  return data;
+};
+
+export const fetchTaskStats = async (): Promise<TaskStats> => {
+  const { data } = await api.get<TaskStats>("/tasks/stats");
+  return data;
+};
+
+export const fetchOptimalTaskTime = async (category?: string): Promise<OptimalTaskTimeResponse> => {
+  const { data } = await api.get<OptimalTaskTimeResponse>("/tasks/optimal-time", {
+    params: category ? { category } : undefined,
+  });
   return data;
 };
 

@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { registerServiceWorker } from "./lib/serviceWorkerRegistration";
 import "./index.css";
 import "./styles/logo-animation.css";
 import "./styles/calendar.css";
@@ -48,3 +49,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     </QueryClientProvider>
   </React.StrictMode>
 );
+
+registerServiceWorker();

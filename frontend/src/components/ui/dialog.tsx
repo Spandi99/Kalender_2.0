@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-slate-700 bg-slate-950/95 p-6 shadow-2xl backdrop-blur",
+          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-slate-700 bg-slate-950/95 p-6 shadow-2xl backdrop-blur focus:outline-none max-h-[calc(100dvh-2rem)] overflow-y-auto",
           className
         )}
         style={mergedStyle}

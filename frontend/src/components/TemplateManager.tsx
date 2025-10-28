@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState, memo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -43,6 +43,95 @@ const EMPTY_BLOCK: BlockFormState = {
   end_time: "09:00",
   category: "",
 };
+
+interface TemplateBlockEditorProps {
+  index: number;
+  block: BlockFormState;
+  categories: EventCategory[];
+  disableRemove: boolean;
+  onChange: (index: number, patch: Partial<BlockFormState>) => void;
+  onRemove: (index: number) => void;
+}
+
+const TemplateBlockEditor = memo(function TemplateBlockEditor({
+  index,
+  block,
+  categories,
+  disableRemove,
+  onChange,
+  onRemove,
+}: TemplateBlockEditorProps) {
+  const handleChange = (patch: Partial<BlockFormState>) => {
+    onChange(index, patch);
+  };
+
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-4 shadow-lg">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <Label className="font-medium">Block {index + 1}</Label>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="self-start border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
+          onClick={() => onRemove(index)}
+          disabled={disableRemove}
+        >
+          Remove
+        </Button>
+      </div>
+      <div className="mt-3 grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`block-label-${index}`}>Label</Label>
+          <Input
+            id={`block-label-${index}`}
+            className="border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500"
+            value={block.label}
+            onChange={(event) => handleChange({ label: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`block-category-${index}`}>Category</Label>
+          <select
+            id={`block-category-${index}`}
+            className="h-10 w-full rounded-md border border-slate-700 bg-slate-900/80 px-3 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+            value={block.category}
+            onChange={(event) => handleChange({ category: event.target.value })}
+          >
+            <option value="">Default (Work)</option>
+            {categories.map((category) => (
+              <option key={category.slug} value={category.slug}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`block-start-${index}`}>Start time</Label>
+          <Input
+            id={`block-start-${index}`}
+            type="time"
+            className="border-slate-700 bg-slate-900/80 text-slate-100"
+            value={block.start_time}
+            onChange={(event) => handleChange({ start_time: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`block-end-${index}`}>End time</Label>
+          <Input
+            id={`block-end-${index}`}
+            type="time"
+            className="border-slate-700 bg-slate-900/80 text-slate-100"
+            value={block.end_time}
+            onChange={(event) => handleChange({ end_time: event.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export function TemplateManager({ categories }: TemplateManagerProps) {
   const queryClient = useQueryClient();
@@ -132,28 +221,26 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
     }
   }, [applyTarget, applyTemplateMutation]);
 
-  const handleAddBlock = () => {
+  const handleAddBlock = useCallback(() => {
     setFormState((prev) => ({
       ...prev,
       blocks: [...prev.blocks, { ...EMPTY_BLOCK }],
     }));
-  };
+  }, []);
 
-  const handleBlockChange = (index: number, patch: Partial<BlockFormState>) => {
-    setFormState((prev) => {
-      const blocks = prev.blocks.map((block, blockIndex) =>
-        blockIndex === index ? { ...block, ...patch } : block,
-      );
-      return { ...prev, blocks };
-    });
-  };
+  const handleBlockChange = useCallback((index: number, patch: Partial<BlockFormState>) => {
+    setFormState((prev) => ({
+      ...prev,
+      blocks: prev.blocks.map((block, blockIndex) => (blockIndex === index ? { ...block, ...patch } : block)),
+    }));
+  }, []);
 
-  const handleRemoveBlock = (index: number) => {
+  const handleRemoveBlock = useCallback((index: number) => {
     setFormState((prev) => ({
       ...prev,
       blocks: prev.blocks.filter((_, blockIndex) => blockIndex !== index),
     }));
-  };
+  }, []);
 
   const timeToMinutes = (value: string) => {
     const [hours, minutes] = value.split(":");
@@ -330,73 +417,15 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
 
             <div className="space-y-4">
               {formState.blocks.map((block, index) => (
-                <div
+                <TemplateBlockEditor
                   key={index}
-                  className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-4 shadow-lg"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <Label className="font-medium">Block {index + 1}</Label>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="border border-slate-600 bg-slate-900/70 text-slate-100 hover:bg-slate-800/80"
-                      onClick={() => handleRemoveBlock(index)}
-                      disabled={formState.blocks.length === 1}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                  <div className="mt-3 grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor={`block-label-${index}`}>Label</Label>
-                      <Input
-                        id={`block-label-${index}`}
-                        className="border-slate-700 bg-slate-900/80 text-slate-100 placeholder:text-slate-500"
-                        value={block.label}
-                        onChange={(event) => handleBlockChange(index, { label: event.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`block-category-${index}`}>Category</Label>
-                      <select
-                        id={`block-category-${index}`}
-                        className="h-10 w-full rounded-md border border-slate-700 bg-slate-900/80 px-3 text-sm text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-                        value={block.category}
-                        onChange={(event) => handleBlockChange(index, { category: event.target.value })}
-                      >
-                        <option value="">Default (Work)</option>
-                        {categories.map((category) => (
-                          <option key={category.slug} value={category.slug}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor={`block-start-${index}`}>Start time</Label>
-                      <Input
-                        id={`block-start-${index}`}
-                        type="time"
-                        className="border-slate-700 bg-slate-900/80 text-slate-100"
-                        value={block.start_time}
-                        onChange={(event) => handleBlockChange(index, { start_time: event.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`block-end-${index}`}>End time</Label>
-                      <Input
-                        id={`block-end-${index}`}
-                        type="time"
-                        className="border-slate-700 bg-slate-900/80 text-slate-100"
-                        value={block.end_time}
-                        onChange={(event) => handleBlockChange(index, { end_time: event.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
+                  index={index}
+                  block={block}
+                  categories={categories}
+                  disableRemove={formState.blocks.length === 1}
+                  onChange={handleBlockChange}
+                  onRemove={handleRemoveBlock}
+                />
               ))}
             </div>
             <Button

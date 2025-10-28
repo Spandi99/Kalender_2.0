@@ -181,14 +181,14 @@ export function Sidebar({ isMobileOpen, onClose }: SidebarProps) {
 
   return (
     <Fragment>
-      <div className="hidden h-full w-72 lg:block">
+      <div className="hidden h-full w-72 md:block">
         <SidebarContent profile={profile} avatarStatus={avatarStatus} isAvatarLoading={isAvatarLoading} />
       </div>
 
       <AnimatePresence>
         {isMobileOpen ? (
           <motion.div
-            className="fixed inset-0 z-50 flex lg:hidden"
+            className="fixed inset-0 z-50 flex md:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

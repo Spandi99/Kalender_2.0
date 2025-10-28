@@ -135,3 +135,85 @@
   font-size: 0.78rem;
   opacity: 0.8;
 }
+
+@media (max-width: 1024px) {
+  .fc-orgalifer {
+    border-radius: 1.75rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .fc-orgalifer .fc-toolbar.fc-header-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .fc-orgalifer .fc-toolbar-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .fc-orgalifer {
+    padding: 1rem;
+  }
+
+  .fc-orgalifer .fc-daygrid-day-frame {
+    min-height: 120px;
+    padding: 0.35rem;
+  }
+
+  .fc-orgalifer .fc-daygrid-day-top {
+    padding: 0.35rem 0.25rem 0;
+  }
+
+  .fc-orgalifer .fc-daygrid-event {
+    margin-top: 0.25rem;
+  }
+
+  .fc-orgalifer .org-event-daygrid .org-daygrid-title {
+    font-size: 0.85rem;
+  }
+
+  .fc-orgalifer .org-event-daygrid .org-daygrid-description {
+    font-size: 0.7rem;
+  }
+
+  .fc-orgalifer .org-event-content {
+    gap: 0.15rem;
+  }
+
+  .fc-orgalifer .fc-timegrid-slot {
+    height: 3.6rem;
+  }
+
+  .fc-orgalifer .fc-timegrid-event {
+    min-height: 3.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fc-orgalifer {
+    padding: 0.85rem;
+  }
+
+  .fc-orgalifer .fc-toolbar.fc-header-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .fc-orgalifer .fc-toolbar-chunk {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .fc-orgalifer .fc-toolbar-title {
+    font-size: 1rem;
+    text-align: left;
+  }
+
+  .fc-orgalifer .fc-daygrid-day-frame {
+    min-height: 110px;
+  }
+}
+

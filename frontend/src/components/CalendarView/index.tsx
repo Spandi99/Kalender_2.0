@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
 import FullCalendar, { DateSelectArg, EventClickArg } from "@fullcalendar/react";
 import type { EventContentArg, EventMountArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -118,6 +118,39 @@ function truncateWithEllipsis(text: string, maxLength: number) {
 }
 
 export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const media = window.matchMedia("(max-width: 768px)");
+    const updateMatch = (event: MediaQueryListEvent | MediaQueryList) => {
+      setIsCompactLayout(event.matches);
+    };
+
+    updateMatch(media);
+
+    if (typeof media.addEventListener === "function") {
+      const handler = (event: MediaQueryListEvent) => updateMatch(event);
+      media.addEventListener("change", handler);
+      return () => media.removeEventListener("change", handler);
+    }
+
+    const legacyHandler = (event: MediaQueryListEvent) => updateMatch(event);
+    media.addListener(legacyHandler);
+    return () => media.removeListener(legacyHandler);
+  }, []);
+
+  const calendarAspectRatio = isCompactLayout ? 0.85 : 1.45;
+  const calendarHeight: "auto" | "100%" = isCompactLayout ? "auto" : "100%";
+  const calendarEventStack = isCompactLayout ? 2 : 3;
+  const calendarDayMaxRows = isCompactLayout ? 3 : 5;
+  const initialCalendarView = isCompactLayout ? "listWeek" : "dayGridMonth";
+  const toolbarConfig = isCompactLayout
+    ? { left: "prev,next today", center: "title", right: "listWeek,timeGridDay" }
+    : { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,listWeek" };
 
   const renderEventContent = useCallback((info: EventContentArg) => {
     const localeForEvent = resolveLocale(info.view);
@@ -244,14 +277,10 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
     <div className="fc-orgalifer h-full rounded-3xl border border-slate-700 bg-slate-950/90 p-4 text-slate-100 shadow-xl">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView="dayGridMonth"
+        initialView={initialCalendarView}
         timeZone={timeZone}
         locale={locale}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,listWeek",
-        }}
+        headerToolbar={toolbarConfig}
         selectable
         selectMirror
         events={calendarEvents}
@@ -261,12 +290,16 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
         eventDidMount={handleEventDidMount}
         slotEventOverlap={false}
         eventOverlap={false}
-        eventMaxStack={3}
-        aspectRatio={1.45}
+        eventMaxStack={calendarEventStack}
+        dayMaxEventRows={calendarDayMaxRows}
+        expandRows={!isCompactLayout}
+        aspectRatio={calendarAspectRatio}
         eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
         slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
         dayHeaderClassNames={["bg-slate-900 text-slate-200"]}
-        height="100%"
+        height={calendarHeight}
+        buttonText={{ listWeek: "Liste", timeGridDay: "Tag", dayGridMonth: "Monat", timeGridWeek: "Woche" }}
+        moreLinkClick="popover"
       />
     </div>
   );

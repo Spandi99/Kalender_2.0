@@ -76,24 +76,24 @@ export function AvatarDisplay({
       )}
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 sm:gap-5">
           <DynamicAvatar
             level={level}
             animated
             variant="full"
-            className="h-32 w-32 sm:h-36 sm:w-36"
+            className="h-28 w-28 sm:h-36 sm:w-36"
             ariaLabel={`Avatar level ${level}`}
           />
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <div className="text-xs font-semibold uppercase tracking-wide text-brand-accent">Dein Avatar</div>
             <div className="text-3xl font-bold text-slate-100 transition-transform duration-700">
               Level {level}
             </div>
-            <div className="text-sm capitalize text-slate-300">{avatarState.replace(/_/g, " ")}</div>
+            <div className="text-sm capitalize text-slate-300 break-words">{avatarState.replace(/_/g, " ")}</div>
             <div className="text-sm text-slate-400">Stimmung: {expression}</div>
           </div>
         </div>
-        <div className="flex min-w-[220px] flex-col gap-2">
+        <div className="flex w-full flex-col gap-2 sm:min-w-[220px]">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400">
             <span>Fortschritt</span>
             <span>{progressValue}%</span>
