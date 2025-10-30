@@ -24,7 +24,7 @@ def add_calendar(payload: schemas.ImportedCalendarCreate, db: Session = Depends(
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Calendar already added")
 
-    calendar = create_calendar(db, payload.name, str(payload.url))
+    calendar = create_calendar(db, payload.name, str(payload.url), payload.color)
     return schemas.ImportedCalendarOut.from_orm(calendar)
 
 

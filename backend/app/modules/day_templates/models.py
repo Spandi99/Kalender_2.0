@@ -27,5 +27,6 @@ class TemplateBlock(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     category = Column(String, nullable=True)
+    color = Column(String(20), nullable=True)
 
     template = relationship("DayTemplate", back_populates="blocks")

@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..feedback.models import Feedback
+from ..tasks.models import TaskEvent
+from ..tasks.service import update_task_feedback
 from ..xp.models import XPLog
 from ..xp.service import award_xp_for_event
 from .models import Event, EventCategory
@@ -53,6 +55,13 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
         imported_event.description = event.description
         imported_event.last_updated = datetime.utcnow()
 
+    if "completed" in update_values:
+        update_task_feedback(db, event, bool(event.completed))
+
+    if event.task_link is not None:
+        event.task_link.scheduled_for = event.start
+        db.add(event.task_link)
+
     db.add(event)
     db.commit()
     db.refresh(event)
@@ -66,6 +75,7 @@ def delete_event(db: Session, event_id: int) -> None:
 
     db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
     db.query(Feedback).filter(Feedback.event_id == event.id).delete(synchronize_session=False)
+    db.query(TaskEvent).filter(TaskEvent.event_id == event.id).delete(synchronize_session=False)
 
     imported_event = getattr(event, "imported_source", None)
     if imported_event is not None:
@@ -85,6 +95,8 @@ def complete_event(db: Session, event_id: int) -> tuple[Event, int]:
         db.add(event)
         db.commit()
         db.refresh(event)
+
+    update_task_feedback(db, event, True)
 
     xp = award_xp_for_event(db, event)
     return event, xp

@@ -7,16 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
+import { ColorPicker } from "./ui/color-picker";
 
 interface FormState {
   name: string;
   url: string;
+  color: string | null;
 }
 
 const EMPTY_FORM: FormState = {
   name: "",
   url: "",
+  color: null,
 };
+
+const EVENT_QUERY_KEYS: Array<readonly unknown[]> = [
+  ["events"],
+  ["events", "dashboard"],
+  ["events", "overview"],
+  ["events", "next-widget"],
+];
 
 export function ExternalCalendars() {
   const queryClient = useQueryClient();
@@ -28,11 +38,11 @@ export function ExternalCalendars() {
   const invalidateCalendars = () => {
     queryClient.invalidateQueries({ queryKey: ["imported-calendars"] });
     queryClient.invalidateQueries({ queryKey: ["imported-calendars", "overview"] });
-    queryClient.invalidateQueries({ queryKey: ["events"] });
+    EVENT_QUERY_KEYS.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
   };
 
   const addCalendarMutation = useMutation({
-    mutationFn: ({ name, url }: FormState) => addICalCalendar(name, url),
+    mutationFn: ({ name, url, color }: FormState) => addICalCalendar(name, url, color),
     onMutate: () => {
       setFormError(null);
       setStatus(null);
@@ -40,7 +50,7 @@ export function ExternalCalendars() {
     onSuccess: (calendar) => {
       invalidateCalendars();
       setFormState(EMPTY_FORM);
-      setStatus({ type: "info", message: `Calendar "${calendar.name}" added. Trigger a sync to import events.` });
+      setStatus({ type: "info", message: `Calendar "${calendar.name}" hinzugefügt. Starte einen Sync, um Events zu importieren.` });
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : "Failed to add calendar.";
@@ -78,7 +88,11 @@ export function ExternalCalendars() {
       return;
     }
 
-    addCalendarMutation.mutate({ name: formState.name.trim(), url: formState.url.trim() });
+    addCalendarMutation.mutate({
+      name: formState.name.trim(),
+      url: formState.url.trim(),
+      color: formState.color,
+    });
   };
 
   const calendars = calendarsQuery.data ?? [];
@@ -114,6 +128,11 @@ export function ExternalCalendars() {
               placeholder="https://.../calendar.ics"
               className="border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500"
             />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-slate-200">Farbe</Label>
+            <ColorPicker value={formState.color} onChange={(value) => setFormState((prev) => ({ ...prev, color: value }))} />
+            <p className="text-xs text-slate-500">Optional: Farbe wird für alle importierten Events genutzt.</p>
           </div>
           {formError ? <p className="text-sm text-rose-300">{formError}</p> : null}
           <Button
@@ -159,8 +178,17 @@ export function ExternalCalendars() {
                   key={calendar.id}
                   className="flex flex-col gap-2 rounded-xl border border-slate-700 bg-slate-900/80 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="flex items-center gap-2">
+                    {calendar.color ? (
+                      <span
+                        className="inline-flex h-3 w-3 rounded-full border border-slate-200/60"
+                        style={{ backgroundColor: calendar.color }}
+                        aria-hidden
+                      />
+                    ) : null}
                     <p className="font-medium text-white">{calendar.name}</p>
+                  </div>
+                  <div>
                     <p className="break-all text-xs text-slate-400">{calendar.url}</p>
                     <p className="text-xs text-slate-500">
                       Last synced: {calendar.last_synced ? new Date(calendar.last_synced).toLocaleString() : "Never"}

@@ -23,8 +23,8 @@ def list_calendars(db: Session) -> Iterable[ImportedCalendar]:
     return db.query(ImportedCalendar).order_by(ImportedCalendar.name.asc()).all()
 
 
-def create_calendar(db: Session, name: str, url: str) -> ImportedCalendar:
-    calendar = ImportedCalendar(name=name, url=url)
+def create_calendar(db: Session, name: str, url: str, color: str | None = None) -> ImportedCalendar:
+    calendar = ImportedCalendar(name=name, url=url, color=color)
     db.add(calendar)
     db.commit()
     db.refresh(calendar)
@@ -239,12 +239,14 @@ def _update_linked_event(
     end: datetime,
     description: str,
     category: str,
+    color: str | None,
 ) -> None:
     event.title = title
     event.start = start
     event.end = end
     event.description = description or None
     event.category = category
+    event.color = color
 
 
 def _remove_linked_event(db: Session, event_id: int) -> None:
@@ -309,6 +311,7 @@ def sync_calendar(db: Session, calendar_id: int) -> ImportedCalendar | None:
                 description=description or None,
                 category=category,
                 completed=False,
+                color=calendar.color,
             )
             db.add(linked_event)
             db.flush()
@@ -323,6 +326,7 @@ def sync_calendar(db: Session, calendar_id: int) -> ImportedCalendar | None:
             end=end,
             description=description,
             category=category,
+            color=calendar.color,
         )
 
     for orphan in list(calendar.events):

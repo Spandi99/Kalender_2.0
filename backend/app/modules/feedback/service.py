@@ -3,6 +3,7 @@ from collections import Counter
 from sqlalchemy.orm import Session
 
 from ..calendar.models import Event
+from ..tasks.service import update_task_feedback
 from ..xp.models import XPLog
 from ..xp.service import award_xp_for_event
 from .models import Feedback, Punctuality
@@ -20,6 +21,8 @@ def create_feedback(db: Session, payload: FeedbackCreate) -> Feedback:
     event.completed = payload.completed
     db.add(event)
     db.add(feedback)
+
+    update_task_feedback(db, event, payload.completed)
 
     if payload.completed:
         award_xp_for_event(db, event, feedback_override=feedback)

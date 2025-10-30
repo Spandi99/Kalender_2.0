@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
-from typing import Iterable, List, Sequence, Tuple
+from typing import Iterable, List, Sequence, Tuple, Set
 
 from sqlalchemy.orm import Session, selectinload
 
@@ -9,7 +9,8 @@ from ..calendar.models import Event
 from ..calendar.schemas import EventCreate
 from ..calendar.service import create_event
 from .models import DayTemplate, TemplateBlock
-from .schemas import DayTemplateCreate
+from .schemas import DayTemplateCreate, TemplateApplyOptions
+
 
 class TemplateNotFoundError(ValueError):
     """Raised when a requested day template cannot be found."""
@@ -43,6 +44,7 @@ def create_template(db: Session, payload: DayTemplateCreate) -> DayTemplate:
             start_time=block.start_time,
             end_time=block.end_time,
             category=block.category,
+            color=block.color,
         )
         for block in sorted(payload.blocks, key=lambda b: b.start_time)
     ]
@@ -148,9 +150,43 @@ def apply_template_to_day(db: Session, template_id: int, target_date: date) -> L
                 start=slot_start,
                 end=slot_end,
                 category=block.category or "work",
+                color=block.color,
             )
             new_event = create_event(db, payload)
             created_events.append(new_event)
             scheduled_events.append(new_event)
 
     return created_events
+
+
+def _resolve_schedule_dates(options: TemplateApplyOptions) -> List[date]:
+    days: Set[int] = {day for day in options.days_of_week if 0 <= day <= 6}
+    start = options.start_date
+    base_week_start = start - timedelta(days=start.weekday())
+    schedule: List[date] = []
+
+    if not days:
+        if options.include_start_date:
+            return [start]
+        return []
+
+    for week_index in range(options.duration_weeks):
+        week_start = base_week_start + timedelta(days=7 * week_index)
+        for day in sorted(days):
+            candidate = week_start + timedelta(days=day)
+            if candidate < start:
+                continue
+            schedule.append(candidate)
+
+    if options.include_start_date and start not in schedule:
+        schedule.append(start)
+
+    return sorted(dict.fromkeys(schedule))
+
+
+def apply_template_schedule(db: Session, template_id: int, options: TemplateApplyOptions) -> List[Event]:
+    target_dates = _resolve_schedule_dates(options)
+    created: List[Event] = []
+    for target_date in target_dates:
+        created.extend(apply_template_to_day(db, template_id, target_date))
+    return created

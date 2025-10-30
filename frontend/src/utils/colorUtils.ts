@@ -283,3 +283,16 @@ export function ensureContrast(backgroundColor: string, preferredTextColor: stri
 export function parseToRgba(color: string) {
   return parseColor(color);
 }
+
+export const COLOR_PRESETS = [
+  "#0EA5E9",
+  "#6366F1",
+  "#F97316",
+  "#F43F5E",
+  "#10B981",
+  "#EAB308",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#F59E0B",
+];

@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterable
 
-from sqlalchemy import MetaData, inspect, select
+from sqlalchemy import MetaData, inspect, select, text
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -50,6 +50,21 @@ def seed_default_categories(db: Session) -> None:
     if created:
         db.flush()
 
+
+
+
+def _ensure_column(connection, table: str, column: str, ddl: str) -> None:
+    inspector = inspect(connection)
+    existing_columns = {col["name"] for col in inspector.get_columns(table)}
+    if column in existing_columns:
+        return
+    connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+
+
+def _ensure_additional_columns(connection: Connection) -> None:
+    _ensure_column(connection, "events", "color", "VARCHAR(20)")
+    _ensure_column(connection, "template_blocks", "color", "VARCHAR(20)")
+    _ensure_column(connection, "imported_calendars", "color", "VARCHAR(20)")
 
 def _migrate_legacy_xp_entries(connection: Connection) -> None:
     inspector = inspect(connection)
@@ -100,5 +115,6 @@ def run_migrations(bind: Engine | None = None) -> None:
     Base.metadata.create_all(bind=active_engine)
     with active_engine.begin() as connection:
         _migrate_legacy_xp_entries(connection)
+        _ensure_additional_columns(connection)
     with _session_scope(bind=active_engine) as session:
         seed_default_categories(session)

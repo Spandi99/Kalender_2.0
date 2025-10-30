@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock3, Loader2, Plus, RefreshCcw } from "lucide-react";
@@ -17,6 +17,7 @@ import { CalendarView as SchedulerCalendar } from "../CalendarView";
 import { FeedbackModal } from "../Feedback/FeedbackModal";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { ColorPicker } from "../ui/color-picker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
@@ -27,11 +28,19 @@ interface NewEventFormState {
   end: string;
   category: string;
   description: string;
+  color: string | null;
 }
 
 type FeedbackFormPayload = Omit<FeedbackPayload, "event_id">;
 
 const DEFAULT_EVENT_CATEGORY = "work";
+
+const EVENT_QUERY_KEYS: Array<readonly unknown[]> = [
+  ["events", "dashboard"],
+  ["events", "overview"],
+  ["events", "next-widget"],
+  ["events"],
+];
 
 const toDateTimeLocalValue = (date: Date) => {
   const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -73,6 +82,7 @@ export default function CalendarView() {
       end: toDateTimeLocalValue(inOneHour),
       category: DEFAULT_EVENT_CATEGORY,
       description: "",
+      color: null,
     };
   });
 
@@ -89,6 +99,52 @@ export default function CalendarView() {
 
   const categories = categoriesQuery.data ?? [];
   const events = eventsQuery.data ?? [];
+  const sortEventsByStart = useCallback(
+    (list: CalendarEvent[]) =>
+      [...list].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()),
+    []
+  );
+
+  const appendEventToCaches = useCallback(
+    (newEvent: CalendarEvent) => {
+      EVENT_QUERY_KEYS.forEach((key) => {
+        queryClient.setQueryData<CalendarEvent[]>(key, (previous) => {
+          if (!previous) {
+            return [newEvent];
+          }
+          const exists = previous.some((item) => item.id === newEvent.id);
+          const next = exists
+            ? previous.map((item) => (item.id === newEvent.id ? newEvent : item))
+            : [...previous, newEvent];
+          return sortEventsByStart(next);
+        });
+      });
+    },
+    [queryClient, sortEventsByStart]
+  );
+
+  const patchEventInCaches = useCallback(
+    (eventId: number, patch: (event: CalendarEvent) => CalendarEvent) => {
+      EVENT_QUERY_KEYS.forEach((key) => {
+        queryClient.setQueryData<CalendarEvent[]>(key, (previous) => {
+          if (!previous) {
+            return previous;
+          }
+          let updated = false;
+          const next = previous.map((item) => {
+            if (item.id === eventId) {
+              updated = true;
+              return patch(item);
+            }
+            return item;
+          });
+          return updated ? sortEventsByStart(next) : previous;
+        });
+      });
+    },
+    [queryClient, sortEventsByStart]
+  );
+
 
   useEffect(() => {
     if (createModalOpen && !createForm.category && categories.length > 0) {
@@ -131,7 +187,7 @@ export default function CalendarView() {
 
   const createEventMutation = useMutation({
     mutationFn: createEvent,
-    onSuccess: () => {
+    onSuccess: (createdEvent) => {
       setCreateModalOpen(false);
       setCreateError(null);
       setCreateForm((previous) => ({
@@ -139,6 +195,7 @@ export default function CalendarView() {
         title: "",
         description: "",
       }));
+      appendEventToCaches(createdEvent);
       queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
     },
@@ -157,10 +214,12 @@ export default function CalendarView() {
     onMutate: () => {
       setFeedbackError(null);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       setFeedbackModalOpen(false);
-      setFeedbackTarget(null);
       setFeedbackError(null);
+      patchEventInCaches(variables.eventId, (event) => ({ ...event, completed: variables.payload.completed }));
+      setSelectedEvent((previous) => (previous && previous.id === variables.eventId ? { ...previous, completed: variables.payload.completed } : previous));
+      setFeedbackTarget(null);
       queryClient.invalidateQueries({ queryKey: ["feedback", "summary", "dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["ai", "insights", "dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["xp", "summary", "dashboard"] });
@@ -188,6 +247,7 @@ export default function CalendarView() {
       end: toDateTimeLocalValue(end),
       category: categories[0]?.slug ?? previous.category ?? DEFAULT_EVENT_CATEGORY,
       description: "",
+      color: previous.color ?? null,
     }));
     setCreateError(null);
     setCreateModalOpen(true);
@@ -200,6 +260,7 @@ export default function CalendarView() {
     const end = fromDateTimeLocalValue(createForm.end);
     const category = createForm.category || categories[0]?.slug || DEFAULT_EVENT_CATEGORY;
     const description = createForm.description.trim();
+    const color = createForm.color ? createForm.color : null;
 
     if (!title) {
       setCreateError("Bitte einen Titel für den Termin vergeben.");
@@ -216,6 +277,7 @@ export default function CalendarView() {
       end: end.toISOString(),
       category,
       description: description || undefined,
+      color: color,
     });
   };
 
@@ -398,6 +460,12 @@ export default function CalendarView() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-200">
+                Farbe
+              </Label>
+              <ColorPicker value={createForm.color} onChange={(color) => setCreateForm((previous) => ({ ...previous, color }))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="event-description" className="text-slate-200">

@@ -34,6 +34,7 @@ from .modules.ical_import.service import (
 from .modules.learning import router as learning_router
 from .modules.self_healing.monitor import start_self_healing_monitor
 from .modules.self_healing.router import router as system_router
+from .modules.tasks import router as tasks_router
 from .modules.xp import router as xp_router
 
 settings = get_settings()
@@ -67,6 +68,7 @@ app.include_router(ical_router.router, prefix="/api/ical", tags=["iCal"])
 app.include_router(feedback_router.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(xp_router.router, prefix="/api/xp", tags=["XP"])
 app.include_router(templates_router.router, prefix="/api/templates", tags=["Day Templates"])
+app.include_router(tasks_router.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(ai_router.router, prefix=settings.api_v1_prefix)
 app.include_router(adaptive_router.router, prefix=settings.api_v1_prefix)
 app.include_router(learning_router.router, prefix=settings.api_v1_prefix)

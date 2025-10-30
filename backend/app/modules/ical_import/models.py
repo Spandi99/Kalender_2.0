@@ -15,6 +15,7 @@ class ImportedCalendar(Base):
     name = Column(String, nullable=False)
     url = Column(String, nullable=False, unique=True)
     last_synced = Column(DateTime, nullable=True)
+    color = Column(String(20), nullable=True)
 
     events = relationship(
         "ImportedEvent",

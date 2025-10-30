@@ -9,6 +9,7 @@ from pydantic import BaseModel, HttpUrl
 class ImportedCalendarBase(BaseModel):
     name: str
     url: HttpUrl
+    color: Optional[str] = None
 
 
 class ImportedCalendarCreate(ImportedCalendarBase):
@@ -20,6 +21,7 @@ class ImportedCalendarOut(BaseModel):
     name: str
     url: HttpUrl
     last_synced: Optional[datetime]
+    color: Optional[str]
 
     class Config:
         orm_mode = True

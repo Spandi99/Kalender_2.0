@@ -5,6 +5,7 @@ import {
   CreateDayTemplatePayload,
   DayTemplate,
   EventCategory,
+  TemplateApplyOptions,
   applyTemplate,
   createTemplate,
   deleteTemplate,
@@ -16,6 +17,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { Textarea } from "./ui/textarea";
+import { ColorPicker } from "./ui/color-picker";
 import { ApplyTemplateModal } from "./ApplyTemplateModal";
 
 type StatusState = { type: "success" | "error"; message: string } | null;
@@ -25,6 +27,7 @@ type BlockFormState = {
   start_time: string;
   end_time: string;
   category: string;
+  color: string | null;
 };
 
 type TemplateFormState = {
@@ -42,6 +45,7 @@ const EMPTY_BLOCK: BlockFormState = {
   start_time: "08:00",
   end_time: "09:00",
   category: "",
+  color: null,
 };
 
 interface TemplateBlockEditorProps {
@@ -106,6 +110,10 @@ const TemplateBlockEditor = memo(function TemplateBlockEditor({
             ))}
           </select>
         </div>
+      </div>
+      <div className="mt-3">
+        <Label>Color</Label>
+        <ColorPicker value={block.color} onChange={(value) => handleChange({ color: value })} />
       </div>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
@@ -192,19 +200,22 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
   });
 
   const applyTemplateMutation = useMutation({
-    mutationFn: ({ templateId, date }: { templateId: number; date: string }) =>
-      applyTemplate(templateId, date),
+    mutationFn: ({ templateId, options }: { templateId: number; options: TemplateApplyOptions }) =>
+      applyTemplate(templateId, options),
     onMutate: () => {
       setApplyError(null);
       setStatus(null);
     },
     onSuccess: (events, variables) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "overview"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "next-widget"] });
       setStatus({
         type: "success",
         message: events.length
-          ? `Template applied to ${variables.date}. ${events.length} event(s) created.`
-          : `Template applied to ${variables.date}. No free slots available.`,
+          ? `Template ab ${variables.options.start_date} angewendet. ${events.length} Event(s) erstellt.`
+          : `Template ab ${variables.options.start_date} angewendet. Keine freien Slots gefunden.`,
       });
       setApplyTarget(null);
     },
@@ -283,6 +294,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
         start_time: block.start_time,
         end_time: block.end_time,
         category: block.category.trim() ? block.category.trim() : undefined,
+        color: block.color ?? undefined,
       })),
     };
 
@@ -369,13 +381,20 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                         key={block.id}
                         className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 shadow-inner"
                       >
-                        <div>
+                        <div className="flex items-center gap-2">
                           <p className="font-medium">{block.label}</p>
-                          <p className="text-xs text-slate-400">
-                            {formatTime(block.start_time)} – {formatTime(block.end_time)}
-                            {block.category ? ` • ${categoryLookup[block.category] ?? block.category}` : ""}
-                          </p>
+                          {block.color ? (
+                            <span
+                              className="inline-flex h-3 w-3 rounded-full border border-slate-300/60"
+                              style={{ backgroundColor: block.color }}
+                              aria-hidden
+                            />
+                          ) : null}
                         </div>
+                        <p className="text-xs text-slate-400">
+                          {formatTime(block.start_time)} – {formatTime(block.end_time)}
+                          {block.category ? ` • ${categoryLookup[block.category] ?? block.category}` : ""}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -450,9 +469,9 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
         templateName={applyTarget?.name ?? ""}
         isApplying={applyTemplateMutation.isPending}
         errorMessage={applyError}
-        onConfirm={(selectedDate) => {
+        onConfirm={(options) => {
           if (applyTarget) {
-            applyTemplateMutation.mutate({ templateId: applyTarget.id, date: selectedDate });
+            applyTemplateMutation.mutate({ templateId: applyTarget.id, options });
           }
         }}
         onOpenChange={(open) => {

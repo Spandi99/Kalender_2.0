@@ -11,6 +11,7 @@ class EventBase(BaseModel):
     end: datetime
     category: str = "work"
     description: Optional[str] = None
+    color: Optional[str] = None
 
     @validator("start", "end", pre=True)
     def normalize_datetime(cls, value: datetime | str) -> datetime:
@@ -33,6 +34,7 @@ class EventUpdate(BaseModel):
     end: Optional[datetime] = None
     category: Optional[str] = None
     description: Optional[str] = None
+    color: Optional[str] = None
     completed: Optional[bool] = None
 
 

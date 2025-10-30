@@ -1,7 +1,8 @@
-from datetime import time
+
+from datetime import date, time
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TemplateBlockCreate(BaseModel):
@@ -9,6 +10,7 @@ class TemplateBlockCreate(BaseModel):
     start_time: time
     end_time: time
     category: Optional[str] = None
+    color: Optional[str] = None
 
 
 class TemplateBlockOut(TemplateBlockCreate):
@@ -30,3 +32,10 @@ class DayTemplateOut(DayTemplateCreate):
 
     class Config:
         orm_mode = True
+
+
+class TemplateApplyOptions(BaseModel):
+    start_date: date
+    days_of_week: List[int] = Field(default_factory=list, description="0=Monday, 6=Sunday")
+    duration_weeks: int = Field(default=1, ge=1, le=26)
+    include_start_date: bool = True

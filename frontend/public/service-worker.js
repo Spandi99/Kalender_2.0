@@ -1,5 +1,5 @@
 const STATIC_CACHE = "orgalifer-static-v1";
-const DATA_CACHE = "orgalifer-data-v1";
+const DATA_CACHE = "orgalifer-data-v2";
 const NOTIFICATION_STORE = "orgalifer-notifications-v1";
 const SCHEDULE_REQUEST = new Request("/__orgalifer/internal/notifications", { method: "GET" });
 const PRECACHE_URLS = ["/", "/manifest.json", "/assets/icons/icon-192.png", "/assets/icons/icon-512.png"];
@@ -73,20 +73,43 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
-
-      return fetch(request)
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(DATA_CACHE).then((cache) => cache.put(request, copy));
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(DATA_CACHE).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
-        .catch(() => cached);
-    })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) {
+            return cached;
+          }
+          throw new Error("Network request failed and no cached response available.");
+        })
+    );
+    return;
+  }
+
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(DATA_CACHE).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) {
+          return cached;
+        }
+        throw new Error("Network request failed and no cached response available.");
+      })
   );
 });
 

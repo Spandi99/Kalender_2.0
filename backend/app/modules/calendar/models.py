@@ -27,6 +27,7 @@ class Event(Base):
     category = Column(String(100), ForeignKey("event_categories.slug"), nullable=False, default="work")
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False, nullable=False)
+    color = Column(String(20), nullable=True)
     actual_start = Column(DateTime, nullable=True)
     actual_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -34,3 +35,4 @@ class Event(Base):
     category_ref = relationship("EventCategory", back_populates="events")
     xp_log_entry = relationship("XPLog", back_populates="event", uselist=False)
     feedbacks = relationship("Feedback", back_populates="event")
+    task_link = relationship("TaskEvent", back_populates="event", uselist=False)

@@ -55,6 +55,7 @@ export interface CalendarEvent {
   start: string;
   end: string;
   category: string;
+  color: string | null;
   completed: boolean;
 }
 
@@ -63,6 +64,7 @@ export interface ImportedCalendar {
   name: string;
   url: string;
   last_synced: string | null;
+  color: string | null;
 }
 
 export interface TemplateBlockInput {
@@ -70,10 +72,18 @@ export interface TemplateBlockInput {
   start_time: string;
   end_time: string;
   category?: string;
+  color?: string | null;
 }
 
 export interface TemplateBlock extends TemplateBlockInput {
   id: number;
+}
+
+export interface TemplateApplyOptions {
+  start_date: string;
+  days_of_week?: number[];
+  duration_weeks?: number;
+  include_start_date?: boolean;
 }
 
 export interface DayTemplate {
@@ -95,6 +105,7 @@ export interface CreateEventPayload {
   start: string;
   end: string;
   category: string;
+  color?: string | null;
 }
 
 export interface UpdateEventPayload extends Partial<CreateEventPayload> {
@@ -107,35 +118,52 @@ export interface EventCategory {
   xp_value: number;
 }
 
-export type TaskFrequency = "daily" | "weekly" | "monthly" | "yearly" | "custom";
+
 export type TaskPriority = "low" | "medium" | "high";
-export type TaskIntervalUnit = "day" | "week" | "month" | "year";
+export type PreferredTimeOfDay = "morning" | "afternoon" | "evening";
+export type TaskIntervalUnit = "day" | "week" | "month";
+
+export interface TaskEventLink {
+  event_id: number;
+  scheduled_for: string;
+  completed: boolean;
+}
 
 export interface Task {
   id: number;
   title: string;
-  frequency: TaskFrequency;
-  interval_unit: TaskIntervalUnit;
-  interval_value: number;
-  duration_minutes: number;
-  preferred_time: string | null;
+  description?: string | null;
   priority: TaskPriority;
+  preferred_time: PreferredTimeOfDay | null;
+  interval_value: number;
+  interval_unit: TaskIntervalUnit;
+  duration_minutes: number;
+  color: string | null;
   category: string | null;
+  completion_probability: number;
   last_completed: string | null;
   next_due: string | null;
   last_scheduled_at: string | null;
+  completed: boolean;
   created_at: string;
+  updated_at: string;
+  events: TaskEventLink[];
 }
 
 export interface CreateTaskPayload {
   title: string;
-  frequency: TaskFrequency;
-  duration_minutes: number;
-  priority: TaskPriority;
-  category?: string | null;
-  preferred_time?: string | null;
+  description?: string | null;
+  priority?: TaskPriority;
+  preferred_time?: PreferredTimeOfDay | null;
   interval_value?: number;
   interval_unit?: TaskIntervalUnit;
+  duration_minutes?: number;
+  color?: string | null;
+  category?: string | null;
+}
+
+export interface UpdateTaskPayload extends Partial<CreateTaskPayload> {
+  completed?: boolean;
 }
 
 export interface TaskStats {
@@ -370,6 +398,15 @@ export const createTask = async (payload: CreateTaskPayload): Promise<Task> => {
   return data;
 };
 
+export const updateTask = async (taskId: number, payload: UpdateTaskPayload): Promise<Task> => {
+  const { data } = await api.put<Task>(`/tasks/${taskId}`, payload);
+  return data;
+};
+
+export const deleteTask = async (taskId: number): Promise<void> => {
+  await api.delete(`/tasks/${taskId}`);
+};
+
 export const scheduleTasks = async (): Promise<ScheduleTasksResponse> => {
   const { data } = await api.post<ScheduleTasksResponse>("/tasks/schedule");
   return data;
@@ -402,8 +439,8 @@ export const fetchImportedCalendars = async (): Promise<ImportedCalendar[]> => {
   return data;
 };
 
-export const addICalCalendar = async (name: string, url: string): Promise<ImportedCalendar> => {
-  const { data } = await api.post<ImportedCalendar>("/ical/import", { name, url });
+export const addICalCalendar = async (name: string, url: string, color?: string | null): Promise<ImportedCalendar> => {
+  const { data } = await api.post<ImportedCalendar>("/ical/import", { name, url, color: color ?? null });
   return data;
 };
 
@@ -432,13 +469,15 @@ export const deleteTemplate = async (templateId: number): Promise<void> => {
 
 export const applyTemplate = async (
   templateId: number,
-  date: string
+  options: TemplateApplyOptions
 ): Promise<CalendarEvent[]> => {
-  const { data } = await api.post<CalendarEvent[]>(
-    `/templates/${templateId}/apply`,
-    null,
-    { params: { date } }
-  );
+  const payload = {
+    start_date: options.start_date,
+    days_of_week: options.days_of_week ?? [],
+    duration_weeks: options.duration_weeks ?? 1,
+    include_start_date: options.include_start_date ?? true,
+  };
+  const { data } = await api.post<CalendarEvent[]>(`/templates/${templateId}/apply`, payload);
   return data;
 };
 

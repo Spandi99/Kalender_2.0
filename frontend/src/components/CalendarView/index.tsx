@@ -207,6 +207,13 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
       root.setAttribute("title", tooltipParts.join(" • "));
     }
 
+    if (info.event.extendedProps?.completed) {
+      const statusEl = document.createElement("div");
+      statusEl.className = "org-event-line org-event-status text-xs font-semibold text-emerald-100";
+      statusEl.textContent = "✔ Abgeschlossen";
+      root.appendChild(statusEl);
+    }
+
     return { domNodes: [root] };
   }, []);
 
@@ -226,10 +233,10 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
   const calendarEvents = useMemo(
     () =>
       events.map((event) => {
-        const categoryColor = resolveCategoryColor(event.category);
-        const surface = event.completed ? adjustLuminance(categoryColor, -0.15) : categoryColor;
-        const backgroundColor = withAlpha(surface, event.completed ? 0.72 : 0.85);
-        const borderColor = mixColors(surface, "#020617", 0.65);
+        const baseColor = event.color ?? resolveCategoryColor(event.category);
+        const surface = event.completed ? "#16a34a" : baseColor;
+        const backgroundColor = withAlpha(surface, event.completed ? 0.9 : 0.85);
+        const borderColor = mixColors(surface, "#020617", event.completed ? 0.4 : 0.65);
         const textColor = getReadableTextColor(backgroundColor, {
           lightColor: "#ffffff",
           darkColor: "#0f172a",
@@ -256,6 +263,7 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
           textColor,
           extendedProps: {
             description: event.description ?? "",
+            completed: event.completed,
           },
         };
       }),

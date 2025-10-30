@@ -18,10 +18,10 @@ function AppRoutes() {
         <Route index element={<OverviewView />} />
         <Route path="calendar" element={<CalendarView />} />
         <Route path="xp" element={<XPView />} />
-        <Route path="tasks" element={<TasksView />} />
         <Route path="ical" element={<ICalView />} />
         <Route path="ai" element={<AIView />} />
         <Route path="templates" element={<TemplatesView />} />
+        <Route path="tasks" element={<TasksView />} />
         <Route path="feedback" element={<FeedbackView />} />
       </Route>
       <Route path="/legacy/*" element={<LegacyApp />} />
