@@ -1,15 +1,18 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { CalendarDays, Clock3, Loader2, Plus, RefreshCcw } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CalendarDays, Loader2, Pencil, Plus, RefreshCcw, Trash2 } from "lucide-react";
 
 import type { CalendarEvent, EventCategory } from "../../api/client";
 import {
   createEvent,
+  deleteEvent,
   fetchEventCategories,
   fetchEvents,
   submitFeedback,
+  updateEvent,
   type FeedbackPayload,
+  type UpdateEventPayload,
 } from "../../api/client";
 import { AVATAR_QUERY_KEY } from "../../lib/useAvatar";
 import { syncEventNotifications } from "../../lib/notifications";
@@ -29,6 +32,12 @@ interface NewEventFormState {
   category: string;
   description: string;
   color: string | null;
+}
+
+interface ToastState {
+  id: number;
+  message: string;
+  variant: "success" | "error";
 }
 
 type FeedbackFormPayload = Omit<FeedbackPayload, "event_id">;
@@ -72,6 +81,11 @@ export default function CalendarView() {
   const [feedbackTarget, setFeedbackTarget] = useState<CalendarEvent | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const [createForm, setCreateForm] = useState<NewEventFormState>(() => {
     const now = new Date();
@@ -85,6 +99,10 @@ export default function CalendarView() {
       color: null,
     };
   });
+
+  const showToast = useCallback((message: string, variant: ToastState["variant"]) => {
+    setToast({ id: Date.now(), message, variant });
+  }, []);
 
   const eventsQuery = useQuery({
     queryKey: ["events", "dashboard"],
@@ -145,6 +163,21 @@ export default function CalendarView() {
     [queryClient, sortEventsByStart]
   );
 
+  const removeEventFromCaches = useCallback(
+    (eventId: number) => {
+      EVENT_QUERY_KEYS.forEach((key) => {
+        queryClient.setQueryData<CalendarEvent[]>(key, (previous) => {
+          if (!previous) {
+            return previous;
+          }
+          const next = previous.filter((item) => item.id !== eventId);
+          return next.length === previous.length ? previous : next;
+        });
+      });
+    },
+    [queryClient]
+  );
+
 
   useEffect(() => {
     if (createModalOpen && !createForm.category && categories.length > 0) {
@@ -166,6 +199,14 @@ export default function CalendarView() {
     const updated = events.find((event) => event.id === selectedEvent.id) ?? null;
     setSelectedEvent(updated);
   }, [events, selectedEvent?.id]);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+    const timer = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const upcomingStats = useMemo(() => {
     if (events.length === 0) {
@@ -190,6 +231,9 @@ export default function CalendarView() {
     onSuccess: (createdEvent) => {
       setCreateModalOpen(false);
       setCreateError(null);
+      setIsEditMode(false);
+      setEditingEventId(null);
+      setSelectedEvent(null);
       setCreateForm((previous) => ({
         ...previous,
         title: "",
@@ -198,6 +242,7 @@ export default function CalendarView() {
       appendEventToCaches(createdEvent);
       queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      void eventsQuery.refetch();
     },
     onError: (error: unknown) => {
       const message =
@@ -205,6 +250,54 @@ export default function CalendarView() {
           ? error.message
           : "Das Event konnte nicht gespeichert werden. Bitte erneut versuchen.";
       setCreateError(message);
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: ({ eventId, payload }: { eventId: number; payload: UpdateEventPayload }) =>
+      updateEvent(eventId, payload),
+    onSuccess: (updatedEvent) => {
+      setCreateModalOpen(false);
+      setCreateError(null);
+      setIsEditMode(false);
+      setEditingEventId(null);
+      patchEventInCaches(updatedEvent.id, () => updatedEvent);
+      setSelectedEvent((previous) => (previous && previous.id === updatedEvent.id ? updatedEvent : previous));
+      queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      void eventsQuery.refetch();
+      showToast("Event aktualisiert.", "success");
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Das Event konnte nicht aktualisiert werden. Bitte erneut versuchen.";
+      setCreateError(message);
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (eventId: number) => deleteEvent(eventId),
+    onMutate: () => {
+      setDeleteError(null);
+    },
+    onSuccess: (_data, eventId) => {
+      removeEventFromCaches(eventId);
+      setDeleteTarget(null);
+      setDeleteError(null);
+      setSelectedEvent((previous) => (previous && previous.id === eventId ? null : previous));
+      queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      void eventsQuery.refetch();
+      showToast("Event deleted successfully.", "success");
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Das Event konnte nicht gelöscht werden. Bitte erneut versuchen.";
+      setDeleteError(message);
     },
   });
 
@@ -250,10 +343,30 @@ export default function CalendarView() {
       color: previous.color ?? null,
     }));
     setCreateError(null);
+    setIsEditMode(false);
+    setEditingEventId(null);
     setCreateModalOpen(true);
   };
 
-  const handleSubmitNewEvent = (event: FormEvent<HTMLFormElement>) => {
+  const handleOpenEditModal = (event: CalendarEvent) => {
+    const startDate = new Date(event.start);
+    const endDate = event.end ? new Date(event.end) : new Date(startDate.getTime() + 60 * 60 * 1000);
+    setCreateForm({
+      title: event.title ?? "",
+      start: toDateTimeLocalValue(startDate),
+      end: toDateTimeLocalValue(endDate),
+      category: event.category || categories[0]?.slug || DEFAULT_EVENT_CATEGORY,
+      description: event.description ?? "",
+      color: event.color,
+    });
+    setCreateError(null);
+    setIsEditMode(true);
+    setEditingEventId(event.id);
+    setSelectedEvent(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleSubmitEvent = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = createForm.title.trim();
     const start = fromDateTimeLocalValue(createForm.start);
@@ -271,14 +384,26 @@ export default function CalendarView() {
       return;
     }
 
-    createEventMutation.mutate({
+    const payload = {
       title,
       start: start.toISOString(),
       end: end.toISOString(),
       category,
       description: description || undefined,
-      color: color,
-    });
+      color,
+    };
+
+    setCreateError(null);
+
+    if (isEditMode && editingEventId) {
+      updateEventMutation.mutate({
+        eventId: editingEventId,
+        payload: payload as UpdateEventPayload,
+      });
+      return;
+    }
+
+    createEventMutation.mutate(payload);
   };
 
   const handleFeedbackSubmit = async (payload: FeedbackFormPayload) => {
@@ -301,8 +426,14 @@ export default function CalendarView() {
 
   const handleOpenFeedback = (event: CalendarEvent) => {
     setFeedbackTarget(event);
-    setFeedbackError(null);
-    setFeedbackModalOpen(true);
+   setFeedbackError(null);
+   setFeedbackModalOpen(true);
+  };
+
+  const handleRequestDelete = (event: CalendarEvent) => {
+    setDeleteError(null);
+    setDeleteTarget(event);
+    setSelectedEvent(null);
   };
 
   const upcomingLabel = useMemo(() => {
@@ -320,6 +451,8 @@ export default function CalendarView() {
     const parts = [hours > 0 ? `${hours}h` : null, minutes > 0 ? `${minutes}m` : null].filter(Boolean).join(" ");
     return `${upcomingStats.title} in ${parts}`;
   }, [upcomingStats]);
+
+  const isSaving = isEditMode ? updateEventMutation.isPending : createEventMutation.isPending;
 
   return (
     <motion.div
@@ -394,18 +527,30 @@ export default function CalendarView() {
         </div>
       </motion.section>
 
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+      <Dialog
+        open={createModalOpen}
+        onOpenChange={(open) => {
+          setCreateModalOpen(open);
+          if (!open) {
+            setIsEditMode(false);
+            setEditingEventId(null);
+            setCreateError(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-xl border border-slate-700 bg-slate-950/95">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl text-white">
-              <Plus className="h-5 w-5 text-blue-400" aria-hidden />
-              Neues Event anlegen
+              {isEditMode ? <Pencil className="h-5 w-5 text-blue-400" aria-hidden /> : <Plus className="h-5 w-5 text-blue-400" aria-hidden />}
+              {isEditMode ? "Event bearbeiten" : "Neues Event anlegen"}
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-300">
-              Definiere Titel, Zeitraum und Kategorie für deinen neuen Termin.
+              {isEditMode
+                ? "Passe Titel, Zeitraum oder Kategorie deines Termins an."
+                : "Definiere Titel, Zeitraum und Kategorie für deinen neuen Termin."}
             </DialogDescription>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={handleSubmitNewEvent}>
+          <form className="space-y-4" onSubmit={handleSubmitEvent}>
             <div className="space-y-2">
               <Label htmlFor="event-title" className="text-slate-200">
                 Titel
@@ -482,11 +627,23 @@ export default function CalendarView() {
             </div>
             {createError ? <p className="text-sm text-rose-300">{createError}</p> : null}
             <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setCreateModalOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setCreateModalOpen(false);
+                  setIsEditMode(false);
+                  setEditingEventId(null);
+                }}
+              >
                 Abbrechen
               </Button>
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-500" disabled={createEventMutation.isPending}>
-                {createEventMutation.isPending ? "Speichere…" : "Event speichern"}
+              <Button
+                type="submit"
+                className="bg-blue-600 text-white hover:bg-blue-500"
+                disabled={isSaving}
+              >
+                {isSaving ? (isEditMode ? "Aktualisiere…" : "Speichere…") : isEditMode ? "Event aktualisieren" : "Event speichern"}
               </Button>
             </div>
           </form>
@@ -508,16 +665,91 @@ export default function CalendarView() {
               ) : (
                 <p className="text-sm text-slate-400">Keine zusätzliche Beschreibung hinterlegt.</p>
               )}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" onClick={() => handleOpenFeedback(selectedEvent)}>
-                  Feedback öffnen
-                </Button>
-                <Button type="button" variant="secondary" className="bg-slate-800 text-slate-100 hover:bg-slate-700" onClick={() => setSelectedEvent(null)}>
-                  Schließen
-                </Button>
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" onClick={() => handleOpenFeedback(selectedEvent)}>
+                    Feedback öffnen
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="bg-slate-800 text-slate-100 hover:bg-slate-700"
+                    onClick={() => setSelectedEvent(null)}
+                  >
+                    Schließen
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    className="bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-500 text-white shadow-lg transition-all hover:from-blue-500 hover:via-indigo-400 hover:to-sky-400"
+                    onClick={() => selectedEvent && handleOpenEditModal(selectedEvent)}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" aria-hidden />
+                    Event bearbeiten
+                  </Button>
+                  <Button
+                    type="button"
+                    className="bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-lg transition-all hover:from-rose-500 hover:to-red-400"
+                    onClick={() => {
+                      if (selectedEvent) {
+                        handleRequestDelete(selectedEvent);
+                      }
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                    Event löschen
+                  </Button>
+                </div>
               </div>
             </>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm border border-slate-700 bg-slate-950/95">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-white">Event löschen?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-300">
+              Are you sure you want to delete this event?
+              <br />
+              This will also remove associated feedback and insights.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError ? <p className="text-sm text-rose-300">{deleteError}</p> : null}
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteError(null);
+              }}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              className="bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-lg transition-all hover:from-rose-500 hover:to-red-400"
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteEventMutation.mutate(deleteTarget.id);
+                }
+              }}
+              disabled={deleteEventMutation.isPending}
+            >
+              {deleteEventMutation.isPending ? "Lösche…" : "Ja, löschen"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -528,6 +760,25 @@ export default function CalendarView() {
         eventTitle={feedbackTarget?.title}
         errorMessage={feedbackError}
       />
+
+      <AnimatePresence>
+        {toast ? (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.2 }}
+            role="status"
+            className={`pointer-events-auto fixed bottom-6 right-6 z-50 w-full max-w-sm cursor-pointer rounded-xl border border-slate-700/60 px-4 py-3 text-sm shadow-xl backdrop-blur ${
+              toast.variant === "success" ? "bg-emerald-500/15 text-emerald-100" : "bg-rose-600/20 text-rose-100"
+            }`}
+            onClick={() => setToast(null)}
+          >
+            {toast.message}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }

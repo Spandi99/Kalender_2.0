@@ -2,7 +2,7 @@ const STATIC_CACHE = "orgalifer-static-v1";
 const DATA_CACHE = "orgalifer-data-v2";
 const NOTIFICATION_STORE = "orgalifer-notifications-v1";
 const SCHEDULE_REQUEST = new Request("/__orgalifer/internal/notifications", { method: "GET" });
-const PRECACHE_URLS = ["/", "/manifest.json", "/assets/icons/icon-192.png", "/assets/icons/icon-512.png"];
+const PRECACHE_URLS = ["/", "/manifest.json", "/assets/orgalifer-app-icon.png"];
 const NOTIFICATION_LEAD_MS = 15 * 60 * 1000;
 
 let scheduledEvents = [];
@@ -174,8 +174,8 @@ self.addEventListener("push", (event) => {
   const options = {
     body: payload.body,
     data: payload.data || {},
-    icon: payload.icon || "/assets/icons/icon-192.png",
-    badge: payload.badge || "/assets/icons/icon-192.png",
+    icon: payload.icon || "/assets/orgalifer-app-icon.png",
+    badge: payload.badge || "/assets/orgalifer-app-icon.png",
     tag: payload.tag,
     renotify: !!payload.renotify,
   };
@@ -359,8 +359,8 @@ async function showEventNotification(event) {
     tag: `event-${event.id}`,
     renotify: false,
     requireInteraction: false,
-    icon: "/assets/icons/icon-192.png",
-    badge: "/assets/icons/icon-192.png",
+    icon: "/assets/orgalifer-app-icon.png",
+    badge: "/assets/orgalifer-app-icon.png",
     vibrate: [200, 100, 200],
     timestamp: eventStart.getTime(),
   };
