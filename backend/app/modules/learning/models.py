@@ -1,12 +1,11 @@
 """Database models for the learning and optimization module."""
 from __future__ import annotations
 
-from datetime import datetime
-
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, JSON, String, Time
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
+from ...core.time import utc_now
 
 
 class LearningSnapshot(Base):
@@ -15,7 +14,7 @@ class LearningSnapshot(Base):
     __tablename__ = "learning_snapshots"
 
     id = Column(Integer, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     clusters = Column(JSON, nullable=False)
     average_mood = Column(Float, nullable=True)
     average_xp = Column(Float, nullable=True)
@@ -44,7 +43,7 @@ class TemplateOptimizationLog(Base):
     new_end_time = Column(Time, nullable=False)
     delta_minutes = Column(Integer, nullable=False)
     reason = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     snapshot_id = Column(Integer, ForeignKey("learning_snapshots.id"), nullable=True)
 
     snapshot = relationship("LearningSnapshot", back_populates="optimizations")

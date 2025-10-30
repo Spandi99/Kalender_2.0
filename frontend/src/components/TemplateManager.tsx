@@ -48,6 +48,20 @@ const EMPTY_BLOCK: BlockFormState = {
   color: null,
 };
 
+function sanitizeTime(value: string): string {
+  if (!value) {
+    return "00:00";
+  }
+  const normalized = value.includes(":") ? value : value.slice(0, 2) + ":" + value.slice(2, 4);
+  const [hourPart, minutePart] = normalized.split(":");
+  const hours = Number.parseInt(hourPart ?? "0", 10);
+  const minutes = Number.parseInt(minutePart ?? "0", 10);
+  const clampedHours = Math.max(0, Math.min(23, Number.isFinite(hours) ? hours : 0));
+  const clampedMinutes = Math.max(0, Math.min(59, Number.isFinite(minutes) ? minutes : 0));
+  return `${clampedHours.toString().padStart(2, "0")}:${clampedMinutes.toString().padStart(2, "0")}`;
+}
+
+
 interface TemplateBlockEditorProps {
   index: number;
   block: BlockFormState;
@@ -122,8 +136,8 @@ const TemplateBlockEditor = memo(function TemplateBlockEditor({
             id={`block-start-${index}`}
             type="time"
             className="border-slate-700 bg-slate-900/80 text-slate-100"
-            value={block.start_time}
-            onChange={(event) => handleChange({ start_time: event.target.value })}
+            value={sanitizeTime(block.start_time)}
+            onChange={(event) => handleChange({ start_time: sanitizeTime(event.target.value) })}
           />
         </div>
         <div className="space-y-2">
@@ -132,8 +146,8 @@ const TemplateBlockEditor = memo(function TemplateBlockEditor({
             id={`block-end-${index}`}
             type="time"
             className="border-slate-700 bg-slate-900/80 text-slate-100"
-            value={block.end_time}
-            onChange={(event) => handleChange({ end_time: event.target.value })}
+            value={sanitizeTime(block.end_time)}
+            onChange={(event) => handleChange({ end_time: sanitizeTime(event.target.value) })}
           />
         </div>
       </div>
@@ -254,8 +268,8 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
   }, []);
 
   const timeToMinutes = (value: string) => {
-    const [hours, minutes] = value.split(":");
-    return Number(hours) * 60 + Number(minutes);
+    const [hours, minutes] = sanitizeTime(value).split(":");
+    return Number.parseInt(hours ?? "0", 10) * 60 + Number.parseInt(minutes ?? "0", 10);
   };
 
   const handleCreateTemplate = (event: FormEvent<HTMLFormElement>) => {
@@ -291,8 +305,8 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
       description: formState.description.trim() || undefined,
       blocks: formState.blocks.map((block) => ({
         label: block.label.trim(),
-        start_time: block.start_time,
-        end_time: block.end_time,
+        start_time: sanitizeTime(block.start_time),
+        end_time: sanitizeTime(block.end_time),
         category: block.category.trim() ? block.category.trim() : undefined,
         color: block.color ?? undefined,
       })),
@@ -301,9 +315,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
     createTemplateMutation.mutate(payload);
   };
 
-  const templates = templatesQuery.data ?? [];
-
-  const formatTime = (value: string) => value.slice(0, 5);
+const templates = templatesQuery.data ?? [];
 
   return (
     <Card className="border border-slate-700/80 bg-slate-950/85 shadow-2xl">
@@ -392,7 +404,7 @@ export function TemplateManager({ categories }: TemplateManagerProps) {
                           ) : null}
                         </div>
                         <p className="text-xs text-slate-400">
-                          {formatTime(block.start_time)} – {formatTime(block.end_time)}
+                          {sanitizeTime(block.start_time)} – {sanitizeTime(block.end_time)}
                           {block.category ? ` • ${categoryLookup[block.category] ?? block.category}` : ""}
                         </p>
                       </li>

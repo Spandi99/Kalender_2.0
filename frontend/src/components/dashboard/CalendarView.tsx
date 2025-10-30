@@ -14,6 +14,7 @@ import {
   type FeedbackPayload,
   type UpdateEventPayload,
 } from "../../api/client";
+import { formatDateTimeRange, LOCAL_TIMEZONE } from "../../lib/datetime";
 import { AVATAR_QUERY_KEY } from "../../lib/useAvatar";
 import { syncEventNotifications } from "../../lib/notifications";
 import { CalendarView as SchedulerCalendar } from "../CalendarView";
@@ -63,14 +64,6 @@ const fromDateTimeLocalValue = (value: string) => {
   }
   return date;
 };
-
-function formatDateRange(event: CalendarEvent, locale: string) {
-  const formatter = new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-  return `${formatter.format(new Date(event.start))} – ${formatter.format(new Date(event.end))}`;
-}
 
 export default function CalendarView() {
   const queryClient = useQueryClient();
@@ -267,6 +260,8 @@ export default function CalendarView() {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       void eventsQuery.refetch();
       showToast("Event aktualisiert.", "success");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "stats"] });
     },
     onError: (error: unknown) => {
       const message =
@@ -289,6 +284,8 @@ export default function CalendarView() {
       setSelectedEvent((previous) => (previous && previous.id === eventId ? null : previous));
       queryClient.invalidateQueries({ queryKey: ["events", "dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "stats"] });
       void eventsQuery.refetch();
       showToast("Event deleted successfully.", "success");
     },
@@ -518,7 +515,7 @@ export default function CalendarView() {
                     handleOpenCreateModal(selection);
                   }}
                   onEventClick={handleEventClick}
-                  timeZone="Europe/Zurich"
+                  timeZone={LOCAL_TIMEZONE}
                   locale={locale}
                 />
               </div>
@@ -657,7 +654,7 @@ export default function CalendarView() {
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-white">{selectedEvent.title}</DialogTitle>
                 <DialogDescription className="text-sm text-slate-300">
-                  {formatDateRange(selectedEvent, locale)}
+                  {formatDateTimeRange(selectedEvent.start, selectedEvent.end)}
                 </DialogDescription>
               </DialogHeader>
               {selectedEvent.description ? (

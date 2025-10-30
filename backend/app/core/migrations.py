@@ -66,6 +66,44 @@ def _ensure_additional_columns(connection: Connection) -> None:
     _ensure_column(connection, "template_blocks", "color", "VARCHAR(20)")
     _ensure_column(connection, "imported_calendars", "color", "VARCHAR(20)")
 
+
+TIMEZONE_TARGETS: dict[str, tuple[str, ...]] = {
+    "event_categories": ("created_at",),
+    "events": ("start", "end", "actual_start", "actual_end", "created_at"),
+    "tasks": ("last_completed", "next_due", "last_scheduled_at", "created_at", "updated_at"),
+    "task_events": ("scheduled_for", "created_at"),
+    "feedback": ("created_at",),
+    "imported_calendars": ("last_synced",),
+    "imported_events": ("start", "end", "last_updated"),
+    "xp_log": ("created_at",),
+    "avatar_state": ("last_update",),
+    "learning_snapshots": ("created_at",),
+    "template_optimization_log": ("created_at",),
+}
+
+_LOCAL_TIMEZONE_NAME = "Europe/Zurich"
+
+
+def _ensure_timezone_columns(connection: Connection) -> None:
+    inspector = inspect(connection)
+    for table, columns in TIMEZONE_TARGETS.items():
+        existing_columns = {col["name"]: col for col in inspector.get_columns(table)}
+        for column in columns:
+            column_info = existing_columns.get(column)
+            if not column_info:
+                continue
+            column_type = column_info.get("type")
+            if getattr(column_type, "timezone", False):
+                continue
+            quoted_table = f'"{table}"'
+            quoted_column = f'"{column}"'
+            statement = text(
+                f"ALTER TABLE {quoted_table} "
+                f"ALTER COLUMN {quoted_column} TYPE TIMESTAMP WITH TIME ZONE "
+                f"USING {quoted_column} AT TIME ZONE '{_LOCAL_TIMEZONE_NAME}'"
+            )
+            connection.execute(statement)
+
 def _migrate_legacy_xp_entries(connection: Connection) -> None:
     inspector = inspect(connection)
     tables = set(inspector.get_table_names())
@@ -116,5 +154,6 @@ def run_migrations(bind: Engine | None = None) -> None:
     with active_engine.begin() as connection:
         _migrate_legacy_xp_entries(connection)
         _ensure_additional_columns(connection)
+        _ensure_timezone_columns(connection)
     with _session_scope(bind=active_engine) as session:
         seed_default_categories(session)

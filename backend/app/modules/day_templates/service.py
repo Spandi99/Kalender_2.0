@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from ..calendar.models import Event
 from ..calendar.schemas import EventCreate
 from ..calendar.service import create_event
+from ...core.time import LOCAL_TIMEZONE, to_utc
 from .models import DayTemplate, TemplateBlock
 from .schemas import DayTemplateCreate, TemplateApplyOptions
 
@@ -116,8 +117,10 @@ MIN_SLOT_DURATION = timedelta(minutes=60)
 def apply_template_to_day(db: Session, template_id: int, target_date: date) -> List[Event]:
     template = _load_template(db, template_id)
 
-    day_start = datetime.combine(target_date, datetime.min.time())
-    day_end = day_start + timedelta(days=1)
+    day_start_local = datetime.combine(target_date, datetime.min.time(), tzinfo=LOCAL_TIMEZONE)
+    day_end_local = day_start_local + timedelta(days=1)
+    day_start = to_utc(day_start_local)
+    day_end = to_utc(day_end_local)
 
     scheduled_events: List[Event] = (
         db.query(Event)
@@ -129,8 +132,10 @@ def apply_template_to_day(db: Session, template_id: int, target_date: date) -> L
     created_events: List[Event] = []
 
     for block in sorted(template.blocks, key=lambda item: item.start_time):
-        block_start = datetime.combine(target_date, block.start_time)
-        block_end = datetime.combine(target_date, block.end_time)
+        block_start_local = datetime.combine(target_date, block.start_time, tzinfo=LOCAL_TIMEZONE)
+        block_end_local = datetime.combine(target_date, block.end_time, tzinfo=LOCAL_TIMEZONE)
+        block_start = to_utc(block_start_local)
+        block_end = to_utc(block_end_local)
         if block_end <= block_start:
             continue
 

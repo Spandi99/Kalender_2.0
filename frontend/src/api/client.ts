@@ -334,6 +334,13 @@ export interface SystemLogEntry {
   resolved: boolean;
 }
 
+export interface SystemMetrics {
+  timezone: string;
+  db_connected: boolean;
+  latest_backup: string | null;
+  xp_entries: number;
+}
+
 export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data } = await api.get<CalendarEvent[]>("/events/");
   return data;
@@ -500,6 +507,11 @@ export const fetchSystemHealth = async (): Promise<SystemHealthStatus> => {
 
 export const fetchSystemLogs = async (): Promise<SystemLogEntry[]> => {
   const { data } = await api.get<SystemLogEntry[]>("/system/logs");
+  return data;
+};
+
+export const fetchSystemMetrics = async (): Promise<SystemMetrics> => {
+  const { data } = await api.get<SystemMetrics>("/system/health");
   return data;
 };
 

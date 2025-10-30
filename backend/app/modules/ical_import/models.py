@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import backref, relationship
 
 from ...core.database import Base
+from ...core.time import utc_now
 
 
 class ImportedCalendar(Base):
@@ -14,7 +13,7 @@ class ImportedCalendar(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     url = Column(String, nullable=False, unique=True)
-    last_synced = Column(DateTime, nullable=True)
+    last_synced = Column(DateTime(timezone=True), nullable=True)
     color = Column(String(20), nullable=True)
 
     events = relationship(
@@ -34,10 +33,10 @@ class ImportedEvent(Base):
     id = Column(Integer, primary_key=True, index=True)
     uid = Column(String, nullable=False)
     title = Column(String, nullable=False)
-    start = Column(DateTime, nullable=False)
-    end = Column(DateTime, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
+    end = Column(DateTime(timezone=True), nullable=False)
     description = Column(Text, nullable=True)
-    last_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
+    last_updated = Column(DateTime(timezone=True), nullable=True, default=utc_now)
 
     calendar_id = Column(Integer, ForeignKey("imported_calendars.id", ondelete="CASCADE"), nullable=False)
     calendar = relationship("ImportedCalendar", back_populates="events")

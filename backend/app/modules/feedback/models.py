@@ -1,10 +1,10 @@
-from datetime import datetime
 from enum import Enum as PyEnum
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
+from ...core.time import utc_now
 
 
 class FeedbackReason(PyEnum):
@@ -34,6 +34,6 @@ class Feedback(Base):
     arrival_delay_minutes = Column(Integer, nullable=True)
     duration_variance_minutes = Column(Integer, nullable=True)
     notes = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     event = relationship("Event", back_populates="feedbacks")

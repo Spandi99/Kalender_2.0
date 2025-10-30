@@ -9,6 +9,7 @@ import numpy as np
 from sqlalchemy.orm import Session, selectinload
 from sklearn.cluster import KMeans
 
+from ...core.time import LOCAL_TIMEZONE, local_now, to_local
 from ..calendar.models import Event
 from ..day_templates.models import TemplateBlock
 from .models import LearningSnapshot, TemplateOptimizationLog
@@ -85,7 +86,8 @@ def learn_productive_hours(db: Session) -> LearningStatsData | None:
         start_time = event.actual_start or event.start
         if start_time is None:
             continue
-        hours.append([start_time.hour + start_time.minute / 60.0])
+        local_start = to_local(start_time)
+        hours.append([local_start.hour + local_start.minute / 60.0])
 
         for fb in event.feedbacks:
             if fb.rating is not None:
@@ -117,7 +119,7 @@ def learn_productive_hours(db: Session) -> LearningStatsData | None:
     snapshot = _persist_snapshot(db, stats)
     if snapshot is not None:
         stats.snapshot_id = snapshot.id
-        stats.snapshot_created_at = snapshot.created_at
+        stats.snapshot_created_at = to_local(snapshot.created_at)
 
     return stats
 
@@ -302,9 +304,9 @@ def _hour_delta(current: float, target: float) -> float:
 
 
 def _shift_time(value: time, delta_hours: float) -> time:
-    base = datetime.combine(datetime.utcnow().date(), value)
+    base = datetime.combine(local_now().date(), value, tzinfo=LOCAL_TIMEZONE)
     shifted = base + timedelta(hours=delta_hours)
-    return shifted.time()
+    return shifted.astimezone(LOCAL_TIMEZONE).time().replace(tzinfo=None)
 
 
 def _build_reason(stats: LearningStatsData, target_hour: float) -> str:

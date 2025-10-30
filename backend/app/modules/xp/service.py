@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import lru_cache
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from ...core.time import utc_now
 from ..calendar.models import Event
 from ..feedback.models import Feedback, Punctuality
 from .models import AvatarState, XPLog
@@ -81,10 +82,10 @@ def _get_or_create_avatar_state(db: Session, user_id: Optional[int] = 1) -> Avat
 def _maybe_decay_mood(state: AvatarState) -> bool:
     if state.mood != "motivated":
         return False
-    if datetime.utcnow() - state.last_update < timedelta(hours=_MOTIVATED_DECAY_HOURS):
+    if utc_now() - state.last_update < timedelta(hours=_MOTIVATED_DECAY_HOURS):
         return False
     state.mood = "neutral"
-    state.last_update = datetime.utcnow()
+    state.last_update = utc_now()
     return True
 
 
@@ -192,7 +193,7 @@ def award_xp_for_event(
     if existing:
         existing.category = category
         existing.xp_awarded = xp_awarded
-        existing.created_at = datetime.utcnow()
+        existing.created_at = utc_now()
         entry = existing
     else:
         entry = XPLog(
@@ -236,12 +237,12 @@ def get_level_status(db: Session, *, user_id: Optional[int] = 1) -> dict[str, ob
     if level > state.level:
         state.level = level
         state.mood = "motivated"
-        state.last_update = datetime.utcnow()
+        state.last_update = utc_now()
         updated = True
     elif level < state.level:
         state.level = level
         state.mood = "neutral"
-        state.last_update = datetime.utcnow()
+        state.last_update = utc_now()
         updated = True
 
     if updated:
@@ -271,3 +272,16 @@ def get_level_status(db: Session, *, user_id: Optional[int] = 1) -> dict[str, ob
         "avatar_state": avatar_state,
         "expression": expression,
     }
+
+
+def reset_xp_progress(db: Session) -> dict[str, int]:
+    deleted_logs = db.query(XPLog).delete()
+    avatars = db.query(AvatarState).all()
+    now = utc_now()
+    for avatar in avatars:
+        avatar.level = 1
+        avatar.mood = "neutral"
+        avatar.last_update = now
+        db.add(avatar)
+    db.commit()
+    return {"xp_logs_deleted": deleted_logs, "avatars_reset": len(avatars)}

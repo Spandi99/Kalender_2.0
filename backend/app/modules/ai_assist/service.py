@@ -8,6 +8,7 @@ from typing import Iterable, Optional
 
 from sqlalchemy.orm import Session
 
+from ...core.time import utc_now
 from ..feedback.models import Feedback
 from .schemas import AIInsightsResponse, Recommendation
 
@@ -40,7 +41,7 @@ def _safe_average(values: Iterable[int | float]) -> Optional[float]:
 def analyze_user_behavior(db: Session) -> AIInsightsResponse:
     """Aggregate recent feedback into actionable insights and recommendations."""
 
-    cutoff = datetime.utcnow() - timedelta(days=RECENT_DAYS_WINDOW)
+    cutoff = utc_now() - timedelta(days=RECENT_DAYS_WINDOW)
 
     feedbacks: list[Feedback] = (
         db.query(Feedback)

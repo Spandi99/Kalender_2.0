@@ -1,20 +1,27 @@
 """API endpoints exposing the self-healing subsystem."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.time import LOCAL_TIMEZONE, to_local
 
 from .models import SystemLog
 from .monitor import get_self_healing_status
 from .recovery import get_recovery_manager
+from ..xp.models import XPLog
 
 router = APIRouter(prefix="/api/system", tags=["System Health"])
+
+BACKUP_DIRECTORY = Path("/home/spandi/kalender_backups")
 
 
 class FailureRequest(BaseModel):
@@ -39,7 +46,7 @@ class SystemLogResponse(BaseModel):
     def from_orm(cls, log: SystemLog) -> "SystemLogResponse":
         return cls(
             id=log.id,
-            timestamp=log.timestamp.isoformat() if log.timestamp else "",
+            timestamp=to_local(log.timestamp).isoformat() if log.timestamp else "",
             component=log.component,
             severity=log.severity,
             message=log.message,
@@ -75,6 +82,32 @@ async def simulate_failure(request: FailureRequest) -> dict[str, Any]:
 @router.get("/status")
 def get_status() -> dict[str, Any]:
     return get_self_healing_status()
+
+
+@router.get("/health")
+def system_health(db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        db.execute(select(1))
+        db_connected = True
+    except SQLAlchemyError:
+        db_connected = False
+
+    latest_backup = None
+    if BACKUP_DIRECTORY.exists():
+        backups = sorted(BACKUP_DIRECTORY.glob("backup-*.sql"))
+        if backups:
+            newest = max(backups, key=lambda path: path.stat().st_mtime)
+            timestamp = datetime.fromtimestamp(newest.stat().st_mtime, tz=timezone.utc)
+            latest_backup = timestamp.astimezone(LOCAL_TIMEZONE).isoformat()
+
+    xp_entries = db.query(XPLog).count()
+
+    return {
+        "timezone": "Europe/Zurich",
+        "db_connected": db_connected,
+        "latest_backup": latest_backup,
+        "xp_entries": xp_entries,
+    }
 
 
 __all__ = ["router"]

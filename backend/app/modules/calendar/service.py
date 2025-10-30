@@ -1,10 +1,12 @@
-from datetime import datetime
-
 from sqlalchemy.orm import Session
 
+from ...core.time import utc_now
 from ..feedback.models import Feedback
-from ..tasks.models import TaskEvent
-from ..tasks.service import update_task_feedback
+from ..tasks.service import (
+    reset_task_schedule,
+    synchronize_task_schedule,
+    update_task_feedback,
+)
 from ..xp.models import XPLog
 from ..xp.service import award_xp_for_event
 from .models import Event, EventCategory
@@ -53,13 +55,14 @@ def update_event(db: Session, event_id: int, payload: EventUpdate) -> Event:
         imported_event.start = event.start
         imported_event.end = event.end
         imported_event.description = event.description
-        imported_event.last_updated = datetime.utcnow()
+        imported_event.last_updated = utc_now()
 
     if "completed" in update_values:
         update_task_feedback(db, event, bool(event.completed))
 
     if event.task_link is not None:
         event.task_link.scheduled_for = event.start
+        synchronize_task_schedule(db, event.task_link)
         db.add(event.task_link)
 
     db.add(event)
@@ -73,9 +76,15 @@ def delete_event(db: Session, event_id: int) -> None:
     if not event:
         raise ValueError("Event not found")
 
+    task_link = event.task_link
+    task_id = task_link.task_id if task_link is not None else None
+
     db.query(XPLog).filter(XPLog.event_id == event.id).delete(synchronize_session=False)
     db.query(Feedback).filter(Feedback.event_id == event.id).delete(synchronize_session=False)
-    db.query(TaskEvent).filter(TaskEvent.event_id == event.id).delete(synchronize_session=False)
+    if task_link is not None:
+        db.delete(task_link)
+        db.flush()
+        reset_task_schedule(db, task_id)
 
     imported_event = getattr(event, "imported_source", None)
     if imported_event is not None:

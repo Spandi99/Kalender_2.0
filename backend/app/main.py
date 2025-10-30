@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import logging
 import os
 import socket
@@ -12,6 +11,7 @@ from sqlalchemy.exc import OperationalError
 from .core.config import get_settings
 from .core.database import SessionLocal
 from .core.migrations import run_migrations
+from .core.time import LOCAL_TIMEZONE, local_now
 from .core.middleware import (
     AutoFixMiddleware,
     ExceptionLoggerMiddleware,
@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 _database_schema_initialized = False
 
 app = FastAPI(title="AI Calendar XP", openapi_url="/api/openapi.json")
+app.state.local_timezone = LOCAL_TIMEZONE
 app.add_middleware(ExceptionLoggerMiddleware)
 app.add_middleware(AutoFixMiddleware)
 
@@ -63,6 +64,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_timezone_header(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Timezone"] = "Europe/Zurich"
+    return response
 app.include_router(calendar_router.router, prefix="/api/events", tags=["Events"])
 app.include_router(ical_router.router, prefix="/api/ical", tags=["iCal"])
 app.include_router(feedback_router.router, prefix="/api/feedback", tags=["Feedback"])
@@ -176,7 +184,7 @@ def nginx_status() -> dict[str, str]:
 def health_extended() -> dict[str, object]:
     return {
         "status": "ok",
-        "time": datetime.datetime.utcnow().isoformat(),
+        "time": local_now().isoformat(),
         "cert_exists": os.path.exists(
             "/etc/letsencrypt/live/orgalifer.ch/fullchain.pem"
         ),

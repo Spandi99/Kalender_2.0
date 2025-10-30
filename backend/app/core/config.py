@@ -26,6 +26,7 @@ class Settings(BaseSettings):
         env="BACKEND_CORS_ORIGINS",
     )
     debug_mode: bool = Field(default=False, env="DEBUG_MODE")
+    xp_reset_token: Optional[str] = Field(default=None, env="XP_RESET_TOKEN")
 
     @validator("database_url", pre=True, always=True)
     def ensure_database_url(cls, _value: Optional[str]) -> str:

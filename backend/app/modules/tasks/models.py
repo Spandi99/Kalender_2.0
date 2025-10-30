@@ -1,13 +1,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
+from ...core.time import utc_now
 
 
 class TaskPriority(str, Enum):
@@ -42,12 +42,12 @@ class Task(Base):
     color = Column(String(20), nullable=True)
     category = Column(String(100), ForeignKey("event_categories.slug"), nullable=True)
     completion_probability = Column(Float, nullable=False, default=0.5)
-    last_completed = Column(DateTime, nullable=True)
-    next_due = Column(DateTime, nullable=True)
-    last_scheduled_at = Column(DateTime, nullable=True)
+    last_completed = Column(DateTime(timezone=True), nullable=True)
+    next_due = Column(DateTime(timezone=True), nullable=True)
+    last_scheduled_at = Column(DateTime(timezone=True), nullable=True)
     completed = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
 
     events = relationship("TaskEvent", back_populates="task", cascade="all, delete-orphan")
 
@@ -58,9 +58,9 @@ class TaskEvent(Base):
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=False, unique=True)
-    scheduled_for = Column(DateTime, nullable=False)
+    scheduled_for = Column(DateTime(timezone=True), nullable=False)
     completed = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
 
     task = relationship("Task", back_populates="events")
     event = relationship("Event", back_populates="task_link")

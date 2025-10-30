@@ -10,6 +10,7 @@ import {
   applyLearningSuggestions,
 } from "../api/client";
 import { Button } from "./ui/button";
+import { formatDateTime } from "../lib/datetime";
 
 interface StatusState {
   type: "success" | "error";
@@ -79,17 +80,7 @@ function formatDeltaMinutes(deltaMinutes: number): string {
 }
 
 function formatTimestamp(value: string | null): string {
-  if (!value) {
-    return "–";
-  }
-  try {
-    return new Intl.DateTimeFormat("de-DE", {
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date(value));
-  } catch (error) {
-    return value;
-  }
+  return formatDateTime(value) ?? "–";
 }
 
 export function LearningSuggestionsCard() {

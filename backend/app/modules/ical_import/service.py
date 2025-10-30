@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import httpx
 from sqlalchemy.orm import Session
 
+from ...core.time import LOCAL_TIMEZONE, to_utc, utc_now
 from ..calendar.models import Event, EventCategory
 from ..feedback.models import Feedback
 from ..xp.models import XPLog
@@ -46,17 +47,14 @@ def _normalize_datetime(value) -> datetime:
     if isinstance(value, datetime):
         dt = value
     elif isinstance(value, date):
-        dt = datetime.combine(value, time.min)
+        dt = datetime.combine(value, time.min, tzinfo=LOCAL_TIMEZONE)
     else:
         raise ValueError("Unsupported datetime type")
 
-    if dt.tzinfo is not None:
-        local_tz = datetime.now().astimezone().tzinfo
-        if local_tz is not None:
-            dt = dt.astimezone(local_tz)
-        dt = dt.replace(tzinfo=None)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=LOCAL_TIMEZONE)
 
-    return dt
+    return to_utc(dt)
 
 
 def _parse_duration(value: str) -> timedelta:
@@ -301,7 +299,7 @@ def sync_calendar(db: Session, calendar_id: int) -> ImportedCalendar | None:
         imported_event.start = start
         imported_event.end = end
         imported_event.description = description or None
-        imported_event.last_updated = datetime.utcnow()
+        imported_event.last_updated = utc_now()
 
         if imported_event.event is None:
             linked_event = Event(
@@ -336,7 +334,7 @@ def sync_calendar(db: Session, calendar_id: int) -> ImportedCalendar | None:
             _remove_linked_event(db, orphan.event_id)
         db.delete(orphan)
 
-    calendar.last_synced = datetime.utcnow()
+    calendar.last_synced = utc_now()
     db.commit()
     db.refresh(calendar)
     return calendar

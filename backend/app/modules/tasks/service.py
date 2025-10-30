@@ -8,6 +8,7 @@ from typing import Iterable, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
+from ...core.time import LOCAL_TIMEZONE, to_local, to_utc, utc_now
 from ..calendar.models import Event
 from ..calendar.schemas import EventCreate
 from ..feedback.models import Feedback
@@ -66,10 +67,10 @@ def _resolve_optimal_hour(db: Session, task: Task) -> int:
     else:
         category_query = []
 
-    hours: list[int] = [row[0].hour for row in category_query]
+    hours: list[int] = [to_local(row[0]).hour for row in category_query]
     if not hours:
         global_rows = base_query.all()
-        hours = [row[0].hour for row in global_rows]
+        hours = [to_local(row[0]).hour for row in global_rows]
 
     if hours:
         counter = Counter(hours)
@@ -119,7 +120,7 @@ def _refresh_completion_probability(db: Session, task: Task) -> None:
 
 
 def create_task(db: Session, payload: TaskCreate) -> Task:
-    now = datetime.utcnow()
+    now = utc_now()
     task = Task(
         title=payload.title,
         description=payload.description,
@@ -155,15 +156,15 @@ def update_task(db: Session, task_id: int, payload: TaskUpdate) -> Task:
 
     if payload.completed is not None:
         if payload.completed:
-            task.last_completed = datetime.utcnow()
+            task.last_completed = utc_now()
             task.completed = True
-            anchor = task.last_scheduled_at or datetime.utcnow()
+            anchor = task.last_scheduled_at or utc_now()
             task.next_due = _compute_next_due(task, anchor)
         else:
             task.completed = False
 
     if payload.interval_value is not None or payload.interval_unit is not None:
-        anchor = task.last_scheduled_at or datetime.utcnow()
+        anchor = task.last_scheduled_at or utc_now()
         task.next_due = _compute_next_due(task, anchor)
 
     if payload.color is not None:
@@ -210,21 +211,29 @@ def _schedule_task(db: Session, task: Task, reference: datetime) -> Optional[Sch
     from ..calendar.service import create_event as calendar_create_event
 
     duration = timedelta(minutes=task.duration_minutes)
-    target_start = max(task.next_due or reference, reference)
+    reference_local = to_local(reference)
+    target_candidate = to_local(task.next_due) if task.next_due else reference_local
+    target_start_local = target_candidate if target_candidate > reference_local else reference_local
     optimal_hour = _resolve_optimal_hour(db, task)
-    base_start = datetime.combine(target_start.date(), time(hour=optimal_hour, minute=0))
-    if base_start < reference:
-        base_start = reference
+    base_start_local = datetime.combine(
+        target_start_local.date(),
+        time(hour=optimal_hour, minute=0),
+        tzinfo=LOCAL_TIMEZONE,
+    )
+    if base_start_local < reference_local:
+        base_start_local = reference_local
 
-    slot_start = _find_free_slot(db, base_start, duration)
+    slot_start = _find_free_slot(db, to_utc(base_start_local), duration)
     if slot_start is None:
         return None
+
+    slot_end = slot_start + duration
 
     payload = EventCreate(
         title=task.title,
         description=task.description,
         start=slot_start,
-        end=slot_start + duration,
+        end=slot_end,
         category=task.category or DEFAULT_CATEGORY,
         color=task.color,
     )
@@ -251,13 +260,13 @@ def _schedule_task(db: Session, task: Task, reference: datetime) -> Optional[Sch
         task_id=task.id,
         event_id=event.id,
         title=event.title,
-        start=event.start,
-        end=event.end,
+        start=to_local(event.start),
+        end=to_local(event.end),
     )
 
 
 def schedule_tasks(db: Session) -> ScheduleTasksResponse:
-    now = datetime.utcnow()
+    now = utc_now()
     tasks = list_tasks(db)
     priority_rank = {
         TaskPriority.HIGH: 0,
@@ -295,12 +304,12 @@ def _productive_hours(db: Session) -> list[int]:
         .all()
     )
     for (start,) in rows:
-        hours[start.hour] += 1
+        hours[to_local(start).hour] += 1
     return hours
 
 
 def get_task_stats(db: Session) -> TaskStats:
-    now = datetime.utcnow()
+    now = utc_now()
     total = db.query(func.count(Task.id)).scalar() or 0
     overdue = (
         db.query(func.count(Task.id))
@@ -328,6 +337,7 @@ def get_task_stats(db: Session) -> TaskStats:
         .first()
     )
     next_due = next_due_row[0] if next_due_row else None
+    next_due_local = to_local(next_due) if next_due else None
 
     return TaskStats(
         total_tasks=total,
@@ -335,7 +345,7 @@ def get_task_stats(db: Session) -> TaskStats:
         upcoming_tasks=upcoming,
         scheduled_events=scheduled_events,
         productive_hours=_productive_hours(db),
-        next_due=next_due,
+        next_due=next_due_local,
     )
 
 
@@ -362,13 +372,64 @@ def update_task_feedback(db: Session, event: Event, completed: bool) -> None:
         return
 
     if completed:
-        task.last_completed = datetime.utcnow()
+        task.last_completed = utc_now()
         task.completed = True
         task.next_due = _compute_next_due(task, task_event.scheduled_for)
     else:
         task.completed = False
-        task.next_due = datetime.utcnow()
+        task.next_due = utc_now()
 
     _refresh_completion_probability(db, task)
     db.add(task_event)
+    db.add(task)
+
+
+def synchronize_task_schedule(db: Session, task_event: TaskEvent) -> None:
+    """Ensure task scheduling metadata stays in sync with a linked calendar event."""
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_event.task_id)
+        .options(selectinload(Task.events))
+        .first()
+    )
+    if task is None:
+        return
+
+    task.last_scheduled_at = task_event.scheduled_for
+    if not task.completed:
+        task.next_due = _compute_next_due(task, task_event.scheduled_for)
+
+    _refresh_completion_probability(db, task)
+    db.add(task)
+
+
+def reset_task_schedule(db: Session, task_id: int) -> None:
+    """Reset task scheduling details when a linked calendar event is removed."""
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_id)
+        .options(selectinload(Task.events))
+        .first()
+    )
+    if task is None:
+        return
+
+    now = utc_now()
+    remaining_links = list(task.events)
+    upcoming = min(
+        (mapping for mapping in remaining_links if mapping.scheduled_for >= now),
+        default=None,
+        key=lambda mapping: mapping.scheduled_for,
+    )
+
+    if upcoming is not None:
+        task.last_scheduled_at = upcoming.scheduled_for
+        if not task.completed:
+            task.next_due = _compute_next_due(task, upcoming.scheduled_for)
+    else:
+        task.last_scheduled_at = None
+        task.completed = False
+        task.next_due = now
+
+    _refresh_completion_probability(db, task)
     db.add(task)

@@ -30,6 +30,7 @@ import {
   scheduleTasks,
   updateTask,
 } from "../../api/client";
+import { formatDateTime } from "../../lib/datetime";
 import { ColorPicker } from "../ui/color-picker";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -104,20 +105,6 @@ function formatPreferredTime(value: Task["preferred_time"]) {
   }
 }
 
-function formatDateTime(value: string | null, locale: string) {
-  if (!value) {
-    return null;
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function resolveUpcomingEvent(events: TaskEventLink[]): TaskEventLink | null {
   const now = Date.now();
   return (
@@ -148,9 +135,6 @@ function describeProductiveHours(hours: number[]) {
 
 export default function TasksView() {
   const queryClient = useQueryClient();
-  const locale =
-    typeof navigator !== "undefined" && navigator.language ? navigator.language : "de-CH";
-
   const [formState, setFormState] = useState<TaskFormState>(DEFAULT_FORM);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [status, setStatus] = useState<StatusBanner>(null);
@@ -633,7 +617,7 @@ export default function TasksView() {
                       {scheduleResult.entries.slice(0, 4).map((entry) => (
                         <li key={`${entry.task_id}-${entry.event_id}`}>
                           {entry.title} •{" "}
-                          {formatDateTime(entry.start, locale) ?? entry.start}
+                          {formatDateTime(entry.start) ?? entry.start}
                         </li>
                       ))}
                       {scheduleResult.entries.length > 4 ? (
@@ -773,11 +757,11 @@ export default function TasksView() {
                         </div>
                         <div className="text-xs text-slate-400/90">
                           Nächste Fälligkeit:{" "}
-                          {formatDateTime(task.next_due, locale) ?? "Noch nicht geplant"}
+                          {formatDateTime(task.next_due) ?? "Noch nicht geplant"}
                         </div>
                         {nextEvent ? (
                           <div className="text-xs text-slate-300">
-                            Nächster Kalender-Slot: {formatDateTime(nextEvent.scheduled_for, locale)}
+                            Nächster Kalender-Slot: {formatDateTime(nextEvent.scheduled_for)}
                           </div>
                         ) : null}
                       </div>

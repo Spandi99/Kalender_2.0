@@ -1,9 +1,8 @@
-from datetime import datetime
-
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
+from ...core.time import utc_now
 
 
 class XPLog(Base):
@@ -13,7 +12,7 @@ class XPLog(Base):
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False, unique=True)
     category = Column(String(50), nullable=False)
     xp_awarded = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     event = relationship("Event", back_populates="xp_log_entry")
 
@@ -25,4 +24,4 @@ class AvatarState(Base):
     user_id = Column(Integer, nullable=True, index=True, default=1)
     level = Column(Integer, nullable=False, default=1)
     mood = Column(String(32), nullable=False, default="neutral")
-    last_update = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_update = Column(DateTime(timezone=True), default=utc_now, nullable=False)

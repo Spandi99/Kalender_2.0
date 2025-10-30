@@ -13,6 +13,7 @@ import "@fullcalendar/list/main.css";
 // ----------------------------------------------------------
 
 import type { CalendarEvent } from "../../api/client";
+import { LOCAL_TIMEZONE, formatTime } from "../../lib/datetime";
 import { adjustLuminance, getReadableTextColor, mixColors, withAlpha } from "../../utils/colorUtils";
 
 export interface CalendarViewProps {
@@ -25,14 +26,54 @@ export interface CalendarViewProps {
 
 const CATEGORY_COLORS = ["#0066FF", "#00C896", "#F97316", "#A855F7", "#EC4899", "#38BDF8", "#F59E0B", "#22D3EE"];
 
-const toLocalCalendarDate = (value: string) => {
+const zonedFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: LOCAL_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+const offsetFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: LOCAL_TIMEZONE,
+  timeZoneName: "shortOffset",
+  hour: "2-digit",
+});
+
+function toZonedISOString(value: string | null | undefined): string | undefined {
   if (!value) {
-    return value;
+    return undefined;
   }
   const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().replace(/\.\d{3}Z$/, "");
-};
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  const parts = zonedFormatter.formatToParts(date);
+  const lookup = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? (type === "second" ? "00" : "01");
+
+  const offsetLabel =
+    offsetFormatter.formatToParts(date).find((part) => part.type === "timeZoneName")?.value ?? "GMT+00";
+  const match = offsetLabel.match(/([+-]\d{1,2})(?::?(\d{2}))?/);
+  const hoursRaw = match ? Number.parseInt(match[1], 10) : 0;
+  const minutesRaw = match && match[2] ? Number.parseInt(match[2], 10) : 0;
+  const hoursComponent = Number.isFinite(hoursRaw) ? hoursRaw : 0;
+  const minutesComponent = Number.isFinite(minutesRaw) ? minutesRaw : 0;
+  const normalizedHours = `${hoursComponent >= 0 ? "+" : "-"}${Math.abs(hoursComponent)
+    .toString()
+    .padStart(2, "0")}`;
+  const normalizedMinutes = minutesComponent.toString().padStart(2, "0");
+  const offset = `${normalizedHours}:${normalizedMinutes}`;
+
+  return `${lookup("year")}-${lookup("month")}-${lookup("day")}T${lookup("hour")}:${lookup("minute")}:${lookup(
+    "second"
+  )}${offset}`;
+}
+
 
 function hashCategory(category: string) {
   let hash = 0;
@@ -67,6 +108,16 @@ function formatEventTimeRange(event: EventContentArg["event"], locale: string, f
     return fallback;
   }
 
+  const startLabel = typeof event.extendedProps?.startTimeLabel === "string" ? event.extendedProps.startTimeLabel : null;
+  const endLabel = typeof event.extendedProps?.endTimeLabel === "string" ? event.extendedProps.endTimeLabel : null;
+
+  if (startLabel) {
+    if (endLabel && endLabel !== startLabel) {
+      return `${startLabel} – ${endLabel}`;
+    }
+    return startLabel;
+  }
+
   if (event.allDay) {
     const multiDay = event.end && event.end.getTime() - event.start.getTime() > 24 * 60 * 60 * 1000;
     if (!multiDay) {
@@ -78,11 +129,27 @@ function formatEventTimeRange(event: EventContentArg["event"], locale: string, f
     return fallback || "";
   }
 
-  const formatter = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
-  const startText = event.start ? formatter.format(event.start) : "";
+  const startProp = event.extendedProps?.startTimeLabel;
+  const endProp = event.extendedProps?.endTimeLabel;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: LOCAL_TIMEZONE,
+  });
+
+  const startText = typeof startProp === "string" && startProp
+    ? startProp
+    : event.start
+      ? formatter.format(event.start)
+      : "";
+
   let endText = "";
 
-  if (event.end) {
+  if (typeof endProp === "string" && endProp) {
+    endText = endProp;
+  } else if (event.end) {
     const effectiveEnd = event.allDay ? new Date(event.end.getTime() - 60_000) : event.end;
     endText = formatter.format(effectiveEnd);
   }
@@ -117,7 +184,7 @@ function truncateWithEllipsis(text: string, maxLength: number) {
   return `${safeSlice.replace(/[\s\-·:/]+$/, "")}…`;
 }
 
-export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "local", locale }: CalendarViewProps) {
+export function CalendarView({ events, onSelectRange, onEventClick, timeZone = LOCAL_TIMEZONE, locale }: CalendarViewProps) {
   const [isCompactLayout, setIsCompactLayout] = useState(false);
 
   useEffect(() => {
@@ -242,12 +309,20 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
           darkColor: "#0f172a",
         });
 
+        const start = toZonedISOString(event.start) ?? event.start;
+        const end = toZonedISOString(event.end ?? undefined) ?? event.end;
+
+        const zonedStart = toZonedISOString(event.start) ?? event.start;
+        const zonedEnd = toZonedISOString(event.end ?? undefined) ?? event.end;
+        const startTimeLabel = formatTime(event.start);
+        const endTimeLabel = formatTime(event.end ?? undefined);
+
         return {
           display: "block",
           id: String(event.id),
           title: event.title,
-          start: toLocalCalendarDate(event.start),
-          end: toLocalCalendarDate(event.end),
+          start: zonedStart,
+          end: zonedEnd,
           classNames: [
             "fc-orgalifer-event",
             "rounded-xl",
@@ -264,6 +339,8 @@ export function CalendarView({ events, onSelectRange, onEventClick, timeZone = "
           extendedProps: {
             description: event.description ?? "",
             completed: event.completed,
+            startTimeLabel,
+            endTimeLabel,
           },
         };
       }),

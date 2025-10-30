@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -17,10 +17,13 @@ import {
   fetchEvents,
   fetchSystemHealth,
   fetchSystemLogs,
+  fetchSystemMetrics,
   type CalendarEvent,
   type SystemHealthStatus,
   type SystemLogEntry,
+  type SystemMetrics,
 } from "../../api/client";
+import { formatDateTime } from "../../lib/datetime";
 import NextEventWidget from "../widgets/NextEventWidget";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -46,20 +49,13 @@ function resolveUpcoming(events: CalendarEvent[]): UpcomingSnapshot[] {
     }));
 }
 
-function formatRange(start: Date, end: Date | null, locale: string): string {
-  const dateFormatter = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const timeFormatter = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const datePart = dateFormatter.format(start);
-  const startTime = timeFormatter.format(start);
-  const endTime = end && !Number.isNaN(end.getTime()) ? timeFormatter.format(end) : null;
-  return endTime && endTime !== startTime ? `${datePart} • ${startTime} – ${endTime}` : `${datePart} • ${startTime}`;
+function formatRange(start: Date, end: Date | null): string {
+  const startText = formatDateTime(start);
+  const endText = end && !Number.isNaN(end.getTime()) ? formatDateTime(end) : null;
+  if (!startText) {
+    return "–";
+  }
+  return endText && endText !== startText ? `${startText} – ${endText}` : startText;
 }
 
 function resolveStatusColor(status: SystemHealthStatus["status"] | "recovering") {
@@ -74,11 +70,9 @@ function resolveStatusColor(status: SystemHealthStatus["status"] | "recovering")
   }
 }
 
-function formatLog(entry: SystemLogEntry, locale: string): { time: string; message: string } {
-  const timestamp = entry.timestamp ? new Date(entry.timestamp) : null;
-  const timeText = timestamp && !Number.isNaN(timestamp.getTime())
-    ? new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(timestamp)
-    : "–";
+function formatLog(entry: SystemLogEntry): { time: string; message: string } {
+  const timestamp = entry.timestamp ? formatDateTime(entry.timestamp) : null;
+  const timeText = timestamp ?? "–";
   const message = entry.message ?? "Unbekannte Meldung";
   return { time: timeText, message };
 }
@@ -86,8 +80,6 @@ function formatLog(entry: SystemLogEntry, locale: string): { time: string; messa
 export default function OverviewView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "de-CH";
-
   const eventsQuery = useQuery({
     queryKey: ["events", "overview"],
     queryFn: fetchEvents,
@@ -115,6 +107,37 @@ export default function OverviewView() {
   const logs = logsQuery.data ?? [];
   const status = health?.self_healing_active ? health.status : "recovering";
   const statusStyle = resolveStatusColor(status as SystemHealthStatus["status"] | "recovering");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let active = true;
+
+    const logMetrics = async () => {
+      try {
+        const metrics: SystemMetrics = await fetchSystemMetrics();
+        if (!active) {
+          return;
+        }
+        console.info("[system-health]", metrics);
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+        console.warn("[system-health] Unable to fetch metrics", error);
+      }
+    };
+
+    const interval = window.setInterval(logMetrics, 24 * 60 * 60 * 1000);
+    void logMetrics();
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   return (
     <motion.div
@@ -184,7 +207,7 @@ export default function OverviewView() {
             ) : (
               <ul className="mt-4 space-y-3">
                 {upcomingEvents.map((event, index) => {
-                  const formatted = formatRange(event.start, event.end, locale);
+                  const formatted = formatRange(event.start, event.end);
                   return (
                     <li
                       key={`${event.title}-${event.start.getTime()}-${index}`}
@@ -212,7 +235,7 @@ export default function OverviewView() {
             ) : (
               <ul className="mt-4 space-y-3">
                 {logs.map((entry, index) => {
-                  const { time, message } = formatLog(entry, locale);
+                  const { time, message } = formatLog(entry);
                   return (
                     <li
                       key={`${entry.id ?? index}-${time}`}

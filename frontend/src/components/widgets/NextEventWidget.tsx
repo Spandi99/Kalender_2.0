@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, CalendarDays, Clock3, RefreshCcw, Sparkles, BellRing } from "lucide-react";
 
 import { fetchEvents, type CalendarEvent } from "../../api/client";
+import { formatDateTimeRange } from "../../lib/datetime";
 import {
   createFallbackTimer,
   ensureNotificationPermission,
@@ -28,33 +29,8 @@ function resolveNextEvent(events: CalendarEvent[]): CalendarEvent | null {
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())[0] ?? null;
 }
 
-function formatEventTime(event: CalendarEvent, locale: string): string {
-  const start = new Date(event.start);
-  const end = new Date(event.end);
-  if (Number.isNaN(start.getTime())) {
-    return "";
-  }
-
-  const dateFormatter = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-
-  const timeFormatter = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const dateText = dateFormatter.format(start);
-  const startTime = timeFormatter.format(start);
-  const endTime = Number.isNaN(end.getTime()) ? null : timeFormatter.format(end);
-
-  if (endTime && endTime !== startTime) {
-    return `${dateText} • ${startTime} - ${endTime}`;
-  }
-
-  return `${dateText} • ${startTime}`;
+function formatEventTime(event: CalendarEvent): string {
+  return formatDateTimeRange(event.start, event.end);
 }
 
 function formatCountdown(target: Date | null): string {
@@ -103,7 +79,6 @@ export function NextEventWidget() {
     staleTime: REFRESH_INTERVAL,
   });
 
-  const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en-US";
   const events = eventsQuery.data ?? [];
   const nextEvent = useMemo(() => resolveNextEvent(events), [events]);
 
@@ -224,7 +199,7 @@ export function NextEventWidget() {
               <h2 className="text-xl font-semibold sm:text-2xl">{nextEvent.title}</h2>
               <p className="flex items-center gap-2 text-sm text-slate-200/90">
                 <CalendarDays className="h-4 w-4" aria-hidden />
-                <span>{formatEventTime(nextEvent, locale)}</span>
+                <span>{formatEventTime(nextEvent)}</span>
               </p>
               {countdownText ? (
                 <p className="flex items-center gap-2 text-sm text-slate-300/90">
